@@ -1,16 +1,12 @@
 package org.feynix.application.agent.assembler;
 
 import org.feynix.domain.agent.model.AgentEntity;
-import org.feynix.domain.agent.model.AgentStatus;
-import org.feynix.domain.agent.model.AgentType;
+import org.feynix.domain.agent.constant.AgentType;
 import org.feynix.domain.agent.model.AgentVersionEntity;
-import org.feynix.domain.agent.model.AgentDTO;
-import org.feynix.domain.agent.model.AgentVersionDTO;
+import org.feynix.domain.agent.dto.AgentDTO;
+import org.feynix.domain.agent.dto.AgentVersionDTO;
 import org.feynix.domain.agent.model.ModelConfig;
 import org.feynix.interfaces.dto.agent.CreateAgentRequest;
-import org.feynix.interfaces.dto.agent.UpdateAgentBasicInfoRequest;
-import org.feynix.interfaces.dto.agent.UpdateAgentConfigRequest;
-import org.feynix.interfaces.dto.agent.UpdateAgentStatusRequest;
 import org.feynix.interfaces.dto.agent.PublishAgentVersionRequest;
 import org.feynix.interfaces.dto.agent.UpdateAgentRequest;
 
@@ -84,13 +80,6 @@ public class AgentAssembler {
 
 
     /**
-     * 创建AgentVersionEntity
-     */
-    public static AgentVersionEntity createVersionEntity(AgentEntity agent, PublishAgentVersionRequest request) {
-        return AgentVersionEntity.createFromAgent(agent, request.getVersionNumber(), request.getChangeLog());
-    }
-    
-    /**
      * 将AgentEntity转换为AgentDTO
      */
     public static AgentDTO toDTO(AgentEntity entity) {
@@ -118,29 +107,7 @@ public class AgentAssembler {
         return dto;
     }
     
-    /**
-     * 将AgentVersionEntity转换为AgentVersionDTO
-     */
-    public static AgentVersionDTO toDTO(AgentVersionEntity entity) {
-        if (entity == null) {
-            return null;
-        }
-        
-        AgentVersionDTO dto = new AgentVersionDTO();
-        dto.setId(entity.getId());
-        dto.setAgentId(entity.getAgentId());
-        dto.setVersionNumber(entity.getVersionNumber());
-        dto.setSystemPrompt(entity.getSystemPrompt());
-        dto.setWelcomeMessage(entity.getWelcomeMessage());
-        dto.setModelConfig(entity.getModelConfig());
-        dto.setTools(entity.getTools());
-        dto.setKnowledgeBaseIds(entity.getKnowledgeBaseIds());
-        dto.setChangeLog(entity.getChangeLog());
-        dto.setAgentType(entity.getAgentType());
-        dto.setPublishedAt(entity.getPublishedAt());
-        
-        return dto;
-    }
+
     
     /**
      * 将AgentEntity列表转换为AgentDTO列表
@@ -158,19 +125,5 @@ public class AgentAssembler {
         return dtoList;
     }
     
-    /**
-     * 将AgentVersionEntity列表转换为AgentVersionDTO列表
-     */
-    public static List<AgentVersionDTO> toVersionDTOList(List<AgentVersionEntity> entities) {
-        if (entities == null) {
-            return new ArrayList<>();
-        }
-        
-        List<AgentVersionDTO> dtoList = new ArrayList<>(entities.size());
-        for (AgentVersionEntity entity : entities) {
-            dtoList.add(toDTO(entity));
-        }
-        
-        return dtoList;
-    }
+
 } 

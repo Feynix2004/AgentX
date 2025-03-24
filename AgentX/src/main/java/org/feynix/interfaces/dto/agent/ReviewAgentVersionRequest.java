@@ -1,8 +1,8 @@
 package org.feynix.interfaces.dto.agent;
 
-import org.feynix.domain.agent.model.PublishStatus;
-import org.feynix.domain.common.util.ValidationUtils;
-import org.feynix.domain.common.exception.ParamValidationException;
+import org.feynix.domain.agent.constant.PublishStatus;
+import org.feynix.infrastructure.util.ValidationUtils;
+import org.feynix.infrastructure.exception.ParamValidationException;
 
 /**
  * 审核/更新Agent版本状态的请求对象

@@ -1,7 +1,7 @@
 package org.feynix.interfaces.dto.agent;
 
 import java.util.regex.Pattern;
-import org.feynix.domain.common.exception.ParamValidationException;
+import org.feynix.infrastructure.exception.ParamValidationException;
 
 /**
  * 发布Agent版本请求

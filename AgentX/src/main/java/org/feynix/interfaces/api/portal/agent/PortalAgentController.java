@@ -2,9 +2,8 @@ package org.feynix.interfaces.api.portal.agent;
 
 import org.springframework.web.bind.annotation.*;
 import org.feynix.application.agent.service.AgentAppService;
-import org.feynix.domain.agent.model.AgentDTO;
-import org.feynix.domain.agent.model.AgentStatus;
-import org.feynix.domain.agent.model.AgentVersionDTO;
+import org.feynix.domain.agent.dto.AgentDTO;
+import org.feynix.domain.agent.dto.AgentVersionDTO;
 import org.feynix.infrastructure.auth.UserContext;
 import org.feynix.interfaces.api.common.Result;
 import org.feynix.interfaces.dto.agent.*;

@@ -9,9 +9,9 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.feynix.domain.common.exception.BusinessException;
-import org.feynix.domain.common.exception.EntityNotFoundException;
-import org.feynix.domain.common.exception.ParamValidationException;
+import org.feynix.infrastructure.exception.BusinessException;
+import org.feynix.infrastructure.exception.EntityNotFoundException;
+import org.feynix.infrastructure.exception.ParamValidationException;
 import org.feynix.interfaces.api.common.Result;
 
 import javax.servlet.http.HttpServletRequest;

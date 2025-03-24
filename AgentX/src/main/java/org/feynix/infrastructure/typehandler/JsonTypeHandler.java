@@ -8,13 +8,12 @@ import org.postgresql.util.PGobject;
 import org.feynix.domain.agent.model.AgentTool;
 import org.feynix.domain.agent.model.ModelConfig;
 import org.feynix.infrastructure.util.JsonUtils;
-import org.feynix.domain.common.exception.ParamValidationException;
+import org.feynix.infrastructure.exception.ParamValidationException;
 
 import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 
 /**

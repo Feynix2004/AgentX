@@ -1,7 +1,6 @@
 package org.feynix.interfaces.dto.agent;
 
-import org.feynix.domain.common.exception.ParamValidationException;
-import org.feynix.domain.common.util.ValidationUtils;
+import org.feynix.infrastructure.util.ValidationUtils;
 
 /**
  * 更新Agent基本信息的请求对象

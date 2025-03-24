@@ -2,7 +2,7 @@ package org.feynix.interfaces.dto.agent;
 
 import org.feynix.domain.agent.model.AgentTool;
 import org.feynix.domain.agent.model.ModelConfig;
-import org.feynix.domain.common.util.ValidationUtils;
+import org.feynix.infrastructure.util.ValidationUtils;
 
 import java.util.List;
 
