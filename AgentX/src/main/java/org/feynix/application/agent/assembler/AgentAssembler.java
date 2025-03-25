@@ -2,12 +2,9 @@ package org.feynix.application.agent.assembler;
 
 import org.feynix.domain.agent.model.AgentEntity;
 import org.feynix.domain.agent.constant.AgentType;
-import org.feynix.domain.agent.model.AgentVersionEntity;
 import org.feynix.domain.agent.dto.AgentDTO;
-import org.feynix.domain.agent.dto.AgentVersionDTO;
 import org.feynix.domain.agent.model.ModelConfig;
 import org.feynix.interfaces.dto.agent.CreateAgentRequest;
-import org.feynix.interfaces.dto.agent.PublishAgentVersionRequest;
 import org.feynix.interfaces.dto.agent.UpdateAgentRequest;
 
 import java.time.LocalDateTime;
@@ -74,6 +71,7 @@ public class AgentAssembler {
         entity.setTools(request.getTools());
         entity.setKnowledgeBaseIds(request.getKnowledgeBaseIds());
         entity.setUserId(userId);
+        entity.setEnabled(request.getEnabled());
 
         return entity;
     }
