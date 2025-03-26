@@ -1,6 +1,7 @@
 package org.feynix.domain.conversation.service;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -20,7 +21,6 @@ import org.feynix.domain.llm.model.LlmResponse;
 import org.feynix.domain.llm.service.LlmService;
 import org.feynix.infrastructure.integration.llm.siliconflow.SiliconFlowLlmService;
 
-import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
