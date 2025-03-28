@@ -6,12 +6,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.feynix.application.conversation.assembler.MessageAssembler;
 import org.feynix.application.conversation.dto.ChatRequest;
 import org.feynix.application.conversation.dto.ChatResponse;
 import org.feynix.application.conversation.dto.StreamChatRequest;
 import org.feynix.application.conversation.dto.StreamChatResponse;
-import org.feynix.domain.conversation.dto.MessageDTO;
 import org.feynix.domain.conversation.model.ContextEntity;
 import org.feynix.domain.conversation.model.MessageEntity;
 import org.feynix.domain.conversation.repository.ContextRepository;
@@ -21,7 +19,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
 
 /**
  * 对话服务实现
@@ -52,10 +49,9 @@ public class ConversationDomainService {
      * @param sessionId 会话id
      * @return 消息列表
      */
-    public List<MessageDTO> getConversationMessages(String sessionId) {
-        List<MessageEntity> messageEntities = messageRepository.selectList(
+    public List<MessageEntity> getConversationMessages(String sessionId) {
+        return messageRepository.selectList(
                 Wrappers.<MessageEntity>lambdaQuery().eq(MessageEntity::getSessionId, sessionId));
-        return messageEntities.stream().map(MessageAssembler::toDTO).collect(Collectors.toList());
     }
 
 

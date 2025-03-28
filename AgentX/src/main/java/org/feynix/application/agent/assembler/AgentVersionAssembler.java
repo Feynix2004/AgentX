@@ -1,12 +1,15 @@
 package org.feynix.application.agent.assembler;
 
+import org.feynix.domain.agent.dto.AgentDTO;
 import org.feynix.domain.agent.dto.AgentVersionDTO;
 import org.feynix.domain.agent.model.AgentEntity;
 import org.feynix.domain.agent.model.AgentVersionEntity;
 import org.feynix.interfaces.dto.agent.PublishAgentVersionRequest;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class AgentVersionAssembler {
 
@@ -61,6 +64,13 @@ public class AgentVersionAssembler {
      */
     public static AgentVersionEntity createVersionEntity(AgentEntity agent, PublishAgentVersionRequest request) {
         return AgentVersionEntity.createFromAgent(agent, request.getVersionNumber(), request.getChangeLog());
+    }
+
+    public static List<AgentVersionDTO> toDTOs(List<AgentVersionEntity> agents) {
+        if (agents == null || agents.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return agents.stream().map(AgentVersionAssembler::toDTO).collect(Collectors.toList());
     }
 
 }
