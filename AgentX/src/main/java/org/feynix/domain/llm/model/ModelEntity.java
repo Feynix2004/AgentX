@@ -6,6 +6,7 @@ import org.feynix.domain.llm.model.config.LLMModelConfig;
 import org.feynix.domain.llm.model.enums.ModelType;
 import org.feynix.infrastructure.converter.ModelConfigConverter;
 import org.feynix.infrastructure.converter.ModelTypeConverter;
+import org.feynix.infrastructure.exception.BusinessException;
 
 import java.time.LocalDateTime;
 
@@ -23,7 +24,9 @@ public class ModelEntity {
     private String modelId;
     private String name;
     private String description;
-    
+
+    private Boolean isOfficial;
+
     @TableField(typeHandler = ModelTypeConverter.class, jdbcType = JdbcType.VARCHAR)
     private ModelType type;
     
@@ -136,4 +139,18 @@ public class ModelEntity {
     public void setDeletedAt(LocalDateTime deletedAt) {
         this.deletedAt = deletedAt;
     }
-} 
+
+    public Boolean getOfficial() {
+        return isOfficial;
+    }
+
+    public void setOfficial(Boolean official) {
+        isOfficial = official;
+    }
+
+    public void isActive() {
+        if (!status){
+            throw new BusinessException("模型未激活");
+        }
+    }
+}

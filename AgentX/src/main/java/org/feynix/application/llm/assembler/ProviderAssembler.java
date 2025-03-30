@@ -1,6 +1,8 @@
 package org.feynix.application.llm.assembler;
 
+import org.feynix.application.llm.dto.ModelDTO;
 import org.feynix.application.llm.dto.ProviderDTO;
+import org.feynix.domain.llm.model.ModelEntity;
 import org.feynix.domain.llm.model.ProviderAggregate;
 import org.feynix.domain.llm.model.ProviderEntity;
 import org.feynix.interfaces.dto.llm.ProviderCreateRequest;
@@ -124,7 +126,16 @@ public class ProviderAssembler {
             return null;
         }
         ProviderDTO dto = toDTO(provider.getEntity());
-        dto.setModels(ModelAssembler.toDTOs(provider.getModels()));
+
+        List<ModelEntity> models = provider.getModels();
+        if (models == null || models.isEmpty()) {
+            return dto;
+        }
+        for (ModelEntity model : models) {
+            ModelDTO modelDTO = ModelAssembler.toDTO(model);
+            modelDTO.setIsOfficial(provider.getIsOfficial());
+            dto.getModels().add(modelDTO);
+        }
         return dto;
     }
     
