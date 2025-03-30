@@ -1,7 +1,6 @@
 package org.feynix.application.agent.assembler;
 
-import org.feynix.domain.agent.dto.AgentDTO;
-import org.feynix.domain.agent.dto.AgentVersionDTO;
+import org.feynix.application.agent.dto.AgentVersionDTO;
 import org.feynix.domain.agent.model.AgentEntity;
 import org.feynix.domain.agent.model.AgentVersionEntity;
 import org.feynix.interfaces.dto.agent.PublishAgentVersionRequest;

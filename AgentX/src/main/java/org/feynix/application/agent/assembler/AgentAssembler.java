@@ -2,9 +2,8 @@ package org.feynix.application.agent.assembler;
 
 import org.feynix.domain.agent.model.AgentEntity;
 import org.feynix.domain.agent.constant.AgentType;
-import org.feynix.domain.agent.dto.AgentDTO;
-import org.feynix.domain.agent.model.AgentVersionEntity;
-import org.feynix.domain.agent.model.ModelConfig;
+import org.feynix.application.agent.dto.AgentDTO;
+import org.feynix.domain.agent.model.AgentModelConfig;
 import org.feynix.interfaces.dto.agent.CreateAgentRequest;
 import org.feynix.interfaces.dto.agent.SearchAgentsRequest;
 import org.feynix.interfaces.dto.agent.UpdateAgentRequest;
@@ -44,7 +43,7 @@ public class AgentAssembler {
         if (request.getModelConfig() != null) {
             entity.setModelConfig(request.getModelConfig());
         } else {
-            entity.setModelConfig(ModelConfig.createDefault());
+            entity.setModelConfig(AgentModelConfig.createDefault());
         }
         
         // 设置工具和知识库ID

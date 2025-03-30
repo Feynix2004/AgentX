@@ -1,9 +1,10 @@
 package org.feynix.interfaces.dto.agent;
 
 import java.util.regex.Pattern;
+
+import jakarta.validation.constraints.NotBlank;
 import org.feynix.infrastructure.exception.ParamValidationException;
 
-import javax.validation.constraints.NotBlank;
 
 /**
  * 发布Agent版本请求

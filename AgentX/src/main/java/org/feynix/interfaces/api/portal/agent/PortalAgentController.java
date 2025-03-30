@@ -3,8 +3,8 @@ package org.feynix.interfaces.api.portal.agent;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.feynix.application.agent.service.AgentAppService;
-import org.feynix.domain.agent.dto.AgentDTO;
-import org.feynix.domain.agent.dto.AgentVersionDTO;
+import org.feynix.application.agent.dto.AgentDTO;
+import org.feynix.application.agent.dto.AgentVersionDTO;
 import org.feynix.infrastructure.auth.UserContext;
 import org.feynix.interfaces.api.common.Result;
 import org.feynix.interfaces.dto.agent.*;
@@ -12,7 +12,7 @@ import org.feynix.interfaces.dto.agent.*;
 import java.util.List;
 
 /**
- * 前台用户Agent管理API控制器
+ * 用户Agent管理
  */
 @RestController
 @RequestMapping("/agent")

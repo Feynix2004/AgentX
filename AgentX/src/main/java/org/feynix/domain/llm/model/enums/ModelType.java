@@ -1,5 +1,7 @@
 package org.feynix.domain.llm.model.enums;
 
+import org.feynix.infrastructure.exception.BusinessException;
+
 /**
  * 模型类型枚举
  */
@@ -30,6 +32,6 @@ public enum ModelType {
                 return type;
             }
         }
-        throw new IllegalArgumentException("Unknown model type code: " + code);
+        throw new BusinessException("Unknown model type code: " + code);
     }
 } 

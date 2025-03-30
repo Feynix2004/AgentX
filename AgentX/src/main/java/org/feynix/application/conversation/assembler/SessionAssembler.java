@@ -1,6 +1,6 @@
 package org.feynix.application.conversation.assembler;
 
-import org.feynix.domain.conversation.dto.SessionDTO;
+import org.feynix.application.conversation.dto.SessionDTO;
 import org.feynix.domain.conversation.model.SessionEntity;
 
 import java.util.Collections;

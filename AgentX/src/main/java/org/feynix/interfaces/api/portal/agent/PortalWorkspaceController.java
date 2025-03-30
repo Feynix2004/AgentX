@@ -2,14 +2,14 @@ package org.feynix.interfaces.api.portal.agent;
 
 import org.springframework.web.bind.annotation.*;
 import org.feynix.application.agent.service.AgentWorkspaceAppService;
-import org.feynix.domain.agent.dto.AgentDTO;
+import org.feynix.application.agent.dto.AgentDTO;
 import org.feynix.infrastructure.auth.UserContext;
 import org.feynix.interfaces.api.common.Result;
 
 import java.util.List;
 
 /**
- * Agent会话关联接口
+ * Agent工作区
  */
 @RestController
 @RequestMapping("/agent/workspace")

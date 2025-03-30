@@ -4,7 +4,7 @@ import org.springframework.stereotype.Service;
 import org.feynix.application.conversation.assembler.MessageAssembler;
 import org.feynix.application.conversation.dto.StreamChatRequest;
 import org.feynix.application.conversation.dto.StreamChatResponse;
-import org.feynix.domain.conversation.dto.MessageDTO;
+import org.feynix.application.conversation.dto.MessageDTO;
 import org.feynix.domain.conversation.model.MessageEntity;
 import org.feynix.domain.conversation.model.SessionEntity;
 import org.feynix.domain.conversation.service.ConversationDomainService;

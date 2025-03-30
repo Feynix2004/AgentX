@@ -3,10 +3,9 @@ package org.feynix.interfaces.api.portal.agent;
 import org.springframework.web.bind.annotation.*;
 import org.feynix.application.agent.service.AgentSessionAppService;
 import org.feynix.application.conversation.dto.StreamChatRequest;
-import org.feynix.application.conversation.dto.StreamChatResponse;
 import org.feynix.application.conversation.service.ConversationAppService;
-import org.feynix.domain.conversation.dto.MessageDTO;
-import org.feynix.domain.conversation.dto.SessionDTO;
+import org.feynix.application.conversation.dto.MessageDTO;
+import org.feynix.application.conversation.dto.SessionDTO;
 import org.feynix.infrastructure.auth.UserContext;
 import org.feynix.interfaces.api.common.Result;
 import org.feynix.interfaces.dto.conversation.ConversationRequest;
@@ -19,6 +18,9 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+/**
+ * Agent会话管理
+ */
 @RestController
 @RequestMapping("/agent/session")
 public class PortalAgentSessionController {

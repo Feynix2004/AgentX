@@ -1,19 +1,15 @@
 package org.feynix.domain.agent.service;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.springframework.stereotype.Service;
-import org.feynix.application.agent.assembler.AgentAssembler;
-import org.feynix.domain.agent.dto.AgentDTO;
 import org.feynix.domain.agent.model.AgentEntity;
 import org.feynix.domain.agent.model.AgentWorkspaceEntity;
 import org.feynix.domain.agent.repository.AgentRepository;
 import org.feynix.domain.agent.repository.AgentWorkspaceRepository;
-import org.feynix.infrastructure.exception.BusinessException;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 
@@ -41,7 +37,7 @@ public class AgentWorkspaceDomainService {
         if (agentIds.isEmpty()) {
             return Collections.emptyList();
         }
-        return agentRepository.selectBatchIds(agentIds);
+        return agentRepository.selectByIds(agentIds);
 
     }
 

@@ -1,9 +1,13 @@
-package org.feynix.domain.agent.dto;
+package org.feynix.application.agent.dto;
 
 public class AgentWorkspaceDTO {
-
+    /**
+     * 代理ID
+     */
     private String agentId;
-
+    /**
+     * 用户ID
+     */
     private String userId;
 
     public AgentWorkspaceDTO(String agentId, String userId) {

@@ -1,21 +1,14 @@
 package org.feynix.application.agent.service;
 
-import java.beans.Transient;
-import java.util.Collections;
 import java.util.List;
 
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.feynix.application.conversation.assembler.SessionAssembler;
-import org.feynix.domain.agent.dto.AgentDTO;
-import org.feynix.domain.agent.dto.AgentVersionDTO;
 import org.feynix.domain.agent.model.AgentEntity;
-import org.feynix.domain.agent.model.ModelConfig;
 import org.feynix.domain.agent.service.AgentDomainService;
 import org.feynix.domain.agent.service.AgentWorkspaceDomainService;
-import org.feynix.domain.conversation.dto.MessageDTO;
-import org.feynix.domain.conversation.dto.SessionDTO;
+import org.feynix.application.conversation.dto.SessionDTO;
 import org.feynix.domain.conversation.model.SessionEntity;
 import org.feynix.domain.conversation.service.ConversationDomainService;
 import org.feynix.domain.conversation.service.SessionDomainService;

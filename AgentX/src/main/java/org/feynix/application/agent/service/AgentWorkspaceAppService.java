@@ -3,7 +3,7 @@ package org.feynix.application.agent.service;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.feynix.application.agent.assembler.AgentAssembler;
-import org.feynix.domain.agent.dto.AgentDTO;
+import org.feynix.application.agent.dto.AgentDTO;
 import org.feynix.domain.agent.model.AgentEntity;
 import org.feynix.domain.agent.service.AgentDomainService;
 import org.feynix.domain.agent.service.AgentWorkspaceDomainService;
@@ -11,7 +11,6 @@ import org.feynix.domain.conversation.model.SessionEntity;
 import org.feynix.domain.conversation.service.ConversationDomainService;
 import org.feynix.domain.conversation.service.SessionDomainService;
 import org.feynix.infrastructure.exception.BusinessException;
-import org.feynix.interfaces.dto.agent.SearchAgentsRequest;
 
 import java.util.List;
 import java.util.stream.Collectors;

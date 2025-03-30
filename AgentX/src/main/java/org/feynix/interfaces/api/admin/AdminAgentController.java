@@ -2,14 +2,14 @@ package org.feynix.interfaces.api.admin;
 
 import org.springframework.web.bind.annotation.*;
 import org.feynix.application.agent.service.AgentAppService;
-import org.feynix.domain.agent.dto.AgentVersionDTO;
+import org.feynix.application.agent.dto.AgentVersionDTO;
 import org.feynix.domain.agent.constant.PublishStatus;
 import org.feynix.interfaces.api.common.Result;
 import org.feynix.interfaces.dto.agent.ReviewAgentVersionRequest;
 
 import java.util.List;
 /**
- * 管理员Agent管理API控制器
+ * 管理员Agent管理
  * 负责处理管理员对Agent的管理操作，如审核、查看待审核列表等
  */
 @RestController
