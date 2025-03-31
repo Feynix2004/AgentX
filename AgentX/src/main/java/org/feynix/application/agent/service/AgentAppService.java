@@ -1,13 +1,16 @@
 package org.feynix.application.agent.service;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.feynix.application.agent.assembler.AgentAssembler;
 import org.feynix.application.agent.assembler.AgentVersionAssembler;
 import org.feynix.application.agent.dto.AgentDTO;
 import org.feynix.domain.agent.model.AgentEntity;
 import org.feynix.application.agent.dto.AgentVersionDTO;
 import org.feynix.domain.agent.model.AgentVersionEntity;
+import org.feynix.domain.agent.model.AgentWorkspaceEntity;
 import org.feynix.domain.agent.service.AgentDomainService;
+import org.feynix.domain.agent.service.AgentWorkspaceDomainService;
 import org.feynix.infrastructure.exception.ParamValidationException;
 import org.feynix.interfaces.dto.agent.*;
 import org.feynix.domain.agent.constant.PublishStatus;
@@ -26,24 +29,29 @@ import java.util.List;
 public class AgentAppService {
 
     private final AgentDomainService agentServiceDomainService;
+    private final AgentWorkspaceDomainService agentWorkspaceDomainService;
 
-    public AgentAppService(AgentDomainService agentServiceDomainService) {
+    public AgentAppService(AgentDomainService agentServiceDomainService, AgentWorkspaceDomainService agentWorkspaceDomainService) {
         this.agentServiceDomainService = agentServiceDomainService;
+        this.agentWorkspaceDomainService = agentWorkspaceDomainService;
     }
 
     /**
      * 创建新Agent
      */
+    @Transactional
     public AgentDTO createAgent(CreateAgentRequest request, String userId) {
 
         // todo feynix 判断用户是否存在
 
         // 使用组装器创建领域实体
         AgentEntity entity = AgentAssembler.toEntity(request,userId);
-
         entity.setUserId(userId);
-
         AgentEntity agent = agentServiceDomainService.createAgent(entity);
+        AgentWorkspaceEntity agentWorkspaceEntity = new AgentWorkspaceEntity();
+        agentWorkspaceEntity.setAgentId(agent.getId());
+        agentWorkspaceEntity.setUserId(userId);
+        agentWorkspaceDomainService.save(agentWorkspaceEntity);
         return AgentAssembler.toDTO(agent);
     }
 
