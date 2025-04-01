@@ -2,10 +2,16 @@ package org.feynix.application.admin.llm.service;
 
 
 import org.springframework.stereotype.Service;
+import org.feynix.application.llm.assembler.ModelAssembler;
 import org.feynix.application.llm.assembler.ProviderAssembler;
+import org.feynix.application.llm.dto.ModelDTO;
 import org.feynix.application.llm.dto.ProviderDTO;
+import org.feynix.domain.llm.model.ModelEntity;
 import org.feynix.domain.llm.model.ProviderEntity;
 import org.feynix.domain.llm.service.LlmDomainService;
+import org.feynix.infrastructure.entity.Operator;
+import org.feynix.interfaces.dto.llm.ModelCreateRequest;
+import org.feynix.interfaces.dto.llm.ModelUpdateRequest;
 import org.feynix.interfaces.dto.llm.ProviderCreateRequest;
 import org.feynix.interfaces.dto.llm.ProviderUpdateRequest;
 
@@ -30,10 +36,58 @@ public class AdminLLMAppService {
         return ProviderAssembler.toDTO(llmDomainService.createProvider(provider));
     }
 
+    /**
+     * 修改服务商
+     * @param providerUpdateRequest 请求对象
+     * @param userId 用户id
+     */
     public ProviderDTO updateProvider(ProviderUpdateRequest providerUpdateRequest, String userId) {
         ProviderEntity provider = ProviderAssembler.toEntity(providerUpdateRequest, userId);
-
-//        llmDomainService.updateProvider();
+        provider.setAdmin();
+        llmDomainService.updateProvider(provider);
         return null;
+    }
+
+    /**
+     * 删除服务商
+     * @param providerId 服务商id
+     * @param userId 用户id
+     */
+    public void deleteProvider(String providerId,String userId) {
+        llmDomainService.deleteProvider(providerId, userId,Operator.ADMIN);
+    }
+
+    /**
+     * 创建模型
+     * @param modelCreateRequest 模型对象
+     * @param userId 用户id
+     */
+    public ModelDTO createModel(ModelCreateRequest modelCreateRequest, String userId) {
+        ModelEntity entity = ModelAssembler.toEntity(modelCreateRequest, userId);
+        entity.setAdmin();
+        entity.setOfficial(true);
+        llmDomainService.createModel(entity);
+        return ModelAssembler.toDTO(entity);
+    }
+
+    /**
+     * 更新模型
+     * @param modelUpdateRequest 模型请求对象
+     * @param userId 用户id
+     */
+    public ModelDTO updateModel(ModelUpdateRequest modelUpdateRequest, String userId) {
+        ModelEntity entity = ModelAssembler.toEntity(modelUpdateRequest, userId);
+        entity.setAdmin();
+        llmDomainService.updateModel(entity);
+        return ModelAssembler.toDTO(entity);
+    }
+
+    /**
+     * 删除模型
+     * @param modelId 模型id
+     * @param userId 用户id
+     */
+    public void deleteModel(String modelId,String userId) {
+        llmDomainService.deleteModel(modelId, userId,Operator.ADMIN);
     }
 }

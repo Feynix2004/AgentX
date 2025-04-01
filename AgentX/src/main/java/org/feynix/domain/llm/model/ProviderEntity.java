@@ -5,8 +5,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.feynix.domain.llm.model.config.ProviderConfig;
 import org.feynix.infrastructure.converter.ProviderConfigConverter;
+import org.feynix.infrastructure.converter.ProviderProtocolConverter;
+import org.feynix.infrastructure.converter.RoleConverter;
 import org.feynix.infrastructure.entity.BaseEntity;
 import org.feynix.infrastructure.exception.BusinessException;
+import org.feynix.infrastructure.llm.protocol.enums.ProviderProtocol;
 import org.feynix.infrastructure.utils.EncryptUtils;
 
 import java.time.LocalDateTime;
@@ -21,7 +24,9 @@ public class ProviderEntity extends BaseEntity {
     private String id;
 
     private String userId;
-    private String protocol;
+
+    @TableField(typeHandler = ProviderProtocolConverter.class)
+    private ProviderProtocol protocol;
     private String name;
     private String description;
 
@@ -55,11 +60,11 @@ public class ProviderEntity extends BaseEntity {
         this.userId = userId;
     }
 
-    public String getProtocol() {
+    public ProviderProtocol getProtocol() {
         return protocol;
     }
 
-    public void setProtocol(String protocol) {
+    public void setProtocol(ProviderProtocol protocol) {
         this.protocol = protocol;
     }
 
