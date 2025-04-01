@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.activerecord.Model;
 import org.feynix.domain.conversation.constant.Role;
 import org.feynix.infrastructure.converter.ModelConfigConverter;
 import org.feynix.infrastructure.converter.RoleConverter;
+import org.feynix.infrastructure.entity.BaseEntity;
 
 import java.time.LocalDateTime;
 
@@ -12,7 +13,7 @@ import java.time.LocalDateTime;
  * 消息实体类，代表对话中的一条消息
  */
 @TableName("messages")
-public class MessageEntity extends Model<MessageEntity> {
+public class MessageEntity extends BaseEntity {
 
     /**
      * 消息唯一ID
