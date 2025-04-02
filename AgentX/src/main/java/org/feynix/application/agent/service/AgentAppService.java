@@ -9,6 +9,7 @@ import org.feynix.domain.agent.model.AgentEntity;
 import org.feynix.application.agent.dto.AgentVersionDTO;
 import org.feynix.domain.agent.model.AgentVersionEntity;
 import org.feynix.domain.agent.model.AgentWorkspaceEntity;
+import org.feynix.domain.agent.model.LLMModelConfig;
 import org.feynix.domain.agent.service.AgentDomainService;
 import org.feynix.domain.agent.service.AgentWorkspaceDomainService;
 import org.feynix.infrastructure.exception.ParamValidationException;
@@ -48,9 +49,7 @@ public class AgentAppService {
         AgentEntity entity = AgentAssembler.toEntity(request,userId);
         entity.setUserId(userId);
         AgentEntity agent = agentServiceDomainService.createAgent(entity);
-        AgentWorkspaceEntity agentWorkspaceEntity = new AgentWorkspaceEntity();
-        agentWorkspaceEntity.setAgentId(agent.getId());
-        agentWorkspaceEntity.setUserId(userId);
+        AgentWorkspaceEntity agentWorkspaceEntity = new AgentWorkspaceEntity(agent.getId(),userId,new LLMModelConfig());
         agentWorkspaceDomainService.save(agentWorkspaceEntity);
         return AgentAssembler.toDTO(agent);
     }

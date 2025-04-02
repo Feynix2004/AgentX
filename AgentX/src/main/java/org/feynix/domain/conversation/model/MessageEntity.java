@@ -1,9 +1,7 @@
 package org.feynix.domain.conversation.model;
 
 import com.baomidou.mybatisplus.annotation.*;
-import com.baomidou.mybatisplus.extension.activerecord.Model;
 import org.feynix.domain.conversation.constant.Role;
-import org.feynix.infrastructure.converter.ModelConfigConverter;
 import org.feynix.infrastructure.converter.RoleConverter;
 import org.feynix.infrastructure.entity.BaseEntity;
 
