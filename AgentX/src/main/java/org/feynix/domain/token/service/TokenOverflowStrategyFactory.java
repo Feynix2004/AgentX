@@ -2,7 +2,7 @@ package org.feynix.domain.token.service;
 
 import org.springframework.stereotype.Service;
 import org.feynix.domain.token.model.config.TokenOverflowConfig;
-import org.feynix.domain.token.model.enums.TokenOverflowStrategyEnum;
+import org.feynix.domain.shared.enums.TokenOverflowStrategyEnum;
 import org.feynix.domain.token.service.impl.NoTokenOverflowStrategy;
 import org.feynix.domain.token.service.impl.SlidingWindowTokenOverflowStrategy;
 import org.feynix.domain.token.service.impl.SummarizeTokenOverflowStrategy;

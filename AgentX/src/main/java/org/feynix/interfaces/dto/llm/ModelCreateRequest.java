@@ -1,7 +1,6 @@
 package org.feynix.interfaces.dto.llm;
 
 import jakarta.validation.constraints.NotBlank;
-import org.feynix.domain.agent.model.LLMModelConfig;
 import org.feynix.domain.llm.model.enums.ModelType;
 
 /**

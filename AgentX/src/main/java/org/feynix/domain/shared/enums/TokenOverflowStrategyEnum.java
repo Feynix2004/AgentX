@@ -1,4 +1,4 @@
-package org.feynix.domain.token.model.enums;
+package org.feynix.domain.shared.enums;
 
 /**
  * Token超限处理策略枚举
