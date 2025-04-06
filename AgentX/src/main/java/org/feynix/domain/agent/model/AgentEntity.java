@@ -3,9 +3,7 @@ package org.feynix.domain.agent.model;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.extension.activerecord.Model;
 import org.apache.ibatis.type.JdbcType;
 import org.feynix.domain.agent.constant.AgentType;
 import org.feynix.infrastructure.entity.BaseEntity;
@@ -61,13 +59,13 @@ public class AgentEntity extends BaseEntity {
     /**
      * Agent可使用的工具列表
      */
-    @TableField(value = "tools", typeHandler = JsonTypeHandler.class, jdbcType = JdbcType.OTHER)
+    @TableField(value = "tools", exist = false)
     private List<AgentTool> tools;
 
     /**
      * 关联的知识库ID列表
      */
-    @TableField(value = "knowledge_base_ids", typeHandler = JsonTypeHandler.class, jdbcType = JdbcType.OTHER)
+    @TableField(value = "knowledge_base_ids", exist = false)
     private List<String> knowledgeBaseIds;
 
     /**
