@@ -7,7 +7,10 @@ import org.feynix.application.agent.dto.AgentDTO;
 import org.feynix.application.agent.dto.AgentVersionDTO;
 import org.feynix.infrastructure.auth.UserContext;
 import org.feynix.interfaces.api.common.Result;
-import org.feynix.interfaces.dto.agent.*;
+import org.feynix.interfaces.dto.agent.request.CreateAgentRequest;
+import org.feynix.interfaces.dto.agent.request.PublishAgentVersionRequest;
+import org.feynix.interfaces.dto.agent.request.SearchAgentsRequest;
+import org.feynix.interfaces.dto.agent.request.UpdateAgentRequest;
 
 import java.util.List;
 

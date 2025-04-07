@@ -10,10 +10,10 @@ import org.feynix.domain.llm.model.ModelEntity;
 import org.feynix.domain.llm.model.ProviderEntity;
 import org.feynix.domain.llm.service.LlmDomainService;
 import org.feynix.infrastructure.entity.Operator;
-import org.feynix.interfaces.dto.llm.ModelCreateRequest;
-import org.feynix.interfaces.dto.llm.ModelUpdateRequest;
-import org.feynix.interfaces.dto.llm.ProviderCreateRequest;
-import org.feynix.interfaces.dto.llm.ProviderUpdateRequest;
+import org.feynix.interfaces.dto.llm.request.ModelCreateRequest;
+import org.feynix.interfaces.dto.llm.request.ModelUpdateRequest;
+import org.feynix.interfaces.dto.llm.request.ProviderCreateRequest;
+import org.feynix.interfaces.dto.llm.request.ProviderUpdateRequest;
 
 @Service
 public class AdminLLMAppService {

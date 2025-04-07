@@ -22,10 +22,10 @@ import org.feynix.infrastructure.llm.protocol.enums.ProviderProtocol;
 import org.feynix.domain.llm.model.enums.ProviderType;
 import org.feynix.infrastructure.auth.UserContext;
 import org.feynix.interfaces.api.common.Result;
-import org.feynix.interfaces.dto.llm.ModelCreateRequest;
-import org.feynix.interfaces.dto.llm.ModelUpdateRequest;
-import org.feynix.interfaces.dto.llm.ProviderCreateRequest;
-import org.feynix.interfaces.dto.llm.ProviderUpdateRequest;
+import org.feynix.interfaces.dto.llm.request.ModelCreateRequest;
+import org.feynix.interfaces.dto.llm.request.ModelUpdateRequest;
+import org.feynix.interfaces.dto.llm.request.ProviderCreateRequest;
+import org.feynix.interfaces.dto.llm.request.ProviderUpdateRequest;
 
 
 /**

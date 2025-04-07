@@ -2,8 +2,8 @@ package org.feynix.application.llm.assembler;
 
 import org.feynix.application.llm.dto.ModelDTO;
 import org.feynix.domain.llm.model.ModelEntity;
-import org.feynix.interfaces.dto.llm.ModelCreateRequest;
-import org.feynix.interfaces.dto.llm.ModelUpdateRequest;
+import org.feynix.interfaces.dto.llm.request.ModelCreateRequest;
+import org.feynix.interfaces.dto.llm.request.ModelUpdateRequest;
 
 import java.time.LocalDateTime;
 import java.util.Collections;

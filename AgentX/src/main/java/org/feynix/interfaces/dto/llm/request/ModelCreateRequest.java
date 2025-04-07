@@ -1,4 +1,4 @@
-package org.feynix.interfaces.dto.llm;
+package org.feynix.interfaces.dto.llm.request;
 
 import jakarta.validation.constraints.NotBlank;
 import org.feynix.domain.llm.model.enums.ModelType;

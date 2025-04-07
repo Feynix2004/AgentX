@@ -13,10 +13,10 @@ import org.feynix.infrastructure.entity.Operator;
 import org.feynix.infrastructure.llm.protocol.enums.ProviderProtocol;
 import org.feynix.domain.llm.model.enums.ProviderType;
 import org.feynix.domain.llm.service.LlmDomainService;
-import org.feynix.interfaces.dto.llm.ModelCreateRequest;
-import org.feynix.interfaces.dto.llm.ModelUpdateRequest;
-import org.feynix.interfaces.dto.llm.ProviderCreateRequest;
-import org.feynix.interfaces.dto.llm.ProviderUpdateRequest;
+import org.feynix.interfaces.dto.llm.request.ModelCreateRequest;
+import org.feynix.interfaces.dto.llm.request.ModelUpdateRequest;
+import org.feynix.interfaces.dto.llm.request.ProviderCreateRequest;
+import org.feynix.interfaces.dto.llm.request.ProviderUpdateRequest;
 
 import java.util.List;
 import java.util.stream.Collectors;

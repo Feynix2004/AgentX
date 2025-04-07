@@ -3,7 +3,7 @@ package org.feynix.application.agent.assembler;
 import org.feynix.application.agent.dto.AgentVersionDTO;
 import org.feynix.domain.agent.model.AgentEntity;
 import org.feynix.domain.agent.model.AgentVersionEntity;
-import org.feynix.interfaces.dto.agent.PublishAgentVersionRequest;
+import org.feynix.interfaces.dto.agent.request.PublishAgentVersionRequest;
 
 import java.util.ArrayList;
 import java.util.Collections;

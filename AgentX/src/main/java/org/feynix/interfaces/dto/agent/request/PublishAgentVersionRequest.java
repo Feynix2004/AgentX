@@ -1,4 +1,4 @@
-package org.feynix.interfaces.dto.agent;
+package org.feynix.interfaces.dto.agent.request;
 
 import java.util.regex.Pattern;
 

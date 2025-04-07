@@ -4,18 +4,15 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.feynix.application.agent.service.AgentSessionAppService;
 import org.feynix.application.conversation.dto.ChatRequest;
-import org.feynix.application.conversation.dto.StreamChatRequest;
 import org.feynix.application.conversation.service.ConversationAppService;
 import org.feynix.application.conversation.dto.MessageDTO;
 import org.feynix.application.conversation.dto.SessionDTO;
 import org.feynix.infrastructure.auth.UserContext;
 import org.feynix.interfaces.api.common.Result;
-import org.feynix.interfaces.dto.conversation.ConversationRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;

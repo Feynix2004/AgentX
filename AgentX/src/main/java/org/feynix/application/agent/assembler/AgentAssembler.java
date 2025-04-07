@@ -3,9 +3,9 @@ package org.feynix.application.agent.assembler;
 import org.feynix.domain.agent.model.AgentEntity;
 import org.feynix.domain.agent.constant.AgentType;
 import org.feynix.application.agent.dto.AgentDTO;
-import org.feynix.interfaces.dto.agent.CreateAgentRequest;
-import org.feynix.interfaces.dto.agent.SearchAgentsRequest;
-import org.feynix.interfaces.dto.agent.UpdateAgentRequest;
+import org.feynix.interfaces.dto.agent.request.CreateAgentRequest;
+import org.feynix.interfaces.dto.agent.request.SearchAgentsRequest;
+import org.feynix.interfaces.dto.agent.request.UpdateAgentRequest;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;

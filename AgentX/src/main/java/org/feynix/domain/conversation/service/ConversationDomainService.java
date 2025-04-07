@@ -1,25 +1,14 @@
 package org.feynix.domain.conversation.service;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import jakarta.annotation.Resource;
-import org.apache.ibatis.executor.BatchResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.feynix.application.conversation.dto.ChatRequest;
-import org.feynix.application.conversation.dto.ChatResponse;
-import org.feynix.application.conversation.dto.StreamChatRequest;
-import org.feynix.application.conversation.dto.StreamChatResponse;
-import org.feynix.domain.conversation.model.ContextEntity;
 import org.feynix.domain.conversation.model.MessageEntity;
-import org.feynix.domain.conversation.repository.ContextRepository;
 import org.feynix.domain.conversation.repository.MessageRepository;
 
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
-import java.util.function.BiConsumer;
 
 /**
  * 对话服务实现

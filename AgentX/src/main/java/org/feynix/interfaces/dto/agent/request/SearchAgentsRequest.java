@@ -1,4 +1,4 @@
-package org.feynix.interfaces.dto.agent;
+package org.feynix.interfaces.dto.agent.request;
 
 /**
  * 搜索Agent的请求对象

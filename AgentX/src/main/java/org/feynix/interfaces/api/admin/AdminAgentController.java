@@ -5,7 +5,7 @@ import org.feynix.application.agent.service.AgentAppService;
 import org.feynix.application.agent.dto.AgentVersionDTO;
 import org.feynix.domain.agent.constant.PublishStatus;
 import org.feynix.interfaces.api.common.Result;
-import org.feynix.interfaces.dto.agent.ReviewAgentVersionRequest;
+import org.feynix.interfaces.dto.agent.request.ReviewAgentVersionRequest;
 
 import java.util.List;
 /**

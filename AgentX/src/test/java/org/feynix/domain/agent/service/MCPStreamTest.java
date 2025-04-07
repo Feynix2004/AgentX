@@ -5,10 +5,7 @@ import dev.langchain4j.mcp.client.DefaultMcpClient;
 import dev.langchain4j.mcp.client.McpClient;
 import dev.langchain4j.mcp.client.transport.McpTransport;
 import dev.langchain4j.mcp.client.transport.http.HttpMcpTransport;
-import dev.langchain4j.mcp.client.transport.stdio.StdioMcpTransport;
-import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.chat.response.ChatResponse;
-import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 import dev.langchain4j.rag.content.Content;
 import dev.langchain4j.service.AiServices;
@@ -18,7 +15,7 @@ import dev.langchain4j.service.tool.ToolProvider;
 
 import java.util.List;
 
-public class MCPTest {
+public class MCPStreamTest {
 
     public static void main(String[] args) throws Exception {
 
@@ -45,7 +42,7 @@ public class MCPTest {
                 .mcpClients(List.of(mcpClient))
                 .build();
 
-        AgentTest bot = AiServices.builder(AgentTest.class)
+        AgentStreamTest bot = AiServices.builder(AgentStreamTest.class)
                 .streamingChatLanguageModel(model)
                 .toolProvider(toolProvider)
                 .build();

@@ -15,7 +15,7 @@ import org.feynix.domain.conversation.model.SessionEntity;
 import org.feynix.domain.conversation.service.ConversationDomainService;
 import org.feynix.domain.conversation.service.SessionDomainService;
 import org.feynix.infrastructure.exception.BusinessException;
-import org.feynix.interfaces.dto.conversation.ConversationRequest;
+import org.feynix.interfaces.dto.conversation.request.ConversationRequest;
 
 @Service
 public class AgentSessionAppService {

@@ -1,6 +1,5 @@
 package org.feynix.interfaces.api.admin;
 
-import dev.langchain4j.service.V;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,10 +13,10 @@ import org.feynix.application.llm.dto.ModelDTO;
 import org.feynix.application.llm.dto.ProviderDTO;
 import org.feynix.infrastructure.auth.UserContext;
 import org.feynix.interfaces.api.common.Result;
-import org.feynix.interfaces.dto.llm.ModelCreateRequest;
-import org.feynix.interfaces.dto.llm.ModelUpdateRequest;
-import org.feynix.interfaces.dto.llm.ProviderCreateRequest;
-import org.feynix.interfaces.dto.llm.ProviderUpdateRequest;
+import org.feynix.interfaces.dto.llm.request.ModelCreateRequest;
+import org.feynix.interfaces.dto.llm.request.ModelUpdateRequest;
+import org.feynix.interfaces.dto.llm.request.ProviderCreateRequest;
+import org.feynix.interfaces.dto.llm.request.ProviderUpdateRequest;
 
 /**
  * 管理员LLM管理

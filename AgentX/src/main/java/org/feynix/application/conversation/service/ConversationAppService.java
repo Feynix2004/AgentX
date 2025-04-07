@@ -1,26 +1,15 @@
 package org.feynix.application.conversation.service;
 
-import com.baomidou.mybatisplus.core.toolkit.Assert;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import dev.langchain4j.data.message.*;
-import dev.langchain4j.model.chat.StreamingChatLanguageModel;
-import dev.langchain4j.model.chat.response.ChatResponse;
-import dev.langchain4j.model.chat.response.StreamingChatResponseHandler;
-import dev.langchain4j.model.openai.OpenAiChatRequestParameters;
-import dev.langchain4j.model.openai.internal.chat.AssistantMessage;
-import dev.langchain4j.model.output.TokenUsage;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import org.feynix.application.conversation.assembler.MessageAssembler;
 import org.feynix.application.conversation.dto.ChatRequest;
-import org.feynix.application.conversation.dto.StreamChatResponse;
 import org.feynix.application.conversation.dto.MessageDTO;
 import org.feynix.domain.agent.model.AgentEntity;
 import org.feynix.domain.agent.model.AgentWorkspaceEntity;
 import org.feynix.domain.agent.model.LLMModelConfig;
 import org.feynix.domain.agent.service.AgentDomainService;
 import org.feynix.domain.agent.service.AgentWorkspaceDomainService;
-import org.feynix.domain.conversation.constant.Role;
 import org.feynix.domain.conversation.handler.ChatEnvironment;
 import org.feynix.domain.conversation.handler.MessageHandler;
 import org.feynix.domain.conversation.handler.MessageHandlerFactory;
@@ -40,16 +29,12 @@ import org.feynix.domain.token.model.TokenProcessResult;
 import org.feynix.domain.token.model.config.TokenOverflowConfig;
 import org.feynix.domain.token.service.TokenDomainService;
 import org.feynix.infrastructure.exception.BusinessException;
-import org.feynix.infrastructure.llm.LLMProviderService;
 import org.feynix.infrastructure.llm.LLMServiceFactory;
 import org.feynix.infrastructure.llm.config.ProviderConfig;
 import org.feynix.infrastructure.transport.MessageTransport;
 import org.feynix.infrastructure.transport.MessageTransportFactory;
 
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 

@@ -5,8 +5,8 @@ import org.feynix.application.llm.dto.ProviderDTO;
 import org.feynix.domain.llm.model.ModelEntity;
 import org.feynix.domain.llm.model.ProviderAggregate;
 import org.feynix.domain.llm.model.ProviderEntity;
-import org.feynix.interfaces.dto.llm.ProviderCreateRequest;
-import org.feynix.interfaces.dto.llm.ProviderUpdateRequest;
+import org.feynix.interfaces.dto.llm.request.ProviderCreateRequest;
+import org.feynix.interfaces.dto.llm.request.ProviderUpdateRequest;
 
 import java.time.LocalDateTime;
 import java.util.List;
