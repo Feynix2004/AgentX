@@ -4,15 +4,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.feynix.application.task.dto.TaskDTO;
 import org.feynix.application.task.service.TaskAppService;
-import org.feynix.domain.task.model.TaskAggregate;
-import org.feynix.infrastructure.auth.UserContext;
 import org.feynix.interfaces.api.common.Result;
 
 import java.util.List;
 
-/** agent任务管理 */
+/**
+ * 任务控制器 - 仅提供查询API
+ */
 @RestController
-@RequestMapping("/tasks")
+@RequestMapping("/api/tasks")
 public class TaskController {
 
     private final TaskAppService taskAppService;
@@ -22,11 +22,15 @@ public class TaskController {
         this.taskAppService = taskAppService;
     }
 
-    /** 获取当前会话的任务
-     * @param sessionId 会话id */
-    @GetMapping("/session/{sessionId}/latest")
-    public Result<TaskAggregate> getSessionTasks(@PathVariable String sessionId) {
-        String userId = UserContext.getCurrentUserId();
-        return Result.success(taskAppService.getCurrentSessionTask(sessionId, userId));
+    /**
+     * 获取会话相关的所有任务
+     *
+     * @param sessionId 会话ID
+     * @return 任务列表
+     */
+    @GetMapping("/session/{sessionId}")
+    public Result<List<TaskDTO>> getSessionTasks(@PathVariable String sessionId) {
+        List<TaskDTO> tasks = taskAppService.getSessionTasks(sessionId);
+        return Result.success(tasks);
     }
 }

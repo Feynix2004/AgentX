@@ -5,5 +5,6 @@ import dev.langchain4j.service.TokenStream;
 
 public interface AgentStandTest {
 
+
     AiMessage chat(String prompt);
 }

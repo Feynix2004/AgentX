@@ -7,8 +7,11 @@ import org.feynix.infrastructure.repository.MyBatisPlusExtRepository;
 
 import java.util.List;
 
-/** 任务仓储接口 */
+/**
+ * 任务仓储接口
+ */
 @Mapper
 public interface TaskRepository extends MyBatisPlusExtRepository<TaskEntity> {
+    
 
-}
+} 
