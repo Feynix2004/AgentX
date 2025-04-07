@@ -6,11 +6,12 @@ import { Sidebar } from "@/components/sidebar"
 import { ChatPanel } from "@/components/chat-panel"
 import { EmptyState } from "@/components/empty-state"
 import { ConversationList } from "@/components/conversation-list"
+import { TaskHistory } from "@/components/task-history"
 import { useWorkspace } from "@/contexts/workspace-context"
 import { getWorkspaceAgents, deleteWorkspaceAgent, deleteWorkspaceAgentWithToast } from "@/lib/agent-service"
 import { getAgentSessions, createAgentSession, type SessionDTO, getAgentSessionsWithToast, createAgentSessionWithToast, updateAgentSessionWithToast } from "@/lib/agent-session-service"
 import type { Agent } from "@/types/agent"
-import { toast } from "@/hooks/use-toast"
+import { toast } from "@/components/ui/use-toast"
 import { MoreHorizontal, Trash2, Settings, Grid, Terminal } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import {
@@ -29,11 +30,8 @@ import {
 } from "@/components/ui/dialog"
 
 // 导入模型选择对话框组件
-import { ModelSelectDialog } from "@/components/model-select-dialog"
-import { ScheduledTaskPanel } from "@/components/scheduled-task-panel"
-
-import { Metadata } from "next"
-import { redirect } from "next/navigation"
+import { ModelSelectDialog } from "../../components/model-select-dialog"
+import { AgentType } from "@/types/agent"
 
 export default function WorkspacePage() {
   const { selectedWorkspaceId, selectedConversationId, setSelectedWorkspaceId, setSelectedConversationId } =
@@ -48,8 +46,8 @@ export default function WorkspacePage() {
   const [agentToDelete, setAgentToDelete] = useState<Agent | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   
-  // 定时任务面板相关状态
-  const [showScheduledTaskPanel, setShowScheduledTaskPanel] = useState(false)
+  // 任务历史相关状态
+  const [showTaskHistory, setShowTaskHistory] = useState(false)
   
   // 模型选择相关状态
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null)
@@ -170,11 +168,8 @@ export default function WorkspacePage() {
   // 获取当前选中的Agent信息
   const currentAgent = agents.find(agent => agent.id === selectedWorkspaceId)
   
-  // 始终显示定时任务功能
-  const isFunctionalAgent = true
-  
-  // 获取当前会话的多模态设置
-  const multiModal = currentSession?.multiModal || false
+  // 判断当前Agent是否为功能性Agent (agentType = 2)
+  const isFunctionalAgent = currentAgent?.agentType === AgentType.FUNCTIONAL
 
   return (
     <div className="flex h-[calc(100vh-3.5rem)] w-full">
@@ -297,19 +292,15 @@ export default function WorkspacePage() {
             <div className="flex-1 flex flex-col">
               <ChatPanel 
                 conversationId={selectedConversationId}
+                onToggleTaskHistory={() => setShowTaskHistory(!showTaskHistory)}
+                showTaskHistory={showTaskHistory}
                 isFunctionalAgent={isFunctionalAgent}
-                agentName={currentAgent?.name || "AI助手"}
-                onToggleScheduledTaskPanel={() => setShowScheduledTaskPanel(!showScheduledTaskPanel)}
-                multiModal={multiModal}
               />
             </div>
-            {showScheduledTaskPanel && isFunctionalAgent && (
-              <ScheduledTaskPanel 
-                isOpen={showScheduledTaskPanel}
-                onClose={() => setShowScheduledTaskPanel(false)}
-                conversationId={selectedConversationId}
-                agentId={selectedWorkspaceId || undefined}
-              />
+            {showTaskHistory && isFunctionalAgent && (
+              <div className="w-[350px] border-l">
+                <TaskHistory onClose={() => setShowTaskHistory(false)} />
+              </div>
             )}
           </div>
         )}

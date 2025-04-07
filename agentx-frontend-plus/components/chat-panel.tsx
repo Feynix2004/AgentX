@@ -1,43 +1,31 @@
 "use client"
 
-import { useState, useRef, useEffect, useCallback } from "react"
-import { Send, Wrench, Clock } from 'lucide-react'
+import { useState, useRef, useEffect } from "react"
+import { FileText, Send, ClipboardList } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { streamChat } from "@/lib/api"
-import { toast } from "@/hooks/use-toast"
+import { toast } from "@/components/ui/use-toast"
 import { getSessionMessages, getSessionMessagesWithToast, type MessageDTO } from "@/lib/session-message-service"
 import { Skeleton } from "@/components/ui/skeleton"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { Highlight, themes } from "prism-react-renderer"
-import { MessageType, type Message as MessageInterface } from "@/types/conversation"
-import { formatDistanceToNow } from 'date-fns'
-import { zhCN } from 'date-fns/locale'
-import { nanoid } from 'nanoid'
-import MultiModalUpload, { type ChatFile } from "@/components/multi-modal-upload"
-import MessageFileDisplay from "@/components/message-file-display"
+import { CurrentTaskList } from "@/components/current-task-list"
 
 interface ChatPanelProps {
   conversationId: string
+  onToggleTaskHistory?: () => void
+  showTaskHistory?: boolean
   isFunctionalAgent?: boolean
-  agentName?: string
-
-  onToggleScheduledTaskPanel?: () => void // 新增：切换定时任务面板的回调
-  multiModal?: boolean // 新增：是否启用多模态功能
 }
 
 interface Message {
   id: string
   role: "USER" | "SYSTEM" | "assistant"
   content: string
-  messageType?: string // 消息类型
-  type?: MessageType // 消息类型枚举
-  createdAt?: string
-  updatedAt?: string
-  fileUrls?: string[] // 修改：文件URL列表
 }
 
 interface AssistantMessage {
@@ -49,76 +37,22 @@ interface StreamData {
   content: string
   done: boolean
   sessionId: string
-  provider?: string
-  model?: string
+  provider: string
+  model: string
   timestamp: number
-  messageType?: string // 消息类型
-  files?: string[] // 新增：文件URL列表
 }
 
-// 定义消息类型为字符串字面量类型
-type MessageTypeValue = 
-  | "TEXT" 
-  | "TOOL_CALL";
-
-export function ChatPanel({ conversationId, isFunctionalAgent = false, agentName = "AI助手", onToggleScheduledTaskPanel, multiModal = false }: ChatPanelProps) {
+export function ChatPanel({ conversationId, onToggleTaskHistory, showTaskHistory = false, isFunctionalAgent = false }: ChatPanelProps) {
   const [input, setInput] = useState("")
-  const [messages, setMessages] = useState<MessageInterface[]>([])
+  const [messages, setMessages] = useState<Message[]>([])
   const [isTyping, setIsTyping] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [autoScroll, setAutoScroll] = useState(true)
   const [isThinking, setIsThinking] = useState(false)
   const [currentAssistantMessage, setCurrentAssistantMessage] = useState<AssistantMessage | null>(null)
-  const [uploadedFiles, setUploadedFiles] = useState<ChatFile[]>([]) // 新增：已上传的文件列表
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const chatContainerRef = useRef<HTMLDivElement>(null)
-  
-  // 新增：使用useRef保存不需要触发重新渲染的状态
-  const hasReceivedFirstResponse = useRef(false);
-  const messageContentAccumulator = useRef({
-    content: "",
-    type: MessageType.TEXT as MessageType
-  });
-
-  // 在组件顶部添加状态来跟踪已完成的TEXT消息
-  const [completedTextMessages, setCompletedTextMessages] = useState<Set<string>>(new Set());
-  // 添加消息序列计数器
-  const messageSequenceNumber = useRef(0);
-
-  // 在组件初始化和conversationId变更时重置状态
-  useEffect(() => {
-    hasReceivedFirstResponse.current = false;
-    messageContentAccumulator.current = {
-      content: "",
-      type: MessageType.TEXT
-    };
-    setCompletedTextMessages(new Set());
-    messageSequenceNumber.current = 0;
-  }, [conversationId]);
-
-  // 添加消息到列表的辅助函数
-  const addMessage = (message: {
-    id: string;
-    role: "USER" | "SYSTEM" | "assistant";
-    content: string;
-    type?: MessageType;
-    createdAt?: string | Date;
-    fileUrls?: string[]; // 修改：使用fileUrls
-  }) => {
-    const messageObj: MessageInterface = {
-      id: message.id,
-      role: message.role,
-      content: message.content,
-      type: message.type || MessageType.TEXT,
-      createdAt: message.createdAt instanceof Date 
-        ? message.createdAt.toISOString() 
-        : message.createdAt || new Date().toISOString(),
-      fileUrls: message.fileUrls || [] // 修改：使用fileUrls
-    };
-    
-    setMessages(prev => [...prev, messageObj]);
-  };
 
   // 获取会话消息
   useEffect(() => {
@@ -136,31 +70,11 @@ export function ChatPanel({ conversationId, isFunctionalAgent = false, agentName
         
         if (messagesResponse.code === 200 && messagesResponse.data) {
           // 转换消息格式
-          const formattedMessages = messagesResponse.data.map((msg: MessageDTO) => {
-            // 将SYSTEM角色的消息视为assistant
-            const normalizedRole = msg.role === "SYSTEM" ? "assistant" : msg.role as "USER" | "SYSTEM" | "assistant"
-            
-            // 获取消息类型，优先使用messageType字段
-            let messageType = MessageType.TEXT
-            if (msg.messageType) {
-              // 尝试转换为枚举值
-              try {
-                messageType = msg.messageType as MessageType
-              } catch (e) {
-                console.warn("Unknown message type:", msg.messageType)
-              }
-            }
-            
-            return {
-              id: msg.id,
-              role: normalizedRole,
-              content: msg.content,
-              type: messageType,
-              createdAt: msg.createdAt,
-              updatedAt: msg.updatedAt,
-              fileUrls: msg.fileUrls || [] // 添加文件URL列表
-            }
-          })
+          const formattedMessages = messagesResponse.data.map((msg: MessageDTO) => ({
+            id: msg.id,
+            role: msg.role as "USER" | "SYSTEM" | "assistant",
+            content: msg.content,
+          }))
           
           setMessages(formattedMessages)
         } else {
@@ -213,33 +127,14 @@ export function ChatPanel({ conversationId, isFunctionalAgent = false, agentName
 
   // 处理发送消息
   const handleSendMessage = async () => {
-    if (!input.trim() && uploadedFiles.length === 0) return
-
-    // 添加调试信息
-    console.log("当前聊天模式:", isFunctionalAgent ? "功能性Agent" : "普通对话")
-    
-    // 获取已完成上传的文件URL
-    const completedFiles = uploadedFiles.filter(file => file.url && file.uploadProgress === 100)
-    const fileUrls = completedFiles.map(file => file.url)
+    if (!input.trim() || !conversationId) return
 
     const userMessage = input.trim()
     setInput("")
-    setUploadedFiles([]) // 清空已上传的文件
     setIsTyping(true)
     setIsThinking(true) // 设置思考状态
     setCurrentAssistantMessage(null) // 重置助手消息状态
     scrollToBottom() // 用户发送新消息时强制滚动到底部
-    
-    // 重置所有状态
-    setCompletedTextMessages(new Set())
-    resetMessageAccumulator()
-    hasReceivedFirstResponse.current = false
-    messageSequenceNumber.current = 0; // 重置消息序列计数器
-
-    // 输出文件URL到控制台
-    if (fileUrls.length > 0) {
-      console.log('发送消息包含的文件URL:', fileUrls)
-    }
 
     // 添加用户消息到消息列表
     const userMessageId = `user-${Date.now()}`
@@ -249,22 +144,15 @@ export function ChatPanel({ conversationId, isFunctionalAgent = false, agentName
         id: userMessageId,
         role: "USER",
         content: userMessage,
-        type: MessageType.TEXT,
-        createdAt: new Date().toISOString(),
-        fileUrls: fileUrls.length > 0 ? fileUrls : undefined // 修改：使用fileUrls
       },
     ])
 
     try {
-      // 发送消息到服务器并获取流式响应，包含文件URL
-      const response = await streamChat(userMessage, conversationId, fileUrls.length > 0 ? fileUrls : undefined)
+      // 发送消息到服务器并获取流式响应
+      const response = await streamChat(userMessage, conversationId)
 
-      // 检查响应状态，如果不是成功状态，则关闭思考状态并返回
       if (!response.ok) {
-        // 错误已在streamChat中处理并显示toast
-        setIsTyping(false)
-        setIsThinking(false) // 关闭思考状态，修复动画一直显示的问题
-        return // 直接返回，不继续处理
+        throw new Error(`Stream chat failed with status ${response.status}`)
       }
 
       const reader = response.body?.getReader()
@@ -272,17 +160,23 @@ export function ChatPanel({ conversationId, isFunctionalAgent = false, agentName
         throw new Error("No reader available")
       }
 
-      // 生成基础消息ID，作为所有消息序列的前缀
-      const baseMessageId = Date.now().toString()
-      
-      // 重置状态
-      hasReceivedFirstResponse.current = false;
-      messageContentAccumulator.current = {
-        content: "",
-        type: MessageType.TEXT
-      };
-      
+      // 添加助理消息到消息列表 - 使用固定的ID以便于更新
+      const assistantMessageId = `assistant-${Date.now()}`
+      setCurrentAssistantMessage({ id: assistantMessageId, hasContent: false })
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: assistantMessageId,
+          role: "assistant",
+          content: "",
+        },
+      ])
+
+      let accumulatedContent = ""
       const decoder = new TextDecoder()
+      let hasReceivedFirstResponse = false
+      
+      // 用于解析SSE格式数据的变量
       let buffer = ""
 
       while (true) {
@@ -300,19 +194,35 @@ export function ChatPanel({ conversationId, isFunctionalAgent = false, agentName
         for (const line of lines) {
           if (line.startsWith("data:")) {
             try {
-              // 提取JSON部分（去掉前缀"data:"，处理可能的重复前缀情况）
-              let jsonStr = line.substring(5);
-              // 处理可能存在的重复data:前缀
-              if (jsonStr.startsWith("data:")) {
-                jsonStr = jsonStr.substring(5);
-              }
-              console.log("收到SSE消息:", jsonStr);
-              
+              // 提取JSON部分（去掉前缀"data:"）
+              const jsonStr = line.substring(5)
               const data = JSON.parse(jsonStr) as StreamData
-              console.log("解析后的消息:", data, "消息类型:", data.messageType);
               
-              // 处理消息 - 传递baseMessageId作为前缀
-              handleStreamDataMessage(data, baseMessageId);
+              if (data.content) {
+                // 收到第一个响应，结束思考状态
+                if (!hasReceivedFirstResponse) {
+                  hasReceivedFirstResponse = true
+                  setIsThinking(false)
+                }
+                
+                accumulatedContent += data.content
+                
+                // 更新现有的助手消息
+                setMessages((prev) =>
+                  prev.map((msg) =>
+                    msg.id === assistantMessageId ? { ...msg, content: accumulatedContent } : msg,
+                  ),
+                )
+                
+                // 更新助手消息状态
+                setCurrentAssistantMessage({ id: assistantMessageId, hasContent: true })
+              }
+              
+              // 如果返回了done标记，则结束处理
+              if (data.done) {
+                console.log("Stream completed with done flag")
+                setIsThinking(false) // 确保在完成时关闭思考状态
+              }
             } catch (e) {
               console.error("Error parsing SSE data:", e, line)
             }
@@ -323,7 +233,6 @@ export function ChatPanel({ conversationId, isFunctionalAgent = false, agentName
       console.error("Error in stream chat:", error)
       setIsThinking(false) // 错误发生时关闭思考状态
       toast({
-        title: "发送消息失败",
         description: error instanceof Error ? error.message : "未知错误",
         variant: "destructive",
       })
@@ -331,159 +240,6 @@ export function ChatPanel({ conversationId, isFunctionalAgent = false, agentName
       setIsTyping(false)
     }
   }
-
-  // 消息处理主函数 - 完全重构
-  const handleStreamDataMessage = (data: StreamData, baseMessageId: string) => {
-    // 首次响应处理
-    if (!hasReceivedFirstResponse.current) {
-      hasReceivedFirstResponse.current = true;
-      setIsThinking(false);
-    }
-    
-    // 处理错误消息
-    if (isErrorMessage(data)) {
-      handleErrorMessage(data);
-      return;
-    }
-    
-    // 获取消息类型，默认为TEXT
-    const messageType = data.messageType as MessageType || MessageType.TEXT;
-    
-    // 生成当前消息序列的唯一ID
-    const currentMessageId = `assistant-${messageType}-${baseMessageId}-seq${messageSequenceNumber.current}`;
-    
-    console.log(`处理消息: 类型=${messageType}, 序列=${messageSequenceNumber.current}, ID=${currentMessageId}, done=${data.done}`);
-    
-    // 处理消息内容（用于UI显示）
-    const displayableTypes = [undefined, "TEXT", "TOOL_CALL"];
-    const isDisplayableType = displayableTypes.includes(data.messageType);
-    
-    if (isDisplayableType && data.content) {
-      // 累积消息内容
-      messageContentAccumulator.current.content += data.content;
-      messageContentAccumulator.current.type = messageType;
-      
-      // 更新UI显示
-      updateOrCreateMessageInUI(currentMessageId, messageContentAccumulator.current);
-    }
-    
-    // 消息结束信号处理
-    if (data.done) {
-      console.log(`消息完成 (done=true), 类型: ${messageType}, 序列: ${messageSequenceNumber.current}`);
-      
-      // 如果是可显示类型且有内容，完成该消息
-      if (isDisplayableType && messageContentAccumulator.current.content) {
-        finalizeMessage(currentMessageId, messageContentAccumulator.current);
-      }
-      
-      // 无论如何，都重置消息累积器，准备接收下一条消息
-      resetMessageAccumulator();
-      
-      // 增加消息序列计数
-      messageSequenceNumber.current += 1;
-      
-      console.log(`消息序列增加到: ${messageSequenceNumber.current}`);
-    }
-  }
-  
-  // 更新或创建UI消息
-  const updateOrCreateMessageInUI = (messageId: string, messageData: {
-    content: string;
-    type: MessageType;
-  }) => {
-    // 使用函数式更新，在一次原子操作中检查并更新/创建消息
-    setMessages(prev => {
-      // 检查消息是否已存在
-      const messageIndex = prev.findIndex(msg => msg.id === messageId);
-      
-      if (messageIndex >= 0) {
-        // 消息已存在，只需更新内容
-        console.log(`更新现有消息: ${messageId}, 内容长度: ${messageData.content.length}`);
-        const newMessages = [...prev];
-        newMessages[messageIndex] = {
-          ...newMessages[messageIndex],
-          content: messageData.content
-        };
-        return newMessages;
-      } else {
-        // 消息不存在，创建新消息
-        console.log(`创建新消息: ${messageId}, 类型: ${messageData.type}`);
-        return [
-          ...prev,
-          {
-            id: messageId,
-            role: "assistant",
-            content: messageData.content,
-            type: messageData.type,
-            createdAt: new Date().toISOString()
-          }
-        ];
-      }
-    });
-    
-    // 更新当前助手消息状态
-    setCurrentAssistantMessage({ id: messageId, hasContent: true });
-  }
-  
-  // 完成消息处理
-  const finalizeMessage = (messageId: string, messageData: {
-    content: string;
-    type: MessageType;
-  }) => {
-    console.log(`完成消息: ${messageId}, 类型: ${messageData.type}, 内容长度: ${messageData.content.length}`);
-    
-    // 如果消息内容为空，不处理
-    if (!messageData.content || messageData.content.trim() === "") {
-      console.log("消息内容为空，不处理");
-      return;
-    }
-    
-    // 确保UI已更新到最终状态，使用相同的原子操作模式
-    setMessages(prev => {
-      // 检查消息是否已存在
-      const messageIndex = prev.findIndex(msg => msg.id === messageId);
-      
-      if (messageIndex >= 0) {
-        // 消息已存在，更新内容
-        console.log(`完成现有消息: ${messageId}`);
-        const newMessages = [...prev];
-        newMessages[messageIndex] = {
-          ...newMessages[messageIndex],
-          content: messageData.content
-        };
-        return newMessages;
-      } else {
-        // 消息不存在，创建新消息
-        console.log(`创建并完成新消息: ${messageId}`);
-        return [
-          ...prev,
-          {
-            id: messageId,
-            role: "assistant",
-            content: messageData.content,
-            type: messageData.type,
-            createdAt: new Date().toISOString()
-          }
-        ];
-      }
-    });
-    
-    // 标记消息为已完成
-    setCompletedTextMessages(prev => {
-      const newSet = new Set(prev);
-      newSet.add(messageId);
-      return newSet;
-    });
-  }
-
-  // 重置消息累积器
-  const resetMessageAccumulator = () => {
-    console.log("重置消息累积器");
-    messageContentAccumulator.current = {
-      content: "",
-      type: MessageType.TEXT
-    };
-  };
 
   // 处理按键事件
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -493,135 +249,25 @@ export function ChatPanel({ conversationId, isFunctionalAgent = false, agentName
     }
   }
 
-  // 格式化消息时间
-  const formatMessageTime = (timestamp?: string) => {
-    if (!timestamp) return '';
-    try {
-      const date = new Date(timestamp);
-      return date.toLocaleString('zh-CN', {
-        hour: '2-digit',
-        minute: '2-digit',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
-      });
-    } catch (e) {
-      return '';
-    }
-  };
-
-  // 根据消息类型获取图标和文本
-  const getMessageTypeInfo = (type: MessageType) => {
-    switch (type) {
-      case MessageType.TOOL_CALL:
-        return {
-          icon: <Wrench className="h-5 w-5 text-blue-500" />,
-          text: '工具调用'
-        };
-      case MessageType.TEXT:
-      default:
-        return {
-          icon: null,
-          text: agentName
-        };
-    }
-  };
-
-  // 渲染消息内容
-  const renderMessageContent = (message: MessageInterface) => {
-    return (
-      <div className="react-markdown">
-        <ReactMarkdown
-          remarkPlugins={[remarkGfm]}
-          components={{
-            // 代码块渲染
-            code({ inline, className, children, ...props }: any) {
-              const match = /language-(\w+)/.exec(className || "");
-              return !inline && match ? (
-                <Highlight
-                  theme={themes.vsDark}
-                  code={String(children).replace(/\n$/, "")}
-                  language={match[1]}
-                >
-                  {({ className, style, tokens, getLineProps, getTokenProps }) => (
-                    <div className="code-block-container">
-                      <pre
-                        className={`${className} rounded p-2 my-2 overflow-x-auto max-w-full text-sm`}
-                        style={{...style, wordBreak: 'break-all', overflowWrap: 'break-word'}}
-                      >
-                        {tokens.map((line, i) => {
-                          // 获取line props但不通过展开操作符传递key
-                          const lineProps = getLineProps({ line, key: i });
-                          return (
-                            <div 
-                              key={i} 
-                              className={lineProps.className}
-                              style={{
-                                ...lineProps.style,
-                                whiteSpace: 'pre-wrap', 
-                                wordBreak: 'break-all'
-                              }}
-                            >
-                              <span className="text-gray-500 mr-2 text-right w-6 inline-block select-none">
-                                {i + 1}
-                              </span>
-                              {line.map((token, tokenIndex) => {
-                                // 获取token props但不包含key
-                                const tokenProps = getTokenProps({ token, key: tokenIndex });
-                                // 删除key属性，使用单独的key属性
-                                return <span 
-                                  key={tokenIndex} 
-                                  className={tokenProps.className}
-                                  style={{
-                                    ...tokenProps.style,
-                                    wordBreak: 'break-all',
-                                    overflowWrap: 'break-word'
-                                  }}
-                                  children={tokenProps.children}
-                                />;
-                              })}
-                            </div>
-                          );
-                        })}
-                      </pre>
-                    </div>
-                  )}
-                </Highlight>
-              ) : (
-                <code className={`${className} bg-gray-100 px-1 py-0.5 rounded break-all`} {...props}>
-                  {children}
-                </code>
-              );
-            },
-          }}
-        >
-          {message.content}
-        </ReactMarkdown>
-      </div>
-    );
-  };
-
-  // 判断是否为错误消息
-  const isErrorMessage = (data: StreamData): boolean => {
-    return !!data.content && (
-      data.content.includes("Error updating database") || 
-      data.content.includes("PSQLException") || 
-      data.content.includes("任务执行过程中发生错误")
-    );
-  };
-
-  // 处理错误消息
-  const handleErrorMessage = (data: StreamData) => {
-    console.error("检测到后端错误:", data.content);
-    toast({
-      title: "任务执行错误",
-      description: "服务器处理任务时遇到问题，请稍后再试",
-      variant: "destructive",
-    });
-  };
-
   return (
     <div className="relative flex h-full w-full flex-col overflow-hidden bg-white">
+      <div className="flex items-center justify-between px-4 py-2 border-b">
+        <div className="flex items-center">
+          <FileText className="h-5 w-5 text-gray-500 mr-2" />
+          <span className="font-medium">对话</span>
+        </div>
+        {isFunctionalAgent && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={onToggleTaskHistory}
+          >
+            <ClipboardList className={`h-5 w-5 ${showTaskHistory ? 'text-primary' : 'text-gray-500'}`} />
+          </Button>
+        )}
+      </div>
+
       <div 
         ref={chatContainerRef}
         className="flex-1 overflow-y-auto px-4 pt-3 pb-4 w-full"
@@ -641,9 +287,9 @@ export function ChatPanel({ conversationId, isFunctionalAgent = false, agentName
                 {error}
               </div>
             )}
-            
+
             {/* 消息内容 */}
-            <div className="space-y-6 w-full">
+            <div className="space-y-3 w-full">
               {messages.length === 0 ? (
                 <div className="flex items-center justify-center h-20 w-full">
                   <p className="text-gray-400">暂无消息，开始发送消息吧</p>
@@ -652,64 +298,118 @@ export function ChatPanel({ conversationId, isFunctionalAgent = false, agentName
                 messages.map((message) => (
                   <div
                     key={message.id}
-                    className={`w-full`}
+                    className={`flex ${message.role === "USER" ? "justify-end" : "justify-start"} mb-3 w-full`}
                   >
-                    {/* 用户消息 */}
-                    {message.role === "USER" ? (
-                      <div className="flex justify-end">
-                        <div className="max-w-[80%]">
-                          {/* 文件显示 - 在消息内容之前 */}
-                          {message.fileUrls && message.fileUrls.length > 0 && (
-                            <div className="mb-3">
-                              <MessageFileDisplay fileUrls={message.fileUrls} />
-                            </div>
-                          )}
-                          
-                          {/* 消息内容 */}
-                          {message.content && (
-                            <div className="bg-blue-50 text-gray-800 p-3 rounded-lg shadow-sm">
-                              {message.content}
-                            </div>
-                          )}
-                          
-                          <div className="text-xs text-gray-500 mt-1 text-right">
-                            {formatMessageTime(message.createdAt)}
-                          </div>
-                        </div>
+                    {message.role !== "USER" && (
+                      <div className="mr-2 h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm shadow-sm flex-shrink-0">
+                        A
                       </div>
-                    ) : (
-                      /* AI消息 */
-                      <div className="flex">
-                        <div className="h-8 w-8 mr-2 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
-                          {message.type && message.type !== MessageType.TEXT 
-                            ? getMessageTypeInfo(message.type).icon 
-                            : <div className="text-lg">🤖</div>
-                          }
+                    )}
+                    <div
+                      className={`rounded-2xl px-3.5 py-2.5 ${
+                        message.role === "USER"
+                          ? "bg-blue-500 text-white shadow-sm"
+                          : "bg-gray-100 border border-gray-200 shadow-sm"
+                      }`}
+                      style={{ 
+                        wordWrap: 'break-word', 
+                        overflowWrap: 'break-word', 
+                        maxWidth: 'min(90%, 800px)',
+                        position: 'relative'
+                      }}
+                    >
+                      {message.content ? (
+                        <div 
+                          className={`prose prose-sm max-w-none break-words overflow-hidden ${
+                            message.role === "USER" 
+                              ? "prose-invert" 
+                              : "prose-headings:text-gray-800"
+                          }`} 
+                          style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}
+                        >
+                          <ReactMarkdown 
+                            remarkPlugins={[remarkGfm]}
+                            components={{
+                              code({node, inline, className, children, ...props}: any) {
+                                const match = /language-(\w+)/.exec(className || '')
+                                const language = match ? match[1] : ''
+                                
+                                return !inline ? (
+                                  <div className="overflow-x-auto my-3 rounded-lg" style={{ maxWidth: '100%' }}>
+                                    <Highlight
+                                      theme={message.role === "USER" ? themes.vsLight : themes.github}
+                                      code={String(children).replace(/\n$/, '')}
+                                      language={language || 'text'}
+                                    >
+                                      {({className, style, tokens, getLineProps, getTokenProps}) => (
+                                        <pre className="p-3 rounded-lg" style={{
+                                          ...style,
+                                          overflowX: 'auto',
+                                          margin: 0,
+                                          maxWidth: '100%',
+                                          whiteSpace: 'pre-wrap',
+                                          wordBreak: 'break-word',
+                                          backgroundColor: message.role === "USER" ? 'rgba(59, 130, 246, 0.15)' : 'rgba(0, 0, 0, 0.04)'
+                                        }}>
+                                          {tokens.map((line, i) => (
+                                            <div key={i} {...getLineProps({line})} style={{ overflowWrap: 'break-word', wordBreak: 'break-all' }}>
+                                              {line.map((token, key) => (
+                                                <span key={key} {...getTokenProps({token})} />
+                                              ))}
+                                            </div>
+                                          ))}
+                                        </pre>
+                                      )}
+                                    </Highlight>
+                                  </div>
+                                ) : (
+                                  <code className={`${message.role === "USER" ? "bg-blue-400/30" : "bg-gray-200"} px-1.5 py-0.5 rounded-md text-sm font-mono`} {...props}>
+                                    {children}
+                                  </code>
+                                )
+                              },
+                              pre({children}: any) {
+                                return <div className="overflow-x-auto" style={{ maxWidth: '100%' }}>{children}</div>
+                              },
+                              p({children}: any) {
+                                return <div className="break-words whitespace-normal my-2" style={{ overflowWrap: 'break-word', wordBreak: 'break-word' }}>{children}</div>
+                              },
+                              li({children}: any) {
+                                return <li className="my-1">{children}</li>
+                              },
+                              ul({children}: any) {
+                                return <ul className="list-disc pl-5 my-2">{children}</ul>
+                              },
+                              ol({children}: any) {
+                                return <ol className="list-decimal pl-5 my-2">{children}</ol>
+                              },
+                              blockquote({children}: any) {
+                                return <div className="border-l-4 border-gray-200 pl-4 my-2 italic" style={{ overflowWrap: 'break-word', wordBreak: 'break-word' }}>{children}</div>
+                              },
+                              table({children}: any) {
+                                return <div className="overflow-x-auto my-2" style={{ maxWidth: '100%' }}><table className="border-collapse border border-gray-300">{children}</table></div>
+                              },
+                              a({node, children, href, ...props}: any) {
+                                return <a href={href} className="break-all" style={{ wordBreak: 'break-all' }} {...props}>{children}</a>
+                              }
+                            }}
+                          >
+                            {message.content}
+                          </ReactMarkdown>
                         </div>
-                        <div className="max-w-[80%]">
-                          {/* 消息类型指示 */}
-                          <div className="flex items-center mb-1 text-xs text-gray-500">
-                            <span className="font-medium">
-                              {message.type ? getMessageTypeInfo(message.type).text : agentName}
-                            </span>
-                            <span className="mx-1 text-gray-400">·</span>
-                            <span>{formatMessageTime(message.createdAt)}</span>
+                      ) : (
+                        message.role === "SYSTEM" && isTyping ? (
+                          <div className="flex space-x-2">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" />
+                            <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce delay-100" />
+                            <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce delay-200" />
                           </div>
-                          
-                          {/* 文件显示 - 在消息内容之前 */}
-                          {message.fileUrls && message.fileUrls.length > 0 && (
-                            <div className="mb-3">
-                              <MessageFileDisplay fileUrls={message.fileUrls} />
-                            </div>
-                          )}
-                          
-                          {/* 消息内容 */}
-                          {message.content && (
-                            <div className="p-3 rounded-lg">
-                              {renderMessageContent(message)}
-                            </div>
-                          )}
-                        </div>
+                        ) : null
+                      )}
+                    </div>
+                    {message.role === "USER" && (
+                      <div className="ml-2 h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm shadow-sm flex-shrink-0">
+                        U
                       </div>
                     )}
                   </div>
@@ -718,22 +418,20 @@ export function ChatPanel({ conversationId, isFunctionalAgent = false, agentName
               
               {/* 思考中提示 */}
               {isThinking && (!currentAssistantMessage || !currentAssistantMessage.hasContent) && (
-                <div className="flex items-start">
-                  <div className="h-8 w-8 mr-2 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <div className="text-lg">🤖</div>
+                <div className="flex justify-start mb-3">
+                  <div className="mr-2 h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm shadow-sm flex-shrink-0">
+                    A
                   </div>
-                  <div className="max-w-[80%]">
-                    <div className="flex items-center mb-1 text-xs text-gray-500">
-                      <span className="font-medium">{agentName}</span>
-                      <span className="mx-1 text-gray-400">·</span>
-                      <span>刚刚</span>
-                    </div>
-                    <div className="space-y-2 p-3 rounded-lg">
-                      <div className="flex space-x-2 items-center">
-                        <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
-                        <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse delay-75"></div>
-                        <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse delay-150"></div>
-                        <div className="text-sm text-gray-500 animate-pulse">思考中...</div>
+                  <div className="rounded-2xl px-5 py-4 bg-gray-50 border border-gray-200 shadow-sm transition-all animate-thinking" style={{ maxWidth: 'min(90%, 800px)' }}>
+                    <div className="flex flex-col">
+                      <div className="flex items-center gap-2.5 mb-3">
+                        <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
+                        <div className="text-gray-600 text-sm font-medium">AI 正在思考...</div>
+                      </div>
+                      <div className="flex items-center">
+                        <div className="relative h-1.5 w-40 bg-gray-200 rounded-full overflow-hidden">
+                          <div className="absolute top-0 left-0 h-full w-40 bg-gradient-to-r from-blue-300 via-blue-500 to-blue-300 rounded-full animate-progress"></div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -742,92 +440,30 @@ export function ChatPanel({ conversationId, isFunctionalAgent = false, agentName
               
               <div ref={messagesEndRef} />
               {!autoScroll && isTyping && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="fixed bottom-20 right-6 rounded-full shadow-md bg-white"
+                <button
                   onClick={scrollToBottom}
+                  className="fixed bottom-20 right-5 bg-blue-500 text-white rounded-full p-2 shadow-lg hover:bg-blue-600 transition-colors"
                 >
-                  <span>↓</span>
-                </Button>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
               )}
             </div>
           </div>
         )}
       </div>
 
+      {/* 输入框上方显示当前任务列表 */}
+      {isFunctionalAgent && (
+        <div className="px-4 py-2">
+          <CurrentTaskList />
+        </div>
+      )}
+
       {/* 输入框 */}
       <div className="border-t p-2 bg-white">
-        {/* 已上传文件显示区域 - 在输入框上方 */}
-        {uploadedFiles.length > 0 && (
-          <div className="mb-2 px-2">
-            <div className="flex flex-wrap gap-2">
-              {uploadedFiles.map((file) => (
-                <div
-                  key={file.id}
-                  className="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg text-sm border border-blue-200"
-                >
-                  <div className="flex-shrink-0 w-5 h-5 bg-blue-100 rounded flex items-center justify-center">
-                    {file.type.startsWith('image/') ? (
-                      <span className="text-sm">🖼️</span>
-                    ) : (
-                      <span className="text-sm">📄</span>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate max-w-32">
-                      {file.name}
-                    </p>
-                    {/* 上传进度条 */}
-                    {file.uploadProgress !== undefined && file.uploadProgress < 100 && (
-                      <div className="w-full bg-gray-200 rounded-full h-1 mt-1">
-                        <div
-                          className="bg-blue-600 h-1 rounded-full transition-all duration-300"
-                          style={{ width: `${file.uploadProgress}%` }}
-                        />
-                      </div>
-                    )}
-                  </div>
-                  <button
-                    onClick={() => {
-                      setUploadedFiles(prev => prev.filter(f => f.id !== file.id))
-                    }}
-                    className="flex-shrink-0 w-4 h-4 rounded-full bg-red-100 hover:bg-red-200 flex items-center justify-center transition-colors"
-                    disabled={isTyping}
-                  >
-                    <span className="text-xs text-red-600">×</span>
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-        
-        {/* 输入框和按钮区域 */}
-        <div className="flex items-end gap-2">
-          {/* 多模态文件上传按钮 */}
-          <MultiModalUpload
-            multiModal={multiModal}
-            uploadedFiles={uploadedFiles}
-            setUploadedFiles={setUploadedFiles}
-            disabled={isTyping}
-            className="flex-shrink-0"
-            showFileList={false}
-          />
-          
-          {/* 定时任务按钮 */}
-          {isFunctionalAgent && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-10 w-10 flex-shrink-0"
-              onClick={onToggleScheduledTaskPanel}
-              title="定时任务"
-            >
-              <Clock className="h-5 w-5 text-gray-500 hover:text-primary" />
-            </Button>
-          )}
-          
+        <div className="flex items-end gap-2 max-w-5xl mx-auto">
           <Textarea
             placeholder="输入消息...(Shift+Enter换行, Enter发送)"
             value={input}
@@ -838,8 +474,8 @@ export function ChatPanel({ conversationId, isFunctionalAgent = false, agentName
           />
           <Button 
             onClick={handleSendMessage} 
-            disabled={(!input.trim() && uploadedFiles.length === 0) || isTyping} 
-            className="h-10 w-10 rounded-xl bg-blue-500 hover:bg-blue-600 shadow-sm flex-shrink-0"
+            disabled={!input.trim()} 
+            className="h-10 w-10 rounded-xl bg-blue-500 hover:bg-blue-600 shadow-sm"
           >
             <Send className="h-5 w-5" />
           </Button>
