@@ -1,7 +1,7 @@
 package org.feynix.domain.rag.mapper;
 
 /**
- * @author shilong.zang
+ * @author zang
  * @date 18:05 <br/>
  */
 
