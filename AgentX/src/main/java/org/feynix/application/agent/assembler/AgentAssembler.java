@@ -1,5 +1,6 @@
 package org.feynix.application.agent.assembler;
 
+import org.springframework.beans.BeanUtils;
 import org.feynix.domain.agent.model.AgentEntity;
 import org.feynix.domain.agent.constant.AgentType;
 import org.feynix.application.agent.dto.AgentDTO;
@@ -37,7 +38,7 @@ public class AgentAssembler {
 
         // 设置初始状态为启用
         entity.setEnabled(true);
-        
+
 
         // 设置工具和知识库ID
         entity.setTools(request.getTools() != null ? request.getTools() : new ArrayList<>());
