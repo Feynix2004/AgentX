@@ -1,4 +1,4 @@
-package org.feynix.infrastructure.embedding.config;
+package org.feynix.infrastructure.rag.config;
 
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;

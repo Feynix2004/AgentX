@@ -1,4 +1,4 @@
-package org.feynix.domain.embedding.constant;
+package org.feynix.domain.rag.constant;
 
 /**
  * @author shilong.zang

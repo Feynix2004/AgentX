@@ -1,11 +1,7 @@
-package org.feynix.domain.embedding.service;
+package org.feynix.domain.rag.service;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.dromara.streamquery.stream.core.stream.Steam;
 import org.slf4j.Logger;
@@ -14,14 +10,14 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
-import org.feynix.domain.embedding.RagDocSyncStorageMessage;
-import org.feynix.domain.embedding.constant.EmbeddingStatus;
-import org.feynix.domain.embedding.constant.FileInitializeStatus;
-import org.feynix.domain.embedding.constant.MetadataConstant;
-import org.feynix.domain.embedding.model.DocumentUnitEntity;
-import org.feynix.domain.embedding.model.FileDetailEntity;
-import org.feynix.domain.embedding.repository.DocumentUnitRepository;
-import org.feynix.domain.embedding.repository.FileDetailRepository;
+import org.feynix.domain.rag.RagDocSyncStorageMessage;
+import org.feynix.domain.rag.constant.EmbeddingStatus;
+import org.feynix.domain.rag.constant.FileInitializeStatus;
+import org.feynix.domain.rag.constant.MetadataConstant;
+import org.feynix.domain.rag.model.DocumentUnitEntity;
+import org.feynix.domain.rag.model.FileDetailEntity;
+import org.feynix.domain.rag.repository.DocumentUnitRepository;
+import org.feynix.domain.rag.repository.FileDetailRepository;
 import org.feynix.infrastructure.mq.enums.EventType;
 import org.feynix.infrastructure.mq.events.RagDocSyncStorageEvent;
 
@@ -34,7 +30,6 @@ import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.openai.OpenAiEmbeddingModel;
 import dev.langchain4j.store.embedding.EmbeddingStore;
-import dev.langchain4j.store.embedding.filter.Filter;
 import dev.langchain4j.store.embedding.filter.comparison.IsEqualTo;
 
 /**

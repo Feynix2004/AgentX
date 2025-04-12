@@ -1,4 +1,4 @@
-package org.feynix.domain.embedding.consumer;
+package org.feynix.domain.rag.consumer;
 
 import static org.feynix.infrastructure.mq.model.MQSendEventModel.HEADER_NAME_TRACE_ID;
 
@@ -17,8 +17,8 @@ import org.springframework.amqp.rabbit.annotation.QueueBinding;
 import org.springframework.amqp.rabbit.annotation.RabbitHandler;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
-import org.feynix.domain.embedding.RagDocSyncStorageMessage;
-import org.feynix.domain.embedding.service.EmbeddingService;
+import org.feynix.domain.rag.RagDocSyncStorageMessage;
+import org.feynix.domain.rag.service.EmbeddingService;
 import org.feynix.infrastructure.mq.events.RagDocSyncStorageEvent;
 import org.feynix.infrastructure.mq.model.MqMessage;
 

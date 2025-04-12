@@ -1,4 +1,4 @@
-package org.feynix.infrastructure.embedding.utils;
+package org.feynix.infrastructure.rag.utils;
 
 import com.vladsch.flexmark.html.HtmlRenderer;
 import com.vladsch.flexmark.parser.Parser;

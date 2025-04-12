@@ -1,4 +1,4 @@
-package org.feynix.domain.embedding;
+package org.feynix.domain.rag;
 
 import java.io.Serial;
 import java.io.Serializable;

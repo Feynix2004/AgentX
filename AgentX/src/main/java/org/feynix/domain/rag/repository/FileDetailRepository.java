@@ -1,7 +1,7 @@
-package org.feynix.domain.embedding.repository;
+package org.feynix.domain.rag.repository;
 
 import org.apache.ibatis.annotations.Mapper;
-import org.feynix.domain.embedding.model.FileDetailEntity;
+import org.feynix.domain.rag.model.FileDetailEntity;
 import org.feynix.infrastructure.repository.MyBatisPlusExtRepository;
 
 /**

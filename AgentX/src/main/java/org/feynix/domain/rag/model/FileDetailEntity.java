@@ -1,4 +1,4 @@
-package org.feynix.domain.embedding.model;
+package org.feynix.domain.rag.model;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -169,13 +169,13 @@ public class FileDetailEntity extends BaseEntity implements Serializable {
 
     /**
      * 是否进行初始化
-     * @see org.feynix.domain.embedding.constant.FileInitializeStatus
+     * @see org.feynix.domain.rag.constant.FileInitializeStatus
      */
     private String isInitialize;
 
     /**
      * 是否进行向量化
-     * @see org.feynix.domain.embedding.constant.EmbeddingStatus
+     * @see org.feynix.domain.rag.constant.EmbeddingStatus
      */
     private String isEmbedding;
 
