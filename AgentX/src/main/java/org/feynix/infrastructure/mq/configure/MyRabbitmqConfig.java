@@ -1,4 +1,4 @@
-package org.feynix.infrastructure.starter.configure;
+package org.feynix.infrastructure.mq.configure;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

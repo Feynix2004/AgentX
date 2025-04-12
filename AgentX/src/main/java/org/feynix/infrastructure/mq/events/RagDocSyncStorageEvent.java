@@ -1,11 +1,11 @@
-package org.feynix.infrastructure.starter.events;
+package org.feynix.infrastructure.mq.events;
 
 import java.io.Serial;
 import java.util.Arrays;
 import java.util.List;
 
-import org.feynix.infrastructure.starter.enums.EventType;
-import org.feynix.infrastructure.starter.model.MQSendEventModel;
+import org.feynix.infrastructure.mq.enums.EventType;
+import org.feynix.infrastructure.mq.model.MQSendEventModel;
 
 
 /**

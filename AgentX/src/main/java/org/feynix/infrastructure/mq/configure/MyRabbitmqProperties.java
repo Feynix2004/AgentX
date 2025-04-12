@@ -1,4 +1,4 @@
-package org.feynix.infrastructure.starter.configure;
+package org.feynix.infrastructure.mq.configure;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;

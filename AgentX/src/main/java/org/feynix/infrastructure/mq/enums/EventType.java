@@ -1,4 +1,4 @@
-package org.feynix.infrastructure.starter.enums;
+package org.feynix.infrastructure.mq.enums;
 
 /**
  * @author zang

@@ -1,10 +1,10 @@
-package org.feynix.infrastructure.starter.model;
+package org.feynix.infrastructure.mq.model;
 
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.List;
 
-import org.feynix.infrastructure.starter.enums.EventType;
+import org.feynix.infrastructure.mq.enums.EventType;
 
 import com.alibaba.fastjson2.JSONObject;
 

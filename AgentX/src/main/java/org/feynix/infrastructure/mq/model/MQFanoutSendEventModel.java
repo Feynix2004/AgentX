@@ -1,4 +1,4 @@
-package org.feynix.infrastructure.starter.model;
+package org.feynix.infrastructure.mq.model;
 
 import org.springframework.amqp.core.ExchangeTypes;
 
