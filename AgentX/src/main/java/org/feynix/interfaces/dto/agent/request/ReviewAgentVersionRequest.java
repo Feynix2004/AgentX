@@ -1,7 +1,7 @@
 package org.feynix.interfaces.dto.agent.request;
 
 import org.feynix.domain.agent.constant.PublishStatus;
-import org.feynix.infrastructure.util.ValidationUtils;
+import org.feynix.infrastructure.utils.ValidationUtils;
 import org.feynix.infrastructure.exception.ParamValidationException;
 
 /**

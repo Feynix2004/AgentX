@@ -1,4 +1,4 @@
-package org.feynix.infrastructure.util;
+package org.feynix.infrastructure.utils;
 
 import cn.hutool.crypto.SecureUtil;
 import cn.hutool.crypto.symmetric.AES;

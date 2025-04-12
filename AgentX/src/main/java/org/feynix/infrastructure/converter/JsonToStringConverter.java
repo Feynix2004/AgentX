@@ -1,12 +1,10 @@
 package org.feynix.infrastructure.converter;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.ibatis.type.BaseTypeHandler;
 import org.apache.ibatis.type.JdbcType;
 import org.apache.ibatis.type.MappedJdbcTypes;
 import org.postgresql.util.PGobject;
-import org.feynix.infrastructure.util.JsonUtils;
+import org.feynix.infrastructure.utils.JsonUtils;
 
 import java.sql.CallableStatement;
 import java.sql.PreparedStatement;

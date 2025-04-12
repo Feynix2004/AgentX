@@ -1,6 +1,6 @@
 package org.feynix.interfaces.dto.agent.request;
 
-import org.feynix.infrastructure.util.ValidationUtils;
+import org.feynix.infrastructure.utils.ValidationUtils;
 
 /**
  * 更新Agent状态的请求对象
