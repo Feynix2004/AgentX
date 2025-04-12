@@ -1,4 +1,4 @@
-package org.feynix.domain.conversation.handler;
+package org.feynix.application.conversation.service.handler;
 
 import dev.langchain4j.service.TokenStream;
 
