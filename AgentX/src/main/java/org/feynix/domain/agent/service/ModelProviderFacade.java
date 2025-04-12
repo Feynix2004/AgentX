@@ -6,7 +6,7 @@ import org.feynix.domain.agent.model.AgentWorkspaceEntity;
 import org.feynix.domain.agent.model.LLMModelConfig;
 import org.feynix.domain.llm.model.ModelEntity;
 import org.feynix.domain.llm.model.ProviderEntity;
-import org.feynix.domain.llm.service.LlmDomainService;
+import org.feynix.domain.llm.service.LLMDomainService;
 import org.feynix.infrastructure.llm.LLMProviderService;
 import org.feynix.infrastructure.llm.config.ProviderConfig;
 
@@ -18,11 +18,11 @@ import org.feynix.infrastructure.llm.config.ProviderConfig;
 public class ModelProviderFacade {
 
     private final AgentWorkspaceDomainService agentWorkspaceDomainService;
-    private final LlmDomainService llmDomainService;
+    private final LLMDomainService llmDomainService;
 
     public ModelProviderFacade(
             AgentWorkspaceDomainService agentWorkspaceDomainService,
-            LlmDomainService llmDomainService) {
+            LLMDomainService llmDomainService) {
         this.agentWorkspaceDomainService = agentWorkspaceDomainService;
         this.llmDomainService = llmDomainService;
     }

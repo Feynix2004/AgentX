@@ -16,7 +16,7 @@ import org.feynix.domain.conversation.service.ConversationDomainService;
 import org.feynix.domain.conversation.service.SessionDomainService;
 import org.feynix.domain.llm.model.ModelEntity;
 import org.feynix.domain.llm.model.ProviderEntity;
-import org.feynix.domain.llm.service.LlmDomainService;
+import org.feynix.domain.llm.service.LLMDomainService;
 import org.feynix.infrastructure.exception.BusinessException;
 import org.feynix.interfaces.dto.agent.request.UpdateModelConfigRequest;
 
@@ -41,11 +41,11 @@ public class AgentWorkspaceAppService {
     private final SessionDomainService sessionDomainService;
 
     private final ConversationDomainService conversationDomainService;
-    private final LlmDomainService llmDomainService;
+    private final LLMDomainService llmDomainService;
     private final ProjectInfoProperties projectInfoProperties;
 
     public AgentWorkspaceAppService(AgentWorkspaceDomainService agentWorkspaceDomainService,
-                                    AgentDomainService agentServiceDomainService, SessionDomainService sessionDomainService, ConversationDomainService conversationDomainService, LlmDomainService llmDomainService, ProjectInfoProperties projectInfoProperties) {
+                                    AgentDomainService agentServiceDomainService, SessionDomainService sessionDomainService, ConversationDomainService conversationDomainService, LLMDomainService llmDomainService, ProjectInfoProperties projectInfoProperties) {
         this.agentWorkspaceDomainService = agentWorkspaceDomainService;
         this.agentServiceDomainService = agentServiceDomainService;
         this.sessionDomainService = sessionDomainService;

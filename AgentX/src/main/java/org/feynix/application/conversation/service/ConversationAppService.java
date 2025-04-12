@@ -22,7 +22,7 @@ import org.feynix.domain.conversation.service.MessageDomainService;
 import org.feynix.domain.conversation.service.SessionDomainService;
 import org.feynix.domain.llm.model.ModelEntity;
 import org.feynix.domain.llm.model.ProviderEntity;
-import org.feynix.domain.llm.service.LlmDomainService;
+import org.feynix.domain.llm.service.LLMDomainService;
 import org.feynix.domain.shared.enums.TokenOverflowStrategyEnum;
 import org.feynix.domain.token.model.TokenMessage;
 import org.feynix.domain.token.model.TokenProcessResult;
@@ -48,11 +48,11 @@ public class ConversationAppService {
     private final SessionDomainService sessionDomainService;
     private final AgentDomainService agentDomainService;
     private final AgentWorkspaceDomainService agentWorkspaceDomainService;
-    private final LlmDomainService llmDomainService;
+    private final LLMDomainService llmDomainService;
     private final ContextDomainService contextDomainService;
     private final TokenDomainService tokenDomainService;
     private final MessageDomainService messageDomainService;
-    
+
     // 新增依赖
     private final MessageHandlerFactory messageHandlerFactory;
     private final MessageTransportFactory transportFactory;
@@ -60,12 +60,12 @@ public class ConversationAppService {
 
     public ConversationAppService(
             ConversationDomainService conversationDomainService,
-            SessionDomainService sessionDomainService, 
-            AgentDomainService agentDomainService, 
-            AgentWorkspaceDomainService agentWorkspaceDomainService, 
-            LlmDomainService llmDomainService, 
-            ContextDomainService contextDomainService, 
-            TokenDomainService tokenDomainService, 
+            SessionDomainService sessionDomainService,
+            AgentDomainService agentDomainService,
+            AgentWorkspaceDomainService agentWorkspaceDomainService,
+            LLMDomainService llmDomainService,
+            ContextDomainService contextDomainService,
+            TokenDomainService tokenDomainService,
             MessageDomainService messageDomainService,
             MessageHandlerFactory messageHandlerFactory,
             MessageTransportFactory transportFactory,
@@ -103,7 +103,7 @@ public class ConversationAppService {
 
     /**
      * 对话方法 - 统一入口
-     * 
+     *
      * @param chatRequest 聊天请求
      * @param userId 用户ID
      * @return SSE发射器
@@ -111,20 +111,20 @@ public class ConversationAppService {
     public SseEmitter chat(ChatRequest chatRequest, String userId) {
         // 1. 准备对话环境
         ChatEnvironment environment = prepareEnvironment(chatRequest, userId);
-        
+
         // 2. 获取传输方式 (当前仅支持SSE，将来支持WebSocket)
         MessageTransport<SseEmitter> transport = transportFactory.getTransport(MessageTransportFactory.TRANSPORT_TYPE_SSE);
-        
+
         // 3. 获取适合的消息处理器 (根据agent类型)
         MessageHandler handler = messageHandlerFactory.getHandler(environment.getAgent());
-        
+
         // 4. 处理对话
         return handler.handleChat(environment, transport);
     }
-    
+
     /**
      * 准备对话环境
-     * 
+     *
      * @param chatRequest 聊天请求
      * @param userId 用户ID
      * @return 对话环境
@@ -151,7 +151,7 @@ public class ConversationAppService {
         // 4. 获取服务商信息
         ProviderEntity provider = llmDomainService.getProvider(model.getProviderId(), userId);
         provider.isActive();
-        
+
         // 5. 创建环境对象
         ChatEnvironment environment = new ChatEnvironment();
         environment.setSessionId(sessionId);
@@ -161,16 +161,16 @@ public class ConversationAppService {
         environment.setModel(model);
         environment.setProvider(provider);
         environment.setLlmModelConfig(llmModelConfig);
-        
+
         // 6. 设置上下文信息和消息历史
         setupContextAndHistory(environment);
-        
+
         return environment;
     }
-    
+
     /**
      * 设置上下文和历史消息
-     * 
+     *
      * @param environment 对话环境
      */
     private void setupContextAndHistory(ChatEnvironment environment) {
@@ -179,78 +179,78 @@ public class ConversationAppService {
         // 获取上下文
         ContextEntity contextEntity = contextDomainService.findBySessionId(sessionId);
         List<MessageEntity> messageEntities = new ArrayList<>();
-        
+
         if (contextEntity != null) {
             // 获取活跃消息
             List<String> activeMessageIds = contextEntity.getActiveMessages();
             messageEntities = messageDomainService.listByIds(activeMessageIds);
-            
+
             // 应用Token溢出策略
             applyTokenOverflowStrategy(environment, contextEntity, messageEntities);
         } else {
             contextEntity = new ContextEntity();
             contextEntity.setSessionId(sessionId);
         }
-        
+
         environment.setContextEntity(contextEntity);
         environment.setMessageHistory(messageEntities);
     }
-    
+
     /**
      * 应用Token溢出策略
-     * 
+     *
      * @param environment 对话环境
      * @param contextEntity 上下文实体
      * @param messageEntities 消息实体列表
      */
     private void applyTokenOverflowStrategy(
-            ChatEnvironment environment, 
-            ContextEntity contextEntity, 
+            ChatEnvironment environment,
+            ContextEntity contextEntity,
             List<MessageEntity> messageEntities) {
-        
+
         LLMModelConfig llmModelConfig = environment.getLlmModelConfig();
         ProviderEntity provider = environment.getProvider();
-        
+
         // 处理Token溢出
         TokenOverflowStrategyEnum strategyType = llmModelConfig.getStrategyType();
-        
+
         // Token处理
         List<TokenMessage> tokenMessages = tokenizeMessage(messageEntities);
-        
+
         // 构造Token配置
         TokenOverflowConfig tokenOverflowConfig = new TokenOverflowConfig();
         tokenOverflowConfig.setStrategyType(strategyType);
         tokenOverflowConfig.setMaxTokens(llmModelConfig.getMaxTokens());
         tokenOverflowConfig.setSummaryThreshold(llmModelConfig.getSummaryThreshold());
-        
+
         // 设置提供商配置
         org.feynix.domain.llm.model.config.ProviderConfig providerConfig = provider.getConfig();
         tokenOverflowConfig.setProviderConfig(new ProviderConfig(
-                providerConfig.getApiKey(), 
-                providerConfig.getBaseUrl(), 
-                environment.getModel().getModelId(), 
+                providerConfig.getApiKey(),
+                providerConfig.getBaseUrl(),
+                environment.getModel().getModelId(),
                 provider.getProtocol()));
-        
+
         // 处理Token
         TokenProcessResult result = tokenDomainService.processMessages(tokenMessages, tokenOverflowConfig);
-        
+
         // 更新上下文
         if (result.isProcessed()) {
             List<TokenMessage> retainedMessages = result.getRetainedMessages();
             List<String> retainedMessageIds = retainedMessages.stream()
                     .map(TokenMessage::getId)
                     .collect(Collectors.toList());
-                    
+
             if (strategyType == TokenOverflowStrategyEnum.SUMMARIZE) {
                 String newSummary = result.getSummary();
                 String oldSummary = contextEntity.getSummary();
                 contextEntity.setSummary(oldSummary + newSummary);
             }
-            
+
             contextEntity.setActiveMessages(retainedMessageIds);
         }
     }
-    
+
     /**
      * 消息实体转换为token消息
      */
