@@ -1,6 +1,6 @@
 package org.feynix.domain.agent.service;
 
-import dev.langchain4j.model.chat.StreamingChatModel;
+import dev.langchain4j.model.chat.StreamingChatLanguageModel;
 import org.springframework.stereotype.Service;
 import org.feynix.domain.agent.model.AgentWorkspaceEntity;
 import org.feynix.domain.agent.model.LLMModelConfig;
@@ -10,24 +10,30 @@ import org.feynix.domain.llm.service.LLMDomainService;
 import org.feynix.infrastructure.llm.LLMProviderService;
 import org.feynix.infrastructure.llm.config.ProviderConfig;
 
-/** 模型提供商门面 负责获取和验证模型及提供商 */
+/**
+ * 模型提供商门面
+ * 负责获取和验证模型及提供商
+ */
 @Service
 public class ModelProviderFacade {
 
     private final AgentWorkspaceDomainService agentWorkspaceDomainService;
     private final LLMDomainService llmDomainService;
 
-    public ModelProviderFacade(AgentWorkspaceDomainService agentWorkspaceDomainService,
+    public ModelProviderFacade(
+            AgentWorkspaceDomainService agentWorkspaceDomainService,
             LLMDomainService llmDomainService) {
         this.agentWorkspaceDomainService = agentWorkspaceDomainService;
         this.llmDomainService = llmDomainService;
     }
 
-    /** 获取并验证模型和提供商
+    /**
+     * 获取并验证模型和提供商
      *
      * @param agentId 代理ID
-     * @param userId 用户ID
-     * @return 模型提供商结果 */
+     * @param userId  用户ID
+     * @return 模型提供商结果
+     */
     public ModelProviderResult getModelAndProvider(String agentId, String userId) {
         // 从工作区中获取对应的模型信息
         AgentWorkspaceEntity workspace = agentWorkspaceDomainService.getWorkspace(agentId, userId);
@@ -44,25 +50,36 @@ public class ModelProviderFacade {
 
         // 构建提供商配置
         org.feynix.domain.llm.model.config.ProviderConfig domainConfig = provider.getConfig();
-        ProviderConfig providerConfig = new ProviderConfig(domainConfig.getApiKey(), domainConfig.getBaseUrl(),
-                model.getModelId(), provider.getProtocol());
+        ProviderConfig providerConfig = new ProviderConfig(
+                domainConfig.getApiKey(),
+                domainConfig.getBaseUrl(),
+                model.getModelId(),
+                provider.getProtocol());
 
         // 获取流式聊天客户端
-        StreamingChatModel chatStreamClient = LLMProviderService.getStream(provider.getProtocol(), providerConfig);
+        StreamingChatLanguageModel chatStreamClient = LLMProviderService.getStream(
+                provider.getProtocol(),
+                providerConfig);
 
         return new ModelProviderResult(model, provider, llmModelConfig, providerConfig, chatStreamClient);
     }
 
-    /** 模型提供商结果 */
+    /**
+     * 模型提供商结果
+     */
     public static class ModelProviderResult {
         private final ModelEntity modelEntity;
         private final ProviderEntity providerEntity;
         private final LLMModelConfig llmModelConfig;
         private final ProviderConfig providerConfig;
-        private final StreamingChatModel chatStreamClient;
+        private final StreamingChatLanguageModel chatStreamClient;
 
-        public ModelProviderResult(ModelEntity modelEntity, ProviderEntity providerEntity,
-                LLMModelConfig llmModelConfig, ProviderConfig providerConfig, StreamingChatModel chatStreamClient) {
+        public ModelProviderResult(
+                ModelEntity modelEntity,
+                ProviderEntity providerEntity,
+                LLMModelConfig llmModelConfig,
+                ProviderConfig providerConfig,
+                StreamingChatLanguageModel chatStreamClient) {
             this.modelEntity = modelEntity;
             this.providerEntity = providerEntity;
             this.llmModelConfig = llmModelConfig;
@@ -86,8 +103,8 @@ public class ModelProviderFacade {
             return providerConfig;
         }
 
-        public StreamingChatModel getChatStreamClient() {
+        public StreamingChatLanguageModel getChatStreamClient() {
             return chatStreamClient;
         }
     }
-}
+} 

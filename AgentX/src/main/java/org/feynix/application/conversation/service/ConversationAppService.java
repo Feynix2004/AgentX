@@ -22,7 +22,7 @@ import org.feynix.domain.conversation.service.MessageDomainService;
 import org.feynix.domain.conversation.service.SessionDomainService;
 import org.feynix.domain.llm.model.ModelEntity;
 import org.feynix.domain.llm.model.ProviderEntity;
-import org.feynix.domain.llm.service.LlmDomainService;
+import org.feynix.domain.llm.service.LLMDomainService;
 import org.feynix.domain.shared.enums.TokenOverflowStrategyEnum;
 import org.feynix.domain.token.model.TokenMessage;
 import org.feynix.domain.token.model.TokenProcessResult;
@@ -48,7 +48,7 @@ public class ConversationAppService {
     private final SessionDomainService sessionDomainService;
     private final AgentDomainService agentDomainService;
     private final AgentWorkspaceDomainService agentWorkspaceDomainService;
-    private final LlmDomainService llmDomainService;
+    private final LLMDomainService llmDomainService;
     private final ContextDomainService contextDomainService;
     private final TokenDomainService tokenDomainService;
     private final MessageDomainService messageDomainService;
@@ -63,7 +63,7 @@ public class ConversationAppService {
             SessionDomainService sessionDomainService,
             AgentDomainService agentDomainService,
             AgentWorkspaceDomainService agentWorkspaceDomainService,
-            LlmDomainService llmDomainService,
+            LLMDomainService llmDomainService,
             ContextDomainService contextDomainService,
             TokenDomainService tokenDomainService,
             MessageDomainService messageDomainService,
