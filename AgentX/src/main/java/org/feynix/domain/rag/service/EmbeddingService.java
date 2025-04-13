@@ -10,7 +10,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
-import org.feynix.domain.rag.RagDocSyncStorageMessage;
+import org.feynix.domain.rag.message.RagDocSyncStorageMessage;
 import org.feynix.domain.rag.constant.EmbeddingStatus;
 import org.feynix.domain.rag.constant.FileInitializeStatus;
 import org.feynix.domain.rag.constant.MetadataConstant;

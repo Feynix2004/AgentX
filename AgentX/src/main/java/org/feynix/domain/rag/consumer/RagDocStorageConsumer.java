@@ -17,7 +17,7 @@ import org.springframework.amqp.rabbit.annotation.QueueBinding;
 import org.springframework.amqp.rabbit.annotation.RabbitHandler;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
-import org.feynix.domain.rag.RagDocSyncStorageMessage;
+import org.feynix.domain.rag.message.RagDocSyncStorageMessage;
 import org.feynix.domain.rag.service.EmbeddingService;
 import org.feynix.infrastructure.mq.events.RagDocSyncStorageEvent;
 import org.feynix.infrastructure.mq.model.MqMessage;

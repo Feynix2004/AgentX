@@ -1,4 +1,4 @@
-package org.feynix.domain.rag;
+package org.feynix.domain.rag.message;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -17,7 +17,7 @@ public class RagDocSyncStorageMessage implements Serializable {
     private String id;
 
     /**
-     * 文档ID
+     * 文件ID
      */
     private String fileId;
 
