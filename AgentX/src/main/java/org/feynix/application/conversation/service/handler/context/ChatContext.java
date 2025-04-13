@@ -1,12 +1,12 @@
-package org.feynix.application.conversation.service.handler.context;
+package org.feynix.application.conversation.service.handler.content;
 
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
-import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.openai.OpenAiChatRequestParameters;
+import org.feynix.application.conversation.service.message.agent.template.AgentPromptTemplates;
 import org.feynix.domain.agent.model.AgentEntity;
 import org.feynix.domain.agent.model.LLMModelConfig;
 import org.feynix.domain.conversation.constant.Role;
@@ -18,46 +18,55 @@ import org.feynix.domain.llm.model.ProviderEntity;
 import java.util.ArrayList;
 import java.util.List;
 
-/** chat 上下文，包含对话所需的所有信息 */
+
+/**
+ * chat 上下文，包含对话所需的所有信息
+ */
 public class ChatContext {
-    /** 会话ID */
+    /**
+     * 会话ID
+     */
     private String sessionId;
-
-    /** 用户ID */
+    
+    /**
+     * 用户ID
+     */
     private String userId;
-
-    /** 用户消息 */
+    
+    /**
+     * 用户消息
+     */
     private String userMessage;
-
-    /** 智能体实体 */
+    
+    /**
+     * 智能体实体
+     */
     private AgentEntity agent;
-
-    /** 模型实体 */
+    
+    /**
+     * 模型实体
+     */
     private ModelEntity model;
-
-    /** 服务商实体 */
+    
+    /**
+     * 服务商实体
+     */
     private ProviderEntity provider;
-
-    /** 大模型配置 */
+    
+    /**
+     * 大模型配置
+     */
     private LLMModelConfig llmModelConfig;
-
-    /** 上下文实体 */
+    
+    /**
+     * 上下文实体
+     */
     private ContextEntity contextEntity;
-
-    /** 历史消息列表 */
+    
+    /**
+     * 历史消息列表
+     */
     private List<MessageEntity> messageHistory;
-
-    /** 使用的 mcp server name */
-    private List<String> mcpServerNames;
-
-    /** 多模态的文件 */
-    private List<String> fileUrls;
-
-    /** 高可用实例ID */
-    private String instanceId;
-
-    /** 是否流式响应 */
-    private boolean streaming = true;
 
     public String getSessionId() {
         return sessionId;
@@ -131,35 +140,48 @@ public class ChatContext {
         this.messageHistory = messageHistory;
     }
 
-    public List<String> getMcpServerNames() {
-        return mcpServerNames;
-    }
+    public dev.langchain4j.model.chat.request.ChatRequest.Builder prepareChatRequest() {
+        // 构建聊天消息列表
+        List<ChatMessage> chatMessages = new ArrayList<>();
+        dev.langchain4j.model.chat.request.ChatRequest.Builder chatRequestBuilder =
+                new dev.langchain4j.model.chat.request.ChatRequest.Builder();
 
-    public void setMcpServerNames(List<String> mcpServerNames) {
-        this.mcpServerNames = mcpServerNames;
-    }
+        // 1. 首先添加系统提示(如果有)
+        if (StringUtils.isNotEmpty(this.getAgent().getSystemPrompt())) {
+            chatMessages.add(new SystemMessage(this.getAgent().getSystemPrompt()));
+        }
 
-    public List<String> getFileUrls() {
-        return fileUrls;
-    }
+        // 2. 有条件地添加摘要信息(作为AI消息，但有明确的前缀标识)
+        if (StringUtils.isNotEmpty(this.getContextEntity().getSummary())) {
+            // 添加为AI消息，但明确标识这是摘要
+            chatMessages.add(new AiMessage(AgentPromptTemplates.getSummaryPrefix() + this.getContextEntity().getSummary()));
+        }
 
-    public void setFileUrls(List<String> fileUrls) {
-        this.fileUrls = fileUrls;
-    }
+        // 3. 添加对话历史
+        for (MessageEntity messageEntity : this.getMessageHistory()) {
+            Role role = messageEntity.getRole();
+            String content = messageEntity.getContent();
+            if (role == Role.USER) {
+                chatMessages.add(new UserMessage(content));
+            } else if (role == Role.SYSTEM) {
+                // 历史中的SYSTEM角色实际上是AI的回复
+                chatMessages.add(new AiMessage(content));
+            }
+        }
 
-    public String getInstanceId() {
-        return instanceId;
-    }
+        // 4. 添加当前用户消息
+        chatMessages.add(new UserMessage(this.getUserMessage()));
 
-    public void setInstanceId(String instanceId) {
-        this.instanceId = instanceId;
-    }
+        // 构建请求参数
+        OpenAiChatRequestParameters.Builder parameters = new OpenAiChatRequestParameters.Builder();
+        parameters.modelName(this.getModel().getModelId());
+        parameters.topP(this.getLlmModelConfig().getTopP())
+                .temperature(this.getLlmModelConfig().getTemperature());
 
-    public boolean isStreaming() {
-        return streaming;
-    }
+        // 设置消息和参数
+        chatRequestBuilder.messages(chatMessages);
+        chatRequestBuilder.parameters(parameters.build());
 
-    public void setStreaming(boolean streaming) {
-        this.streaming = streaming;
+        return chatRequestBuilder;
     }
-}
+} 
