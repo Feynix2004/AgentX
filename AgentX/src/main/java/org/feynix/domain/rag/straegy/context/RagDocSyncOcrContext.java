@@ -5,7 +5,6 @@ import java.util.Map;
 import org.springframework.stereotype.Service;
 import org.feynix.domain.rag.model.enums.RagDocSyncOcrEnum;
 import org.feynix.domain.rag.straegy.RagDocSyncOcrStrategy;
-import org.feynix.infrastructure.enums.IBaseEnum;
 
 import jakarta.annotation.Resource;
 
@@ -21,6 +20,6 @@ public class RagDocSyncOcrContext {
     private Map<String, RagDocSyncOcrStrategy> taskExportStrategyMap;
 
     public RagDocSyncOcrStrategy getTaskExportStrategy(String strategy) {
-        return taskExportStrategyMap.get(IBaseEnum.getLabelByValue(strategy, RagDocSyncOcrEnum.class));
+        return taskExportStrategyMap.get(RagDocSyncOcrEnum.getLabelByValue(strategy));
     }
 }
