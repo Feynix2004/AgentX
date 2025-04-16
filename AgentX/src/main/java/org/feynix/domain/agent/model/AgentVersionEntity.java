@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import org.apache.ibatis.type.JdbcType;
 import org.feynix.domain.agent.constant.PublishStatus;
+import org.feynix.infrastructure.converter.ListConverter;
 import org.feynix.infrastructure.entity.BaseEntity;
 import org.feynix.infrastructure.typehandler.JsonTypeHandler;
 
@@ -70,13 +71,13 @@ public class AgentVersionEntity extends BaseEntity {
     /**
      * Agent可使用的工具列表
      */
-    @TableField(value = "tools", typeHandler = JsonTypeHandler.class, jdbcType = JdbcType.OTHER)
+    @TableField(value = "tools", typeHandler = ListConverter.class)
     private List<AgentTool> tools;
 
     /**
      * 关联的知识库ID列表
      */
-    @TableField(value = "knowledge_base_ids", typeHandler = JsonTypeHandler.class, jdbcType = JdbcType.OTHER)
+    @TableField(value = "knowledge_base_ids", typeHandler = ListConverter.class)
     private List<String> knowledgeBaseIds;
 
     /**
