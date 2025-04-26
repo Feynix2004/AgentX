@@ -15,7 +15,6 @@ import org.feynix.domain.rag.dto.resp.RerankResponse;
 import org.feynix.infrastructure.rag.config.EmbeddingProperties;
 import org.feynix.domain.rag.dto.req.EmbeddingReqDTO;
 import org.feynix.infrastructure.rag.config.RerankProperties;
-import org.feynix.infrastructure.util.JsonUtils;
 
 /**
  * @author shilong.zang
