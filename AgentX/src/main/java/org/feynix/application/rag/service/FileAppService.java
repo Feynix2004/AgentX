@@ -4,7 +4,7 @@ package org.feynix.application.rag.service;
 import org.springframework.stereotype.Service;
 import org.feynix.application.rag.assembler.FileAssembler;
 import org.feynix.domain.rag.model.FileDetailEntity;
-import org.feynix.domain.rag.service.FileDetailService;
+import org.feynix.domain.rag.service.FileDetailDomainService;
 import org.feynix.interfaces.dto.rag.RagUploadRequest;
 
 /**
@@ -13,11 +13,11 @@ import org.feynix.interfaces.dto.rag.RagUploadRequest;
  */
 
 @Service
-public class FileService {
+public class FileAppService {
 
-    private final FileDetailService fileDetailService;
+    private final FileDetailDomainService fileDetailService;
 
-    public FileService(FileDetailService fileDetailService) {
+    public FileAppService(FileDetailDomainService fileDetailService) {
         this.fileDetailService = fileDetailService;
     }
 

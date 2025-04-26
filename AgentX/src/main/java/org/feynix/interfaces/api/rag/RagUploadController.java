@@ -2,10 +2,9 @@ package org.feynix.interfaces.api.rag;
 
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.feynix.application.rag.service.FileService;
+import org.feynix.application.rag.service.FileAppService;
 import org.feynix.interfaces.api.common.Result;
 import org.feynix.interfaces.dto.rag.RagUploadRequest;
 
@@ -17,9 +16,9 @@ import org.feynix.interfaces.dto.rag.RagUploadRequest;
 @RequestMapping("/rag/file")
 public class RagUploadController {
 
-    private final FileService fileService;
+    private final FileAppService fileService;
 
-    public RagUploadController(FileService fileService) {
+    public RagUploadController(FileAppService fileService) {
         this.fileService = fileService;
     }
 
