@@ -1,12 +1,11 @@
 package org.feynix.infrastructure.llm.protocol.enums;
 
-import org.feynix.domain.conversation.constant.Role;
 import org.feynix.infrastructure.exception.BusinessException;
 
 public enum ProviderProtocol {
 
     OpenAI,
-    CLAUDE;
+    ANTHROPIC;
 
     public static ProviderProtocol fromCode(String code) {
         for (ProviderProtocol protocol : values()) {
