@@ -8,9 +8,7 @@ import org.feynix.application.agent.service.AgentWorkspaceAppService;
 import org.feynix.domain.agent.model.AgentWorkspaceEntity;
 import org.feynix.infrastructure.repository.MyBatisPlusExtRepository;
 
-/**
- * Agent工作区仓库接口
- */
+/** Agent工作区仓库接口 */
 @Mapper
 public interface AgentWorkspaceRepository extends MyBatisPlusExtRepository<AgentWorkspaceEntity> {
 

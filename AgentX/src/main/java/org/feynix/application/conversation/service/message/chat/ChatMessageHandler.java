@@ -5,15 +5,11 @@ import org.feynix.application.conversation.service.message.AbstractMessageHandle
 import org.feynix.domain.conversation.service.MessageDomainService;
 import org.feynix.infrastructure.llm.LLMServiceFactory;
 
-/**
- * 标准消息处理器
- */
+/** 标准消息处理器 */
 @Component(value = "chatMessageHandler")
 public class ChatMessageHandler extends AbstractMessageHandler {
 
-    public ChatMessageHandler(
-            LLMServiceFactory llmServiceFactory,
-            MessageDomainService messageDomainService) {
+    public ChatMessageHandler(LLMServiceFactory llmServiceFactory, MessageDomainService messageDomainService) {
         super(llmServiceFactory, messageDomainService);
     }
 }

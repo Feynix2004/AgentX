@@ -5,9 +5,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.feynix.domain.conversation.model.SessionEntity;
 import org.feynix.infrastructure.repository.MyBatisPlusExtRepository;
 
-/**
- * 会话仓库接口
- */
+/** 会话仓库接口 */
 @Mapper
 public interface SessionRepository extends MyBatisPlusExtRepository<SessionEntity> {
 }
