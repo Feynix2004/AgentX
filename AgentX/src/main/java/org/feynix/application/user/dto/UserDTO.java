@@ -1,7 +1,5 @@
 package org.feynix.application.user.dto;
 
-
-
 public class UserDTO {
 
     private String id;
