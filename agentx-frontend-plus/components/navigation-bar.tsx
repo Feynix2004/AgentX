@@ -152,7 +152,6 @@ export function NavigationBar() {
                   </Avatar>
                   <div>
                     <div className="font-medium">feynix</div>
-                    <div className="text-xs text-muted-foreground">feynix@example.com</div>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
