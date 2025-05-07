@@ -5,6 +5,7 @@ import org.feynix.application.user.assembler.UserAssembler;
 import org.feynix.application.user.dto.UserDTO;
 import org.feynix.domain.user.model.UserEntity;
 import org.feynix.domain.user.service.UserDomainService;
+import org.feynix.interfaces.dto.user.request.UserUpdateRequest;
 
 @Service
 public class UserAppService {
@@ -19,5 +20,11 @@ public class UserAppService {
     public UserDTO getUserInfo(String id) {
         UserEntity userEntity = userDomainService.getUserInfo(id);
         return UserAssembler.toDTO(userEntity);
+    }
+
+    /** 修改用户信息 */
+    public void updateUserInfo(UserUpdateRequest userUpdateRequest, String userId) {
+        UserEntity user = UserAssembler.toEntity(userUpdateRequest, userId);
+        userDomainService.updateUserInfo(user);
     }
 }

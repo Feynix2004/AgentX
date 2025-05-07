@@ -4,10 +4,9 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import org.apache.ibatis.type.JdbcType;
 import org.feynix.domain.agent.constant.AgentType;
 import org.feynix.infrastructure.entity.BaseEntity;
-import org.feynix.infrastructure.typehandler.JsonTypeHandler;
+import org.feynix.infrastructure.exception.BusinessException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -227,5 +226,11 @@ public class AgentEntity extends BaseEntity {
     /** 获取Agent类型枚举 */
     public AgentType getAgentTypeEnum() {
         return AgentType.fromCode(this.agentType);
+    }
+
+    public void isEnable() {
+        if (!this.enabled) {
+            throw new BusinessException("助理未激活");
+        }
     }
 }

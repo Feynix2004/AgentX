@@ -4,6 +4,7 @@ import org.springframework.beans.BeanUtils;
 import org.feynix.application.user.dto.UserDTO;
 import org.feynix.domain.user.model.UserEntity;
 import org.feynix.interfaces.dto.user.request.RegisterRequest;
+import org.feynix.interfaces.dto.user.request.UserUpdateRequest;
 
 public class UserAssembler {
 
@@ -23,6 +24,13 @@ public class UserAssembler {
     public static UserEntity toEntity(RegisterRequest registerRequest) {
         UserEntity userEntity = new UserEntity();
         BeanUtils.copyProperties(registerRequest, userEntity);
+        return userEntity;
+    }
+
+    public static UserEntity toEntity(UserUpdateRequest userUpdateRequest, String userId) {
+        UserEntity userEntity = new UserEntity();
+        BeanUtils.copyProperties(userUpdateRequest, userEntity);
+        userEntity.setId(userId);
         return userEntity;
     }
 }
