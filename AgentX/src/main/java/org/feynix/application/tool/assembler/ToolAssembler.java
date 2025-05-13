@@ -2,9 +2,12 @@ package org.feynix.application.tool.assembler;
 
 import org.springframework.beans.BeanUtils;
 import org.feynix.application.tool.dto.ToolDTO;
+import org.feynix.application.tool.dto.ToolVersionDTO;
 import org.feynix.domain.tool.constant.ToolStatus;
 import org.feynix.domain.tool.constant.ToolType;
 import org.feynix.domain.tool.model.ToolEntity;
+import org.feynix.domain.tool.model.ToolVersionEntity;
+import org.feynix.domain.tool.model.UserToolEntity;
 import org.feynix.infrastructure.utils.JsonUtils;
 import org.feynix.interfaces.dto.tool.request.CreateToolRequest;
 import org.feynix.interfaces.dto.tool.request.UpdateToolRequest;
@@ -48,6 +51,13 @@ public class ToolAssembler {
         return toolDTO;
     }
 
+    public static ToolVersionDTO toDTO(ToolVersionEntity entity) {
+        ToolVersionDTO toolVersionDTO = new ToolVersionDTO();
+        BeanUtils.copyProperties(entity, toolVersionDTO);
+        return toolVersionDTO;
+    }
+
+
     /**
      * 将工具实体列表转换为DTO列表
      *
@@ -66,5 +76,11 @@ public class ToolAssembler {
         BeanUtils.copyProperties(request, toolEntity);
         toolEntity.setUserId(userId);
         return toolEntity;
+    }
+
+    public static ToolDTO toDTO(UserToolEntity userToolEntity) {
+        ToolDTO toolDTO = new ToolDTO();
+        BeanUtils.copyProperties(userToolEntity, toolDTO);
+        return toolDTO;
     }
 }
