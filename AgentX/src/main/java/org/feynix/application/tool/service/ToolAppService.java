@@ -1,4 +1,4 @@
-package org.feynix.application.tool.service.impl;
+package org.feynix.application.tool.service;
 
 import java.util.*;
 
