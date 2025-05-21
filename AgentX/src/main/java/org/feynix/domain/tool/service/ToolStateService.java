@@ -3,7 +3,6 @@ package org.feynix.domain.tool.service;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.feynix.domain.tool.constant.ToolStatus;
@@ -17,8 +16,8 @@ import org.feynix.domain.tool.service.state.impl.ManualReviewProcessor;
 import org.feynix.domain.tool.service.state.impl.PublishingProcessor;
 import org.feynix.domain.tool.service.state.impl.WaitingReviewProcessor;
 import org.feynix.infrastructure.exception.BusinessException;
-import org.feynix.infrastructure.external_services.GitHubService;
-import org.feynix.infrastructure.external_services.MCPGatewayService;
+import org.feynix.infrastructure.github.GitHubService;
+import org.feynix.infrastructure.mcp_gateway.MCPGatewayService;
 
 import java.util.HashMap;
 import java.util.Map;

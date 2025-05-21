@@ -1,20 +1,14 @@
 package org.feynix.domain.tool.service.state.impl;
 
-import dev.langchain4j.agent.tool.ToolSpecification;
-import dev.langchain4j.mcp.client.DefaultMcpClient;
-import dev.langchain4j.mcp.client.McpClient;
-import dev.langchain4j.mcp.client.transport.http.HttpMcpTransport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.feynix.domain.tool.constant.ToolStatus;
 import org.feynix.domain.tool.model.ToolEntity;
 import org.feynix.domain.tool.model.config.ToolDefinition;
-import org.feynix.domain.tool.model.config.ToolSpecificationConverter;
 import org.feynix.domain.tool.service.state.ToolStateProcessor;
 import org.feynix.infrastructure.exception.BusinessException;
-import org.feynix.infrastructure.external_services.MCPGatewayService;
+import org.feynix.infrastructure.mcp_gateway.MCPGatewayService;
 
-import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 

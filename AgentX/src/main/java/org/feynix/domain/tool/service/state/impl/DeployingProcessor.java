@@ -6,7 +6,7 @@ import org.feynix.domain.tool.constant.ToolStatus;
 import org.feynix.domain.tool.model.ToolEntity;
 import org.feynix.domain.tool.service.state.ToolStateProcessor;
 import org.feynix.infrastructure.exception.BusinessException;
-import org.feynix.infrastructure.external_services.MCPGatewayService;
+import org.feynix.infrastructure.mcp_gateway.MCPGatewayService;
 import org.feynix.infrastructure.utils.JsonUtils;
 
 import java.util.Map;
