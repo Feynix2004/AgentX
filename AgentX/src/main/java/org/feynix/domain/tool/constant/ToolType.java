@@ -2,9 +2,7 @@ package org.feynix.domain.tool.constant;
 
 import org.feynix.infrastructure.exception.BusinessException;
 
-/**
- * 工具类型枚举
- */
+/** 工具类型枚举 */
 public enum ToolType {
 
     MCP;
@@ -17,4 +15,4 @@ public enum ToolType {
         }
         throw new BusinessException("未知的工具类型码: " + code);
     }
-} 
+}

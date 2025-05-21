@@ -1,6 +1,5 @@
 package org.feynix.interfaces.dto.tool.request;
 
-
 import org.feynix.interfaces.dto.Page;
 
 public class QueryToolRequest extends Page {
