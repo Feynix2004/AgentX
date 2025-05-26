@@ -14,6 +14,7 @@ import org.feynix.domain.conversation.model.MessageEntity;
 import org.feynix.domain.conversation.model.SessionEntity;
 import org.feynix.domain.conversation.service.ConversationDomainService;
 import org.feynix.domain.conversation.service.SessionDomainService;
+import org.feynix.domain.scheduledtask.service.ScheduledTaskExecutionService;
 import org.feynix.infrastructure.exception.BusinessException;
 import org.feynix.interfaces.dto.conversation.request.ConversationRequest;
 
@@ -28,13 +29,16 @@ public class AgentSessionAppService {
 
     private final ConversationDomainService conversationDomainService;
 
+    private final ScheduledTaskExecutionService scheduledTaskExecutionService;
+
     public AgentSessionAppService(AgentWorkspaceDomainService agentWorkspaceDomainService,
             AgentDomainService agentServiceDomainService, SessionDomainService sessionDomainService,
-            ConversationDomainService conversationDomainService) {
+            ConversationDomainService conversationDomainService, ScheduledTaskExecutionService scheduledTaskExecutionService) {
         this.agentWorkspaceDomainService = agentWorkspaceDomainService;
         this.agentServiceDomainService = agentServiceDomainService;
         this.sessionDomainService = sessionDomainService;
         this.conversationDomainService = conversationDomainService;
+        this.scheduledTaskExecutionService = scheduledTaskExecutionService;
     }
 
     /** 获取助理下的会话列表
@@ -98,6 +102,9 @@ public class AgentSessionAppService {
 
         // 删除会话下的消息
         conversationDomainService.deleteConversationMessages(id);
+
+        // 删除定时任务（包括取消延迟队列中的任务）
+        scheduledTaskExecutionService.deleteTasksBySessionId(id, userId);
     }
 
     /** 发送消息
