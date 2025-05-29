@@ -17,6 +17,7 @@ import org.feynix.domain.scheduledtask.model.RepeatConfig;
 import org.feynix.domain.tool.constant.ToolStatus;
 import org.feynix.domain.tool.constant.ToolType;
 import org.feynix.domain.tool.constant.UploadType;
+import org.feynix.domain.user.model.config.UserSettingsConfig;
 import org.feynix.infrastructure.converter.*;
 
 import jakarta.annotation.PostConstruct;
@@ -55,6 +56,7 @@ public class MyBatisTypeHandlerConfig {
         typeHandlerRegistry.register(RepeatType.class, new RepeatTypeConverter());
         typeHandlerRegistry.register(RepeatConfig.class, new RepeatConfigConverter());
         typeHandlerRegistry.register(ScheduleTaskStatus.class, new ScheduledTaskStatusConverter());
+        typeHandlerRegistry.register(UserSettingsConfig.class, new UserSettingsConfigConverter());
 
         log.info("手动注册类型处理器：ProviderConfigConverter");
 
