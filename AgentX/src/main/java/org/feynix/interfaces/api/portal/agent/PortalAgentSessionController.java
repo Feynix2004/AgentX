@@ -3,6 +3,7 @@ package org.feynix.interfaces.api.portal.agent;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.feynix.application.agent.service.AgentSessionAppService;
+import org.feynix.application.conversation.dto.AgentPreviewRequest;
 import org.feynix.application.conversation.dto.ChatRequest;
 import org.feynix.application.conversation.service.ConversationAppService;
 import org.feynix.application.conversation.dto.MessageDTO;
@@ -76,5 +77,17 @@ public class PortalAgentSessionController {
     @PostMapping("/chat")
     public SseEmitter chat(@RequestBody @Validated ChatRequest chatRequest) {
         return conversationAppService.chat(chatRequest, UserContext.getCurrentUserId());
+    }
+
+    /**
+     * Agent预览功能
+     * 用于在创建/编辑Agent时预览对话效果，无需保存会话
+     * @param previewRequest 预览请求对象
+     * @return SSE流
+     */
+    @PostMapping("/preview")
+    public SseEmitter preview(@RequestBody AgentPreviewRequest previewRequest) {
+        String userId = UserContext.getCurrentUserId();
+        return conversationAppService.previewAgent(previewRequest, userId);
     }
 }
