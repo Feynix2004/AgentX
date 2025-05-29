@@ -7,7 +7,9 @@ import org.springframework.stereotype.Service;
 import org.feynix.domain.tool.model.ToolEntity;
 import org.feynix.domain.tool.repository.ToolRepository;
 import org.feynix.domain.user.model.UserEntity;
+import org.feynix.domain.user.model.UserSettingsEntity;
 import org.feynix.domain.user.repository.UserRepository;
+import org.feynix.domain.user.repository.UserSettingsRepository;
 import org.feynix.infrastructure.exception.BusinessException;
 import org.feynix.infrastructure.utils.PasswordUtils;
 
@@ -21,9 +23,12 @@ public class UserDomainService {
 
     private final UserRepository userRepository;
 
-    public UserDomainService(UserRepository userRepository) {
+    private final UserSettingsRepository settingsRepository;
+
+    public UserDomainService(UserRepository userRepository, UserSettingsRepository settingsRepository) {
         this.userRepository = userRepository;
 
+        this.settingsRepository = settingsRepository;
     }
 
     /** 获取用户信息 */
@@ -63,6 +68,9 @@ public class UserDomainService {
         String nickname = generateNickname();
         userEntity.setNickname(nickname);
         userRepository.checkInsert(userEntity);
+        UserSettingsEntity userSettingsEntity = new UserSettingsEntity();
+        userSettingsEntity.setUserId(userEntity.getId());
+        settingsRepository.insert(userSettingsEntity);
         return userEntity;
     }
 
