@@ -8,4 +8,4 @@ import org.feynix.infrastructure.repository.MyBatisPlusExtRepository;
 @Mapper
 public interface UserSettingsRepository extends MyBatisPlusExtRepository<UserSettingsEntity> {
 
-} 
+}
