@@ -1,5 +1,6 @@
 package org.feynix.application.conversation.assembler;
 
+import org.springframework.beans.BeanUtils;
 import org.feynix.domain.conversation.model.MessageEntity;
 import org.feynix.application.conversation.dto.MessageDTO;
 
@@ -20,12 +21,8 @@ public class MessageAssembler {
         }
 
         MessageDTO dto = new MessageDTO();
-        dto.setId(message.getId());
-        dto.setRole(message.getRole());
-        dto.setContent(message.getContent());
-        dto.setCreatedAt(message.getCreatedAt());
-        dto.setMessageType(message.getMessageType());
 
+        BeanUtils.copyProperties(message, dto);
         return dto;
     }
 

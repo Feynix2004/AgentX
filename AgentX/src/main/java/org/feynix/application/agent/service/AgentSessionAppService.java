@@ -2,10 +2,12 @@ package org.feynix.application.agent.service;
 
 import java.util.List;
 
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.feynix.application.conversation.assembler.SessionAssembler;
 import org.feynix.domain.agent.model.AgentEntity;
+import org.feynix.domain.agent.model.AgentVersionEntity;
 import org.feynix.domain.agent.service.AgentDomainService;
 import org.feynix.domain.agent.service.AgentWorkspaceDomainService;
 import org.feynix.application.conversation.dto.SessionDTO;
@@ -64,7 +66,19 @@ public class AgentSessionAppService {
             SessionEntity session = sessionDomainService.createSession(agentId, userId);
             sessions.add(session);
         }
-        return SessionAssembler.toDTOs(sessions);
+
+        AgentEntity agent = agentServiceDomainService.getAgentById(agentId);
+        Boolean multiModal = agent.getMultiModal();
+        if (!agent.getUserId().equals(userId)) {
+            AgentVersionEntity latestAgentVersion = agentServiceDomainService.getLatestAgentVersion(agentId);
+            multiModal = latestAgentVersion.getMultiModal();
+        }
+
+        List<SessionDTO> dtOs = SessionAssembler.toDTOs(sessions);
+        for (SessionDTO dtO : dtOs) {
+            dtO.setMultiModal(multiModal);
+        }
+        return dtOs;
 
     }
 

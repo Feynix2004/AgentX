@@ -3,11 +3,14 @@ package org.feynix.domain.conversation.model;
 import com.baomidou.mybatisplus.annotation.*;
 import org.feynix.domain.conversation.constant.MessageType;
 import org.feynix.domain.conversation.constant.Role;
+import org.feynix.infrastructure.converter.ListConverter;
 import org.feynix.infrastructure.converter.MessageTypeConverter;
 import org.feynix.infrastructure.converter.RoleConverter;
 import org.feynix.infrastructure.entity.BaseEntity;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 /** 消息实体类，代表对话中的一条消息 */
 @TableName("messages")
@@ -52,6 +55,9 @@ public class MessageEntity extends BaseEntity {
     /** 消息元数据 */
     @TableField("metadata")
     private String metadata;
+
+    @TableField(value = "file_urls",typeHandler = ListConverter.class)
+    private List<String> fileUrls = new ArrayList<>();
 
     /** 无参构造函数 */
     public MessageEntity() {
@@ -148,5 +154,13 @@ public class MessageEntity extends BaseEntity {
 
     public boolean isSystemMessage() {
         return this.role == Role.SYSTEM;
+    }
+
+    public List<String> getFileUrls() {
+        return fileUrls;
+    }
+
+    public void setFileUrls(List<String> fileUrls) {
+        this.fileUrls = fileUrls;
     }
 }
