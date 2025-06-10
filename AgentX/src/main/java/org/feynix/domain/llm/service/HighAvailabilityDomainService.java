@@ -3,6 +3,9 @@ package org.feynix.domain.llm.service;
 import org.feynix.domain.llm.model.HighAvailabilityResult;
 import org.feynix.domain.llm.model.ModelEntity;
 import org.feynix.domain.llm.model.ProviderEntity;
+import org.feynix.domain.llm.event.ModelsBatchDeletedEvent;
+
+import java.util.List;
 
 /**
  * 高可用领域服务接口
@@ -74,4 +77,12 @@ public interface HighAvailabilityDomainService {
      * @param reason 状态变更原因
      */
     void changeModelStatusInGateway(ModelEntity model, boolean enabled, String reason);
+
+    /**
+     * 批量从高可用网关删除模型
+     * 
+     * @param deleteItems 要删除的模型列表
+     * @param userId 用户ID
+     */
+    void batchRemoveModelsFromGateway(List<ModelsBatchDeletedEvent.ModelDeleteItem> deleteItems, String userId);
 } 
