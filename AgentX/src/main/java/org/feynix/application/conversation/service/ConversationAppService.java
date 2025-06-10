@@ -10,7 +10,7 @@ import org.feynix.application.conversation.dto.MessageDTO;
 import org.feynix.application.conversation.service.message.AbstractMessageHandler;
 import org.feynix.application.conversation.service.message.preview.PreviewMessageHandler;
 import org.feynix.application.user.service.UserSettingsAppService;
-import org.feynix.domain.agent.constant.AgentType;
+
 import org.feynix.domain.agent.model.AgentEntity;
 import org.feynix.domain.agent.model.AgentVersionEntity;
 import org.feynix.domain.agent.model.AgentWorkspaceEntity;
@@ -374,7 +374,7 @@ public class ConversationAppService {
         virtualAgent.setSystemPrompt(previewRequest.getSystemPrompt());
         virtualAgent.setToolIds(previewRequest.getToolIds());
         virtualAgent.setToolPresetParams(previewRequest.getToolPresetParams());
-        virtualAgent.setAgentType(AgentType.CHAT_ASSISTANT.getCode());
+
         virtualAgent.setEnabled(true);
         virtualAgent.setCreatedAt(LocalDateTime.now());
         virtualAgent.setUpdatedAt(LocalDateTime.now());
