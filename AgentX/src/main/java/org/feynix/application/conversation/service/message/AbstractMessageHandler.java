@@ -16,6 +16,7 @@ import org.feynix.domain.conversation.constant.Role;
 import org.feynix.domain.conversation.model.MessageEntity;
 import org.feynix.domain.conversation.service.MessageDomainService;
 import org.feynix.domain.llm.service.HighAvailabilityDomainService;
+import org.feynix.infrastructure.exception.BusinessException;
 import org.feynix.infrastructure.llm.LLMServiceFactory;
 import org.feynix.infrastructure.transport.MessageTransport;
 
@@ -111,6 +112,7 @@ public abstract class AbstractMessageHandler {
         tokenStream.onPartialResponse(reply -> {
             messageBuilder.get().append(reply);
             transport.sendMessage(connection, AgentChatResponse.build(reply, MessageType.TEXT));
+            throw new BusinessException("test");
         });
 
         // 完整响应处理
