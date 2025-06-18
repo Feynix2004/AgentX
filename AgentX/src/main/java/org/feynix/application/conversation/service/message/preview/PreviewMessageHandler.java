@@ -11,7 +11,10 @@ import org.feynix.application.conversation.service.message.agent.AgentToolManage
 import org.feynix.domain.conversation.constant.MessageType;
 import org.feynix.domain.conversation.model.MessageEntity;
 import org.feynix.domain.conversation.service.MessageDomainService;
+import org.feynix.domain.conversation.service.SessionDomainService;
 import org.feynix.domain.llm.service.HighAvailabilityDomainService;
+import org.feynix.domain.llm.service.LLMDomainService;
+import org.feynix.domain.user.service.UserSettingsDomainService;
 import org.feynix.infrastructure.llm.LLMServiceFactory;
 import org.feynix.infrastructure.transport.MessageTransport;
 
@@ -26,11 +29,17 @@ public class PreviewMessageHandler extends AbstractMessageHandler {
 
     protected final HighAvailabilityDomainService highAvailabilityDomainService;
 
-    public PreviewMessageHandler(LLMServiceFactory llmServiceFactory, MessageDomainService messageDomainService,
-            AgentToolManager agentToolManager, HighAvailabilityDomainService highAvailabilityDomainService) {
-        super(llmServiceFactory, messageDomainService, highAvailabilityDomainService);
+    protected final SessionDomainService sessionDomainService;
+    protected final UserSettingsDomainService userSettingsDomainService;
+    protected final LLMDomainService llmDomainService;
+
+    public PreviewMessageHandler(LLMServiceFactory llmServiceFactory, MessageDomainService messageDomainService, HighAvailabilityDomainService highAvailabilityDomainService, SessionDomainService sessionDomainService, UserSettingsDomainService userSettingsDomainService, LLMDomainService llmDomainService, AgentToolManager agentToolManager, HighAvailabilityDomainService highAvailabilityDomainService1, SessionDomainService sessionDomainService1, UserSettingsDomainService userSettingsDomainService1, LLMDomainService llmDomainService1) {
+        super(llmServiceFactory, messageDomainService, highAvailabilityDomainService, sessionDomainService, userSettingsDomainService, llmDomainService);
         this.agentToolManager = agentToolManager;
-        this.highAvailabilityDomainService = highAvailabilityDomainService;
+        this.highAvailabilityDomainService = highAvailabilityDomainService1;
+        this.sessionDomainService = sessionDomainService1;
+        this.userSettingsDomainService = userSettingsDomainService1;
+        this.llmDomainService = llmDomainService1;
     }
 
     @Override
