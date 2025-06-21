@@ -10,8 +10,7 @@ import {
   Bot, 
   Server,
   Settings,
-  Home,
-  Shield
+  Home
 } from "lucide-react";
 
 interface MenuItemProps {
@@ -65,12 +64,7 @@ export function AdminSidebar() {
     {
       href: "/admin/providers",
       icon: Server,
-      label: "服务商管理",
-    },
-    {
-      href: "/admin/auth-settings",
-      icon: Shield,
-      label: "认证配置",
+      label: "服务商列表",
     },
   ];
 

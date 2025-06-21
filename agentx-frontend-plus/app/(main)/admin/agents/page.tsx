@@ -1,211 +1,127 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Plus, Edit, Trash2, Eye, CheckCircle, XCircle, Bot, RefreshCw } from "lucide-react";
-import { useMemo, useCallback } from "react";
-import { AdminAgentService, Agent, GetAgentsParams, PageResponse, AgentStatistics, AgentVersion } from "@/lib/admin-agent-service";
-import { useToast } from "@/hooks/use-toast";
-import { AgentVersionsDialog } from "@/components/admin/AgentVersionsDialog";
+import { Search, Plus, Edit, Trash2, Eye, CheckCircle, XCircle, Bot } from "lucide-react";
+
+interface Agent {
+  id: string;
+  name: string;
+  description: string;
+  avatar?: string;
+  author: string;
+  status: "published" | "pending" | "rejected" | "private";
+  conversations: number;
+  createdAt: string;
+  updatedAt: string;
+  category: string;
+  isPublic: boolean;
+}
 
 export default function AgentsPage() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchInput, setSearchInput] = useState("");
-  const searchTimeoutRef = useRef<NodeJS.Timeout>();
-  
-  // 初始化时同步searchInput和searchQuery
+
+  // 模拟数据加载
   useEffect(() => {
-    setSearchInput(searchQuery);
-  }, []);
-  const [statusFilter, setStatusFilter] = useState<boolean | undefined>(undefined);
-  const [pagination, setPagination] = useState({
-    current: 1,
-    size: 15,
-    total: 0,
-    pages: 0
-  });
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(15);
-  const [selectedAgent, setSelectedAgent] = useState<{ id: string; name: string } | null>(null);
-  const [versionsDialogOpen, setVersionsDialogOpen] = useState(false);
-  const [statistics, setStatistics] = useState<AgentStatistics>({
-    totalAgents: 0,
-    enabledAgents: 0,
-    disabledAgents: 0,
-    pendingVersions: 0
-  });
-  const { toast } = useToast();
+    const mockAgents: Agent[] = [
+      {
+        id: "1",
+        name: "编程助手",
+        description: "专业的编程代码助手，帮助开发者编写和优化代码",
+        avatar: "",
+        author: "admin",
+        status: "published",
+        conversations: 1245,
+        createdAt: "2024-01-01",
+        updatedAt: "2024-01-15",
+        category: "编程开发",
+        isPublic: true,
+      },
+      {
+        id: "2",
+        name: "文案创作助手",
+        description: "AI文案创作专家，帮助用户撰写各类文案和文章",
+        avatar: "",
+        author: "user123",
+        status: "published",
+        conversations: 892,
+        createdAt: "2024-01-05",
+        updatedAt: "2024-01-18",
+        category: "内容创作",
+        isPublic: true,
+      },
+      {
+        id: "3",
+        name: "数据分析师",
+        description: "专业的数据分析和可视化助手",
+        avatar: "",
+        author: "analyst",
+        status: "pending",
+        conversations: 0,
+        createdAt: "2024-01-10",
+        updatedAt: "2024-01-20",
+        category: "数据分析",
+        isPublic: false,
+      },
+      {
+        id: "4",
+        name: "学习伙伴",
+        description: "个人学习辅导助手",
+        avatar: "",
+        author: "teacher",
+        status: "private",
+        conversations: 156,
+        createdAt: "2024-01-12",
+        updatedAt: "2024-01-19",
+        category: "教育学习",
+        isPublic: false,
+      },
+      {
+        id: "5",
+        name: "翻译专家",
+        description: "多语言翻译助手",
+        avatar: "",
+        author: "translator",
+        status: "rejected",
+        conversations: 0,
+        createdAt: "2024-01-14",
+        updatedAt: "2024-01-21",
+        category: "语言工具",
+        isPublic: false,
+      },
+    ];
 
-  // 使用useMemo优化搜索参数
-  const searchParams = useMemo(() => ({
-    keyword: searchQuery || undefined,
-    enabled: statusFilter,
-    page: currentPage,
-    pageSize: pageSize
-  }), [searchQuery, statusFilter, currentPage, pageSize]);
-
-  // 加载Agent数据
-  const loadAgents = useCallback(async () => {
-    try {
-      setLoading(true);
-      const response = await AdminAgentService.getAgents(searchParams);
-      
-      if (response.code === 200 && response.data) {
-        setAgents(response.data.records);
-        setPagination({
-          current: response.data.current,
-          size: response.data.size,
-          total: response.data.total,
-          pages: response.data.pages
-        });
-      } else {
-        toast({
-          variant: "destructive",
-          title: "获取Agent列表失败",
-          description: response.message || "未知错误"
-        });
-      }
-    } catch (error) {
-      console.error('加载Agent列表失败:', error);
-      toast({
-        variant: "destructive",
-        title: "获取Agent列表失败",
-        description: "网络连接异常，请稍后重试"
-      });
-    } finally {
+    setTimeout(() => {
+      setAgents(mockAgents);
       setLoading(false);
-    }
-  }, [searchParams, toast]);
-
-  // 加载统计数据
-  const loadStatistics = useCallback(async () => {
-    try {
-      const response = await AdminAgentService.getAgentStatistics();
-      if (response.code === 200 && response.data) {
-        setStatistics(response.data);
-      }
-    } catch (error) {
-      console.error('加载统计数据失败:', error);
-    }
+    }, 1000);
   }, []);
 
-  // 处理搜索输入的防抖动
-  useEffect(() => {
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-    
-    searchTimeoutRef.current = setTimeout(() => {
-      setSearchQuery(searchInput);
-      setCurrentPage(1);
-    }, 500);
-
-    return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-    };
-  }, [searchInput]);
-
-  // 初始加载和依赖更新时重新加载  
-  useEffect(() => {
-    loadAgents();
-  }, [loadAgents]);
-
-  // 只在组件挂载时加载统计数据
-  useEffect(() => {
-    loadStatistics();
-  }, [loadStatistics]);
-
-  const getStatusBadge = (enabled: boolean) => {
-    return enabled ? (
-      <Badge variant="default" className="bg-green-100 text-green-800">启用</Badge>
-    ) : (
-      <Badge variant="destructive">禁用</Badge>
-    );
-  };
-
-  // 获取版本状态统计
-  const getVersionStats = (versions: AgentVersion[]) => {
-    const stats = {
-      pending: 0,    // 待审核
-      published: 0,  // 已发布
-      rejected: 0,   // 已拒绝
-      removed: 0     // 已下架
-    };
-
-    versions.forEach(version => {
-      switch (version.publishStatus) {
-        case 1: stats.pending++; break;
-        case 2: stats.published++; break;
-        case 3: stats.rejected++; break;
-        case 4: stats.removed++; break;
-      }
-    });
-
-    return stats;
-  };
-
-  // 获取最新待审核版本
-  const getLatestPendingVersion = (versions: AgentVersion[]) => {
-    return versions
-      .filter(v => v.publishStatus === 1)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
-  };
-
-  // 获取审核状态Badge
-  const getReviewStatusBadge = (versions: AgentVersion[]) => {
-    const stats = getVersionStats(versions);
-    const latestPending = getLatestPendingVersion(versions);
-
-    if (stats.pending > 0) {
-      return (
-        <div className="space-y-1">
-          <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
-            🕒 {stats.pending}个待审核
-          </Badge>
-          {latestPending && (
-            <div className="text-xs text-gray-500">
-              最新: v{latestPending.versionNumber}
-            </div>
-          )}
-        </div>
-      );
-    } else if (stats.published > 0) {
-      return <Badge variant="default" className="bg-green-100 text-green-800">✅ 已发布版本</Badge>;
-    } else if (stats.rejected > 0) {
-      return <Badge variant="destructive">❌ 有拒绝版本</Badge>;
-    } else {
-      return <Badge variant="outline">📝 暂无版本</Badge>;
+  const getStatusBadge = (status: Agent["status"]) => {
+    switch (status) {
+      case "published":
+        return <Badge variant="default" className="bg-green-100 text-green-800">已发布</Badge>;
+      case "pending":
+        return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">待审核</Badge>;
+      case "rejected":
+        return <Badge variant="destructive">已拒绝</Badge>;
+      case "private":
+        return <Badge variant="outline">私有</Badge>;
     }
   };
 
-  // 使用useCallback优化搜索处理函数
-  const handleSearchInputChange = useCallback((value: string) => {
-    setSearchInput(value);
-  }, []);
-
-  // 使用useCallback优化状态筛选处理函数
-  const handleStatusFilter = useCallback((value: string) => {
-    const enabled = value === "enabled" ? true : value === "disabled" ? false : undefined;
-    setStatusFilter(enabled);
-    // 重置到第一页
-    setCurrentPage(1);
-  }, []);
-
-  // 打开版本管理Dialog
-  const handleViewVersions = (agent: Agent) => {
-    setSelectedAgent({ id: agent.id, name: agent.name });
-    setVersionsDialogOpen(true);
-  };
+  const filteredAgents = agents.filter(agent =>
+    agent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    agent.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    agent.author.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   if (loading) {
     return (
@@ -223,40 +139,52 @@ export default function AgentsPage() {
           <h1 className="text-2xl font-bold text-gray-900">Agent管理</h1>
           <p className="text-gray-600 mt-1">管理平台中的所有AI助手</p>
         </div>
+        <Button>
+          <Plus className="w-4 h-4 mr-2" />
+          新增Agent
+        </Button>
       </div>
 
       {/* 统计卡片 */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card>
           <CardContent className="pt-4">
-            <div className="text-2xl font-bold text-blue-600">
-              {statistics.totalAgents}
+            <div className="text-2xl font-bold text-green-600">
+              {agents.filter(a => a.status === "published").length}
             </div>
-            <div className="text-sm text-gray-600">总Agent数</div>
+            <div className="text-sm text-gray-600">已发布</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-4">
-            <div className="text-2xl font-bold text-green-600">
-              {statistics.enabledAgents}
+            <div className="text-2xl font-bold text-yellow-600">
+              {agents.filter(a => a.status === "pending").length}
             </div>
-            <div className="text-sm text-gray-600">启用中</div>
+            <div className="text-sm text-gray-600">待审核</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-4">
+            <div className="text-2xl font-bold text-gray-600">
+              {agents.filter(a => a.status === "private").length}
+            </div>
+            <div className="text-sm text-gray-600">私有</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-4">
             <div className="text-2xl font-bold text-red-600">
-              {statistics.disabledAgents}
+              {agents.filter(a => a.status === "rejected").length}
             </div>
-            <div className="text-sm text-gray-600">已禁用</div>
+            <div className="text-sm text-gray-600">已拒绝</div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-4">
-            <div className="text-2xl font-bold text-orange-600">
-              {statistics.pendingVersions}
+            <div className="text-2xl font-bold text-blue-600">
+              {agents.reduce((sum, a) => sum + a.conversations, 0)}
             </div>
-            <div className="text-sm text-gray-600">待审核</div>
+            <div className="text-sm text-gray-600">总对话数</div>
           </CardContent>
         </Card>
       </div>
@@ -268,25 +196,14 @@ export default function AgentsPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <Input
-                placeholder="搜索Agent名称、描述..."
-                value={searchInput}
-                onChange={(e) => handleSearchInputChange(e.target.value)}
+                placeholder="搜索Agent名称、描述或作者..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
               />
             </div>
-            <Select value={statusFilter === undefined ? "all" : statusFilter ? "enabled" : "disabled"} onValueChange={handleStatusFilter}>
-              <SelectTrigger className="w-32">
-                <SelectValue placeholder="状态筛选" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">全部状态</SelectItem>
-                <SelectItem value="enabled">启用</SelectItem>
-                <SelectItem value="disabled">禁用</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button variant="outline" onClick={() => loadAgents()} disabled={loading}>
-              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-              刷新
+            <Button variant="outline">
+              筛选
             </Button>
           </div>
         </CardContent>
@@ -295,23 +212,23 @@ export default function AgentsPage() {
       {/* Agent列表 */}
       <Card>
         <CardHeader>
-          <CardTitle>Agent列表 ({pagination.total})</CardTitle>
+          <CardTitle>Agent列表 ({filteredAgents.length})</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Agent信息</TableHead>
-                <TableHead>创建者</TableHead>
+                <TableHead>作者</TableHead>
                 <TableHead>状态</TableHead>
-                <TableHead>版本信息</TableHead>
-                <TableHead>审核状态</TableHead>
-                <TableHead>创建时间</TableHead>
+                <TableHead>可见性</TableHead>
+                <TableHead>对话数</TableHead>
+                <TableHead>更新时间</TableHead>
                 <TableHead>操作</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {agents.map((agent) => (
+              {filteredAgents.map((agent) => (
                 <TableRow key={agent.id}>
                   <TableCell>
                     <div className="flex items-center space-x-3">
@@ -324,71 +241,51 @@ export default function AgentsPage() {
                       <div>
                         <div className="font-medium">{agent.name}</div>
                         <div className="text-sm text-gray-500 max-w-xs truncate">
-                          {agent.description || "暂无描述"}
+                          {agent.description}
                         </div>
                         <div className="text-xs text-gray-400 mt-1">
-                          ID: {agent.id} | 版本数: {agent.versions?.length || 0}
+                          分类: {agent.category}
                         </div>
                       </div>
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm">{agent.author}</div>
+                  </TableCell>
+                  <TableCell>
+                    {getStatusBadge(agent.status)}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={agent.isPublic ? "default" : "secondary"}>
+                      {agent.isPublic ? "公开" : "私有"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm">{agent.conversations}</div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm">{agent.updatedAt}</div>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center space-x-2">
-                      <Avatar className="h-6 w-6">
-                        <AvatarImage src={agent.userAvatarUrl} />
-                        <AvatarFallback>
-                          {agent.userNickname?.charAt(0) || agent.userEmail?.charAt(0) || 'U'}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="text-sm font-medium">
-                          {agent.userNickname || agent.userEmail || '未知用户'}
-                        </div>
-                        <div className="text-xs text-gray-400 font-mono">
-                          {agent.userId}
-                        </div>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {getStatusBadge(agent.enabled)}
-                  </TableCell>
-                  <TableCell>
-                    <div className="space-y-1">
-                      <div className="text-sm">
-                        总版本: {agent.versions?.length || 0}
-                      </div>
-                      {agent.versions && agent.versions.length > 0 && (
-                        <div className="text-xs text-gray-500">
-                          {(() => {
-                            const stats = getVersionStats(agent.versions);
-                            const parts = [];
-                            if (stats.published > 0) parts.push(`已发布: ${stats.published}`);
-                            if (stats.pending > 0) parts.push(`待审核: ${stats.pending}`);
-                            if (stats.rejected > 0) parts.push(`已拒绝: ${stats.rejected}`);
-                            return parts.join(' | ');
-                          })()}
-                        </div>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {agent.versions ? getReviewStatusBadge(agent.versions) : (
-                      <Badge variant="outline">📝 暂无版本</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-sm">{new Date(agent.createdAt).toLocaleDateString()}</div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center space-x-2">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        title="查看版本"
-                        onClick={() => handleViewVersions(agent)}
-                      >
+                      <Button variant="ghost" size="icon" title="查看详情">
                         <Eye className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" title="编辑">
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      {agent.status === "pending" && (
+                        <>
+                          <Button variant="ghost" size="icon" className="text-green-600" title="批准">
+                            <CheckCircle className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="text-red-600" title="拒绝">
+                            <XCircle className="w-4 h-4" />
+                          </Button>
+                        </>
+                      )}
+                      <Button variant="ghost" size="icon" className="text-red-600" title="删除">
+                        <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
                   </TableCell>
@@ -398,16 +295,6 @@ export default function AgentsPage() {
           </Table>
         </CardContent>
       </Card>
-
-      {/* Agent版本管理Dialog */}
-      {selectedAgent && (
-        <AgentVersionsDialog
-          open={versionsDialogOpen}
-          onOpenChange={setVersionsDialogOpen}
-          agentId={selectedAgent.id}
-          agentName={selectedAgent.name}
-        />
-      )}
     </div>
   );
 }
