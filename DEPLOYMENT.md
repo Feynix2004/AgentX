@@ -34,7 +34,7 @@ docker run -d \
   -p 8080:8080 \
   -p 8081:8081 \
   -v agentx-data:/var/lib/docker \
-  ghcr.io/feynix/agentx-2:latest
+  ghcr.io/feynix2004/agentx:latest
 ```
 
 **使用自定义配置：**
@@ -52,7 +52,7 @@ docker run -d \
   -p 8081:8081 \
   -v agentx-data:/var/lib/docker \
   -v $(pwd)/agentx-config:/agentx/config \
-  ghcr.io/feynix/agentx-2:latest
+  ghcr.io/feynix2004/agentx:latest
 ```
 
 ### 快速访问
@@ -117,7 +117,7 @@ MAIL_SMTP_PASSWORD=your-email-app-password
 curl -O https://raw.githubusercontent.com/feynix/AgentX-2/main/.env.example
 
 # 方式二：从容器中获取
-docker run --rm ghcr.io/feynix/agentx-2:latest cat /agentx/.env.example > .env.example
+docker run --rm ghcr.io/feynix2004/agentx:latest cat /agentx/.env.example > .env.example
 ```
 
 
@@ -220,12 +220,12 @@ AgentX 采用微服务架构，由多个独立仓库组成：
 
 | 服务 | 仓库 | 镜像 | 职责 |
 |------|------|------|------|
-| **前端+后端** | 本仓库 (AgentX-2) | `ghcr.io/feynix/agentx-2:latest` | 核心业务逻辑 |
+| **前端+后端** | 本仓库 (AgentX-2) | `ghcr.io/feynix2004/agentx:latest` | 核心业务逻辑 |
 | **MCP 网关** | 外部仓库 | `ghcr.io/feynix2004/mcp-gateway:latest` | MCP 协议网关 |
 | **数据库** | 官方镜像 | `ankane/pgvector:latest` + `postgres:15-alpine` | 数据存储 |
 
 ### 🎯 部署策略
-- **一个 tag** → 触发本仓库构建 → 生成 `ghcr.io/feynix/agentx-2:latest`
+- **一个 tag** → 触发本仓库构建 → 生成 `ghcr.io/feynix2004/agentx:latest`
 - **All-in-One 容器** → 自动拉取所有依赖镜像 → 完整系统部署
 - **用户体验** → 一条命令部署整个 AgentX 系统
 
