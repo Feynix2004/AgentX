@@ -11,7 +11,6 @@ export interface User {
   githubId?: string;
   githubLogin?: string;
   avatarUrl?: string;
-  loginPlatform?: string;
   createdAt: string;
   updatedAt: string;
 }
