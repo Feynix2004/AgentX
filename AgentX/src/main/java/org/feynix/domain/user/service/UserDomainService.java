@@ -2,6 +2,7 @@ package org.feynix.domain.user.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import dev.langchain4j.service.output.ServiceOutputParser;
 import org.springframework.stereotype.Service;
 import org.feynix.domain.tool.model.ToolEntity;
@@ -12,6 +13,7 @@ import org.feynix.domain.user.repository.UserRepository;
 import org.feynix.domain.user.repository.UserSettingsRepository;
 import org.feynix.infrastructure.exception.BusinessException;
 import org.feynix.infrastructure.utils.PasswordUtils;
+import org.feynix.interfaces.dto.user.request.QueryUserRequest;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -150,5 +152,28 @@ public class UserDomainService {
         UserSettingsEntity userSettingsEntity = new UserSettingsEntity();
         userSettingsEntity.setUserId(user.getId());
         settingsRepository.insert(userSettingsEntity);
+    }
+
+    /** 分页查询用户列表
+     * 
+     * @param queryUserRequest 查询条件
+     * @return 用户分页数据 */
+    public Page<UserEntity> getUsers(QueryUserRequest queryUserRequest) {
+        LambdaQueryWrapper<UserEntity> wrapper = Wrappers.<UserEntity>lambdaQuery();
+        
+        // 关键词搜索：昵称、邮箱、手机号
+        if (queryUserRequest.getKeyword() != null && !queryUserRequest.getKeyword().trim().isEmpty()) {
+            String keyword = queryUserRequest.getKeyword().trim();
+            wrapper.and(w -> w.like(UserEntity::getNickname, keyword)
+                    .or().like(UserEntity::getEmail, keyword)
+                    .or().like(UserEntity::getPhone, keyword));
+        }
+        
+        // 按创建时间倒序排列
+        wrapper.orderByDesc(UserEntity::getCreatedAt);
+        
+        // 分页查询
+        Page<UserEntity> page = new Page<>(queryUserRequest.getPage(), queryUserRequest.getPageSize());
+        return userRepository.selectPage(page, wrapper);
     }
 }
