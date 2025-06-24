@@ -28,7 +28,11 @@
       "Bash(git merge-base:*)",
       "Bash(git reset)",
       "Bash(git reset:*)",
-      "Bash(bash:*)"
+      "Bash(bash:*)",
+      "Bash(git merge:*)",
+      "Bash(echo:*)",
+      "Bash(docker logs:*)",
+      "Bash(docker exec:*)"
     ],
     "deny": []
   }
