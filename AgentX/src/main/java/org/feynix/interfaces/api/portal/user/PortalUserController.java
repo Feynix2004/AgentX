@@ -8,6 +8,7 @@ import org.feynix.application.user.service.UserAppService;
 import org.feynix.application.user.service.UserSettingsAppService;
 import org.feynix.infrastructure.auth.UserContext;
 import org.feynix.interfaces.api.common.Result;
+import org.feynix.interfaces.dto.user.request.ChangePasswordRequest;
 import org.feynix.interfaces.dto.user.request.UserSettingsUpdateRequest;
 import org.feynix.interfaces.dto.user.request.UserUpdateRequest;
 
@@ -41,6 +42,17 @@ public class PortalUserController {
         String userId = UserContext.getCurrentUserId();
         userAppService.updateUserInfo(userUpdateRequest, userId);
         return Result.success();
+    }
+
+    /** 修改密码
+     * 
+     * @param request 修改密码请求
+     * @return 修改结果 */
+    @PutMapping("/password")
+    public Result<?> updatePassword(@RequestBody @Validated ChangePasswordRequest request) {
+        String userId = UserContext.getCurrentUserId();
+        userAppService.changePassword(request, userId);
+        return Result.success().message("密码修改成功");
     }
 
     /** 获取用户设置
