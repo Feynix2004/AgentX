@@ -36,6 +36,7 @@ spring:
 mybatis-plus:
   mapper-locations: classpath*:/mapper/**/*.xml
   type-aliases-package: org.feynix.domain
+  type-handlers-package: org.feynix.infrastructure.converter
   configuration:
     map-underscore-to-camel-case: true
     cache-enabled: false

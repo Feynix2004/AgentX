@@ -10,7 +10,9 @@ import {
   Bot, 
   Server,
   Settings,
-  Home
+  Home,
+  Shield,
+  Container
 } from "lucide-react";
 
 interface MenuItemProps {
@@ -65,6 +67,16 @@ export function AdminSidebar() {
       href: "/admin/providers",
       icon: Server,
       label: "服务商管理",
+    },
+    {
+      href: "/admin/containers",
+      icon: Container,
+      label: "容器管理",
+    },
+    {
+      href: "/admin/auth-settings",
+      icon: Shield,
+      label: "认证配置",
     },
   ];
 
