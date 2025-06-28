@@ -11,6 +11,7 @@ import org.feynix.domain.tool.constant.ToolStatus;
 import org.feynix.domain.tool.constant.ToolType;
 import org.feynix.domain.tool.constant.UploadType;
 import org.feynix.domain.tool.model.ToolEntity;
+import org.feynix.domain.tool.model.ToolOperationResult;
 import org.feynix.domain.tool.service.ToolDomainService;
 import org.feynix.domain.tool.service.ToolStateDomainService;
 import org.feynix.interfaces.dto.tool.request.CreateToolRequest;
@@ -48,8 +49,8 @@ public class AdminToolAppService {
         entity.setIsOffice(true);
 
         // 保存工具
-        ToolEntity createdTool = toolDomainService.createTool(entity);
-        String toolId = createdTool.getId();
+        ToolOperationResult tool = toolDomainService.createTool(entity);
+        String toolId = tool.getTool().getId();
 
         logger.info("官方工具创建成功: toolId={}", toolId);
         return toolId;
