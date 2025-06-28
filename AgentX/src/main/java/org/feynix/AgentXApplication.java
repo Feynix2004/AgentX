@@ -3,6 +3,7 @@ package org.feynix;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.feynix.infrastructure.utils.PasswordUtils;
 
 /** 应用入口类 */
 @SpringBootApplication
