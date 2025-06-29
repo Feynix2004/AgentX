@@ -1,6 +1,7 @@
 package org.feynix.domain.container.repository;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import org.feynix.domain.container.constant.ContainerType;
 import org.feynix.domain.container.model.ContainerTemplateEntity;
 import org.feynix.infrastructure.repository.MyBatisPlusExtRepository;
 
@@ -19,7 +20,7 @@ public interface ContainerTemplateRepository extends MyBatisPlusExtRepository<Co
      * 
      * @param type 模板类型
      * @return 默认模板，可能为null */
-    ContainerTemplateEntity findDefaultByType(String type);
+    ContainerTemplateEntity findDefaultByType(ContainerType type);
 
     /** 查找所有启用的模板
      * 
