@@ -8,8 +8,6 @@ import org.feynix.application.tool.service.ToolAppService;
 import org.feynix.application.tool.dto.ToolWithUserDTO;
 import org.feynix.application.tool.dto.ToolStatisticsDTO;
 import org.feynix.domain.tool.constant.ToolStatus;
-import org.feynix.domain.tool.constant.ToolType;
-import org.feynix.domain.tool.constant.UploadType;
 import org.feynix.domain.tool.model.ToolEntity;
 import org.feynix.domain.tool.model.ToolOperationResult;
 import org.feynix.domain.tool.service.ToolDomainService;
