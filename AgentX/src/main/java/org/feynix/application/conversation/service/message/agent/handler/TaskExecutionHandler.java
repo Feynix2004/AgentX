@@ -1,7 +1,6 @@
 package org.feynix.application.conversation.service.message.agent.handler;
 
 import dev.langchain4j.data.message.AiMessage;
-import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.service.AiServices;
 import dev.langchain4j.service.tool.ToolProvider;
@@ -17,7 +16,6 @@ import org.feynix.application.conversation.service.message.agent.workflow.AgentW
 import org.feynix.domain.conversation.constant.MessageType;
 import org.feynix.domain.conversation.model.MessageEntity;
 import org.feynix.domain.conversation.service.ContextDomainService;
-import org.feynix.domain.conversation.service.ConversationDomainService;
 import org.feynix.domain.conversation.service.MessageDomainService;
 import org.feynix.domain.task.constant.TaskStatus;
 import org.feynix.domain.task.model.TaskEntity;

@@ -1,6 +1,5 @@
 package org.feynix.application.conversation.service.message.agent.handler;
 
-import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
@@ -15,13 +14,10 @@ import org.feynix.application.conversation.service.message.agent.workflow.AgentW
 import org.feynix.application.conversation.service.message.agent.workflow.AgentWorkflowState;
 import org.feynix.domain.conversation.constant.MessageType;
 import org.feynix.domain.conversation.service.ContextDomainService;
-import org.feynix.domain.conversation.service.ConversationDomainService;
 import org.feynix.domain.conversation.service.MessageDomainService;
 import org.feynix.infrastructure.llm.LLMServiceFactory;
 import org.feynix.infrastructure.utils.ModelResponseToJsonUtils;
-
 import java.util.Collections;
-import java.util.List;
 
 
 /**

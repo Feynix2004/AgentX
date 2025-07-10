@@ -1,5 +1,7 @@
 package org.feynix.domain.rag.model;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
 import java.io.Serial;
 import java.io.Serializable;
 
@@ -20,6 +22,7 @@ public class DocumentUnitEntity extends BaseEntity implements Serializable {
     /**
      * 主键
      */
+    @TableId(type = IdType.ASSIGN_UUID)
     private String id;
 
     /**
@@ -47,12 +50,12 @@ public class DocumentUnitEntity extends BaseEntity implements Serializable {
      */
     private Boolean isOcr;
 
-    public Boolean getOcr() {
+    public Boolean getIsOcr() {
         return isOcr;
     }
 
-    public void setOcr(Boolean ocr) {
-        isOcr = ocr;
+    public void setIsOcr(Boolean isOcr) {
+        this.isOcr = isOcr;
     }
 
     public String getId() {
@@ -87,11 +90,11 @@ public class DocumentUnitEntity extends BaseEntity implements Serializable {
         this.content = content;
     }
 
-    public Boolean getVector() {
+    public Boolean getIsVector() {
         return isVector;
     }
 
-    public void setVector(Boolean vector) {
-        isVector = vector;
+    public void setIsVector(Boolean isVector) {
+        this.isVector = isVector;
     }
 }

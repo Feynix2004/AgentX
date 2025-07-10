@@ -1,9 +1,7 @@
 package org.feynix.application.conversation.service.message.agent.handler;
 
 import dev.langchain4j.data.message.ChatMessage;
-import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.chat.ChatModel;
-import dev.langchain4j.model.chat.StreamingChatLanguageModel;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.openai.OpenAiChatRequestParameters;
@@ -12,12 +10,9 @@ import org.feynix.application.conversation.service.message.agent.event.AgentEven
 import org.feynix.application.conversation.service.message.agent.event.AgentWorkflowEvent;
 import org.feynix.application.conversation.service.message.agent.manager.TaskManager;
 import org.feynix.application.conversation.service.message.agent.workflow.AgentWorkflowContext;
-import org.feynix.application.conversation.service.message.agent.workflow.AgentWorkflowState;
 import org.feynix.domain.conversation.constant.MessageType;
-import org.feynix.domain.conversation.model.ContextEntity;
 import org.feynix.domain.conversation.model.MessageEntity;
 import org.feynix.domain.conversation.service.ContextDomainService;
-import org.feynix.domain.conversation.service.ConversationDomainService;
 import org.feynix.domain.conversation.service.MessageDomainService;
 import org.feynix.infrastructure.llm.LLMServiceFactory;
 

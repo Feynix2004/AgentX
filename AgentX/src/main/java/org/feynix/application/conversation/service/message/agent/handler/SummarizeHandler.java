@@ -3,7 +3,6 @@ package org.feynix.application.conversation.service.message.agent.handler;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
-import dev.langchain4j.model.chat.StreamingChatLanguageModel;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
@@ -18,7 +17,6 @@ import org.feynix.application.conversation.service.message.agent.workflow.AgentW
 import org.feynix.domain.conversation.constant.MessageType;
 import org.feynix.domain.conversation.model.MessageEntity;
 import org.feynix.domain.conversation.service.ContextDomainService;
-import org.feynix.domain.conversation.service.ConversationDomainService;
 import org.feynix.domain.conversation.service.MessageDomainService;
 import org.feynix.infrastructure.llm.LLMServiceFactory;
 
