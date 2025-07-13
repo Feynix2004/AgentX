@@ -4,13 +4,11 @@ import org.springframework.beans.BeanUtils;
 import org.feynix.application.rag.dto.FileDetailInfoDTO;
 import org.feynix.domain.rag.model.FileDetailEntity;
 
-/**
- * 文件详细信息转换器
+/** 文件详细信息转换器
  * 
- * @author shilong.zang
- */
+ * @author shilong.zang */
 public class FileDetailInfoAssembler {
-    
+
     /** Convert FileDetailEntity to FileDetailInfoDTO */
     public static FileDetailInfoDTO toDTO(FileDetailEntity entity) {
         if (entity == null) {

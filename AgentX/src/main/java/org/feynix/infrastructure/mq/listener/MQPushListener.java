@@ -10,8 +10,7 @@ import org.feynix.infrastructure.mq.utils.RabbitMQUtils;
 
 import jakarta.annotation.Resource;
 
-/**
- * @author shilong.zang
+/** @author shilong.zang
  * @date 20:38 <br/>
  */
 @Component

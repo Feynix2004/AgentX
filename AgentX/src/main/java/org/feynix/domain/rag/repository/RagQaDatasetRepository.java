@@ -5,8 +5,7 @@ import org.feynix.domain.rag.model.FileDetailEntity;
 import org.feynix.domain.rag.model.RagQaDatasetEntity;
 import org.feynix.infrastructure.repository.MyBatisPlusExtRepository;
 
-/**
- * @author shilong.zang
+/** @author shilong.zang
  * @date 17:44 <br/>
  */
 @Mapper

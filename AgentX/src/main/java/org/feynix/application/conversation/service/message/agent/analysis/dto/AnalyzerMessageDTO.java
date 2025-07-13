@@ -1,6 +1,5 @@
 package org.feynix.application.conversation.service.message.agent.analysis.dto;
 
-
 public class AnalyzerMessageDTO {
 
     private boolean isQuestion;

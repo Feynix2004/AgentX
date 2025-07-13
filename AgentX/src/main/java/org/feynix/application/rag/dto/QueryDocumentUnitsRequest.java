@@ -3,22 +3,16 @@ package org.feynix.application.rag.dto;
 import jakarta.validation.constraints.NotBlank;
 import org.feynix.interfaces.dto.Page;
 
-/**
- * 查询文件语料请求
+/** 查询文件语料请求
  * 
- * @author shilong.zang
- */
+ * @author shilong.zang */
 public class QueryDocumentUnitsRequest extends Page {
-    
-    /**
-     * 文件ID
-     */
+
+    /** 文件ID */
     @NotBlank(message = "文件ID不能为空")
     private String fileId;
-    
-    /**
-     * 内容关键词搜索
-     */
+
+    /** 内容关键词搜索 */
     private String keyword;
 
     public String getFileId() {
