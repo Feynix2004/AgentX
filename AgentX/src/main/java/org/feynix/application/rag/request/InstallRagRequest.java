@@ -1,6 +1,5 @@
 package org.feynix.application.rag.request;
 
-
 import jakarta.validation.constraints.NotBlank;
 
 /** 安装RAG请求
