@@ -8,9 +8,9 @@ import org.feynix.infrastructure.entity.BaseEntity;
 import org.feynix.infrastructure.exception.BusinessException;
 import org.feynix.infrastructure.llm.protocol.enums.ProviderProtocol;
 
-/**
- * 服务提供商领域模型
- */
+import java.util.Objects;
+
+/** 服务提供商领域模型 */
 @TableName("providers")
 public class ProviderEntity extends BaseEntity {
 
@@ -95,8 +95,14 @@ public class ProviderEntity extends BaseEntity {
     }
 
     public void isActive() {
-        if (!status){
+        if (!status) {
             throw new BusinessException("服务商未激活");
+        }
+    }
+
+    public void isAvailable(String userId) {
+        if (!isOfficial && !Objects.equals(this.getUserId(), userId)){
+            throw new BusinessException("模型未找到");
         }
     }
 }
