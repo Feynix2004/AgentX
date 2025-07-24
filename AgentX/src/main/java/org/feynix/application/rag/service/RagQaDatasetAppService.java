@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.model.embedding.EmbeddingModel;
-import java.util.Arrays;
+
 import java.util.Collections;
 import org.dromara.streamquery.stream.core.stream.Steam;
 import org.springframework.context.ApplicationEventPublisher;
@@ -25,13 +25,9 @@ import org.feynix.application.rag.dto.*;
 import org.feynix.application.rag.RagPublishAppService;
 import org.feynix.application.rag.RagMarketAppService;
 import org.feynix.application.rag.request.PublishRagRequest;
-import org.feynix.application.rag.request.InstallRagRequest;
-import org.feynix.application.rag.service.RagModelConfigService;
 import org.feynix.domain.rag.model.ModelConfig;
 import org.feynix.infrastructure.rag.factory.EmbeddingModelFactory;
 import org.feynix.domain.rag.constant.FileProcessingStatusEnum;
-import org.feynix.domain.rag.constant.FileProcessingEventEnum;
-import org.feynix.domain.rag.constant.MetadataConstant;
 import org.feynix.domain.rag.message.RagDocSyncOcrMessage;
 import org.feynix.domain.rag.message.RagDocSyncStorageMessage;
 import org.feynix.domain.rag.model.DocumentUnitEntity;
@@ -59,7 +55,6 @@ import dev.langchain4j.service.AiServices;
 import dev.langchain4j.service.TokenStream;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.store.memory.chat.InMemoryChatMemoryStore;
-import dev.langchain4j.data.message.UserMessage;
 import org.feynix.application.conversation.service.message.Agent;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.feynix.application.conversation.dto.AgentChatResponse;
@@ -67,7 +62,6 @@ import org.feynix.domain.conversation.constant.MessageType;
 
 import java.util.List;
 import java.util.ArrayList;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /** RAG数据集应用服务
@@ -95,7 +89,7 @@ public class RagQaDatasetAppService {
     private final RagMarketAppService ragMarketAppService;
     private final RagVersionDomainService ragVersionDomainService;
     private final UserRagDomainService userRagDomainService;
-    private final RagDataAccessService ragDataAccessService;
+    private final RagDataAccessDomainService ragDataAccessService;
     private final RagModelConfigService ragModelConfigService;
     private final EmbeddingModelFactory embeddingModelFactory;
     private final UserRagFileRepository userRagFileRepository;
@@ -108,7 +102,7 @@ public class RagQaDatasetAppService {
             UserSettingsDomainService userSettingsDomainService,
             HighAvailabilityDomainService highAvailabilityDomainService, RagPublishAppService ragPublishAppService,
             RagMarketAppService ragMarketAppService, RagVersionDomainService ragVersionDomainService,
-            UserRagDomainService userRagDomainService, RagDataAccessService ragDataAccessService,
+            UserRagDomainService userRagDomainService, RagDataAccessDomainService ragDataAccessService,
             RagModelConfigService ragModelConfigService, EmbeddingModelFactory embeddingModelFactory,
             UserRagFileRepository userRagFileRepository) {
         this.ragQaDatasetDomainService = ragQaDatasetDomainService;
@@ -801,7 +795,7 @@ public class RagQaDatasetAppService {
      * @return 搜索结果 */
     public List<DocumentUnitDTO> ragSearchByUserRag(RagSearchRequest request, String userRagId, String userId) {
         // 获取RAG数据源信息
-        RagDataAccessService.RagDataSourceInfo sourceInfo = ragDataAccessService.getRagDataSourceInfo(userId,
+        RagDataAccessDomainService.RagDataSourceInfo sourceInfo = ragDataAccessService.getRagDataSourceInfo(userId,
                 userRagId);
 
         // 根据安装类型获取实际的数据集ID

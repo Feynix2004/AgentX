@@ -8,6 +8,7 @@ import org.feynix.application.rag.dto.RagVersionDTO;
 import org.feynix.application.rag.request.PublishRagRequest;
 import org.feynix.infrastructure.auth.UserContext;
 import org.feynix.interfaces.api.common.Result;
+import org.feynix.interfaces.dto.rag.request.QueryUserRagVersionRequest;
 
 import java.util.List;
 
@@ -38,15 +39,12 @@ public class RagPublishController {
 
     /** 获取用户的RAG版本列表
      * 
-     * @param page 页码
-     * @param pageSize 每页大小
-     * @param keyword 搜索关键词
+     * @param request 查询请求
      * @return 版本列表 */
     @GetMapping("/versions")
-    public Result<Page<RagVersionDTO>> getUserRagVersions(@RequestParam(defaultValue = "1") Integer page,
-            @RequestParam(defaultValue = "15") Integer pageSize, @RequestParam(required = false) String keyword) {
+    public Result<Page<RagVersionDTO>> getUserRagVersions(QueryUserRagVersionRequest request) {
         String userId = UserContext.getCurrentUserId();
-        Page<RagVersionDTO> result = ragPublishAppService.getUserRagVersions(userId, page, pageSize, keyword);
+        Page<RagVersionDTO> result = ragPublishAppService.getUserRagVersions(userId, request);
         return Result.success(result);
     }
 

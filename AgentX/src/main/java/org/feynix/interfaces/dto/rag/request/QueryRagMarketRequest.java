@@ -1,13 +1,9 @@
-package org.feynix.application.rag.dto;
+package org.feynix.interfaces.dto.rag.request;
 
 import org.feynix.interfaces.dto.Page;
 
-/** 数据集查询请求
- * @author shilong.zang
- * @date 2024-12-09 */
-public class QueryDatasetRequest extends Page {
+public class QueryRagMarketRequest extends Page {
 
-    /** 搜索关键词 */
     private String keyword;
 
     public String getKeyword() {

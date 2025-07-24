@@ -11,6 +11,7 @@ import org.feynix.application.rag.request.ReviewRagVersionRequest;
 import org.feynix.application.rag.request.BatchReviewRequest;
 import org.feynix.application.rag.request.QueryRagVersionRequest;
 import org.feynix.interfaces.api.common.Result;
+import org.feynix.interfaces.dto.rag.request.QueryPendingReviewRequest;
 
 /** 管理员RAG审核控制器
  * @author feynix
@@ -28,13 +29,11 @@ public class AdminRagReviewController {
 
     /** 获取待审核的RAG版本列表
      * 
-     * @param page 页码
-     * @param pageSize 每页大小
+     * @param request 查询请求
      * @return 待审核版本列表 */
     @GetMapping("/pending")
-    public Result<Page<RagVersionDTO>> getPendingReviewVersions(@RequestParam(defaultValue = "1") Integer page,
-            @RequestParam(defaultValue = "15") Integer pageSize) {
-        Page<RagVersionDTO> result = ragPublishAppService.getPendingReviewVersions(page, pageSize);
+    public Result<Page<RagVersionDTO>> getPendingReviewVersions(QueryPendingReviewRequest request) {
+        Page<RagVersionDTO> result = ragPublishAppService.getPendingReviewVersions(request);
         return Result.success(result);
     }
 
