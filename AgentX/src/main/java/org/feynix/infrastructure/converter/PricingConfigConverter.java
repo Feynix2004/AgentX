@@ -14,57 +14,62 @@ import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Map;
 
-/** JSON字段转换器 */
+/**
+ * 价格配置JSON字段转换器
+ * 专门处理商品价格配置的序列化和反序列化
+ */
 @MappedJdbcTypes(JdbcType.OTHER)
-@MappedTypes({Object.class})
-public class JsonConverter extends BaseTypeHandler<Object> {
+@MappedTypes({Map.class})
+public class
+PricingConfigConverter extends BaseTypeHandler<Map<String, Object>> {
 
-    private static final Logger logger = LoggerFactory.getLogger(JsonConverter.class);
+    private static final Logger logger = LoggerFactory.getLogger(PricingConfigConverter.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
-    public void setNonNullParameter(PreparedStatement ps, int i, Object parameter, JdbcType jdbcType)
+    public void setNonNullParameter(PreparedStatement ps, int i, Map<String, Object> parameter, JdbcType jdbcType)
             throws SQLException {
         try {
             String json = objectMapper.writeValueAsString(parameter);
             // 对于PostgreSQL的JSONB类型，需要使用setObject而不是setString
             ps.setObject(i, json, java.sql.Types.OTHER);
         } catch (JsonProcessingException e) {
-            logger.error("JSON序列化失败", e);
-            throw new SQLException("JSON序列化失败", e);
+            logger.error("价格配置JSON序列化失败", e);
+            throw new SQLException("价格配置JSON序列化失败", e);
         }
     }
 
     @Override
-    public Object getNullableResult(ResultSet rs, String columnName) throws SQLException {
+    public Map<String, Object> getNullableResult(ResultSet rs, String columnName) throws SQLException {
         String json = rs.getString(columnName);
         return parseJson(json);
     }
 
     @Override
-    public Object getNullableResult(ResultSet rs, int columnIndex) throws SQLException {
+    public Map<String, Object> getNullableResult(ResultSet rs, int columnIndex) throws SQLException {
         String json = rs.getString(columnIndex);
         return parseJson(json);
     }
 
     @Override
-    public Object getNullableResult(CallableStatement cs, int columnIndex) throws SQLException {
+    public Map<String, Object> getNullableResult(CallableStatement cs, int columnIndex) throws SQLException {
         String json = cs.getString(columnIndex);
         return parseJson(json);
     }
 
-    private Object parseJson(String json) {
+    private Map<String, Object> parseJson(String json) throws SQLException {
         if (json == null || json.trim().isEmpty()) {
             return null;
         }
 
         try {
-            return objectMapper.readValue(json, new TypeReference<Object>() {
+            return objectMapper.readValue(json, new TypeReference<Map<String, Object>>() {
             });
         } catch (JsonProcessingException e) {
-            logger.error("JSON反序列化失败: {}", json, e);
-            return null;
+            logger.error("价格配置JSON反序列化失败: {}", json, e);
+            throw new SQLException("价格配置JSON反序列化失败", e);
         }
     }
 }

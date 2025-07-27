@@ -168,6 +168,7 @@ public class MCPGatewayService {
 - **Assembler Pattern**: Always use `BeanUtils.copyProperties()` for Entity/DTO conversions to avoid field omissions
 
 ### Controller Layer Standards
+- **API路径规范**: 控制器`@RequestMapping`不需要`/api`前缀，在application.yml中已配置统一前缀
 - **Annotation Usage**: `@RestController`, `@RequestMapping` for base path
 - **Validation**: Add `@Validated` annotation to `@RequestBody` parameters
 - **Required Imports**: 
@@ -175,11 +176,22 @@ public class MCPGatewayService {
   import org.springframework.validation.annotation.Validated;
   import org.feynix.infrastructure.auth.UserContext;
   import org.feynix.interfaces.api.common.Result;
+  import org.feynix.interfaces.dto.PageResult; // 分页结果
   ```
 - **User Context**: Always use `UserContext.getCurrentUserId()` for current user ID
 - **Method Structure**: Keep controllers thin, delegate to application services
 - **Return Types**: Always use `Result<T>` wrapper for API responses
 - **Error Handling**: Let application layer handle business logic validation
+- **权限控制**: 前台API必须限制用户只能访问自己的数据，防止越权访问
+  ```java
+  // 正确示例：前台API强制使用当前用户ID
+  @GetMapping
+  public Result<PageResult<UsageRecordDTO>> queryUsageRecords(QueryUsageRecordRequest request) {
+      String userId = UserContext.getCurrentUserId();
+      request.setUserId(userId); // 强制设置为当前用户，防止越权
+      return Result.success(appService.queryUsageRecords(request));
+  }
+  ```
 
 #### Controller Method Format:
 ```java
@@ -194,6 +206,46 @@ public Result<ResponseType> methodName(@RequestBody @Validated RequestType reque
     return Result.success(result);
 }
 ```
+
+### 分页相关规范
+- **分页基类**: 所有查询请求类必须继承`org.feynix.interfaces.dto.Page`，不使用第三方包
+  ```java
+  // 正确
+  import org.feynix.interfaces.dto.Page;
+  public class QueryUserRequest extends Page {
+      // 查询条件字段
+  }
+  
+  // 错误 - 不要使用MyBatis-Plus的Page
+  import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+  ```
+- **分页结果**: 控制器返回使用`PageResult<T>`，应用服务内部使用MyBatis-Plus的Page
+  ```java
+  // Controller层
+  public Result<PageResult<UserDTO>> getUsers(QueryUserRequest request) {
+      PageResult<UserDTO> result = userAppService.getUsers(request);
+      return Result.success(result);
+  }
+  
+  // Application Service层
+  public PageResult<UserDTO> getUsers(QueryUserRequest request) {
+      // 内部使用MyBatis-Plus Page查询
+      MybatisPage<UserEntity> entityPage = new MybatisPage<>(request.getPage(), request.getPageSize());
+      entityPage = userDomainService.getRepository().selectPage(entityPage, wrapper);
+      
+      // 转换为统一的PageResult返回
+      PageResult<UserDTO> result = new PageResult<>(
+          entityPage.getCurrent(), entityPage.getSize(), entityPage.getTotal()
+      );
+      result.setRecords(UserAssembler.toDTOs(entityPage.getRecords()));
+      return result;
+  }
+  ```
+- **分页导入**: 在应用服务中使用别名导入MyBatis-Plus的Page
+  ```java
+  import com.baomidou.mybatisplus.extension.plugins.pagination.Page as MybatisPage;
+  import org.feynix.interfaces.dto.PageResult;
+  ```
 
 ### Application Service Layer
 - **Constructor Injection**: Use final fields with constructor injection
@@ -233,10 +285,37 @@ public class ExampleAppService {
 - **Event Publishing**: Publish domain events for side effects
 
 ### Repository Layer
-- **Interface**: Extend `MyBatisPlusExtRepository<Entity>`
-- **Custom Queries**: Use `@Select`, `@Update`, `@Delete` for complex SQL
-- **Permission Checks**: Use `checkedUpdate()`, `checkedDelete()` methods
-- **Naming**: Repository interface in domain layer, mapper XML in infrastructure
+- **Interface**: Extend `MyBatisPlusExtRepository<Entity>`, add `@Mapper` annotation
+- **No Mapper Implementation**: Repository interfaces are simple - all SQL logic in Domain Services
+- **Lambda Queries**: Use `Wrappers.<Entity>lambdaQuery()` for type-safe queries in Domain Services
+- **Permission Checks**: Use `checkedUpdate()`, `checkedDelete()` methods for safe operations
+- **Naming**: Repository interface in domain layer, no mapper XML needed
+- **Query Pattern**: All database operations through MyBatis-Plus lambda expressions in Domain Services
+- 不允许在 repo 层写 sql，而是在 domain 层通过 mybatisplus 的方式写 sql
+
+#### Domain Service Query Pattern:
+```java
+@Service
+public class ExampleDomainService {
+    
+    private final ExampleRepository repository;
+    
+    // All queries implemented here using Lambda expressions
+    public ExampleEntity findByName(String name) {
+        LambdaQueryWrapper<ExampleEntity> wrapper = Wrappers.<ExampleEntity>lambdaQuery()
+            .eq(ExampleEntity::getName, name)
+            .eq(ExampleEntity::getStatus, true);
+        return repository.selectOne(wrapper);
+    }
+    
+    public void updateEntity(ExampleEntity entity) {
+        LambdaUpdateWrapper<ExampleEntity> wrapper = Wrappers.<ExampleEntity>lambdaUpdate()
+            .eq(ExampleEntity::getId, entity.getId())
+            .eq(entity.needCheckUserId(), ExampleEntity::getUserId, entity.getUserId());
+        repository.checkedUpdate(entity, wrapper);
+    }
+}
+```
 
 ### Assembler Layer Standards
 - **Purpose**: Handle all conversions between Entities, DTOs, and Request objects
@@ -360,6 +439,61 @@ export class ExampleApiService {
 - **No Foreign Keys**: DDD principle - no database-level foreign key constraints
 - **Naming**: Snake_case for tables/columns, lowercase plural for table names
 - **Audit Fields**: All entities inherit `created_at`, `updated_at` from `BaseEntity`
+
+### 常量类型字段规范 ⚠️ **严格遵守**
+
+**实体类常量字段设计原则**：
+- ✅ **使用枚举类型**：实体类中的常量字段必须使用枚举类型而非String
+- ✅ **TypeHandler转换**：通过自定义TypeHandler实现数据库与Java对象间的转换
+- ✅ **统一命名规范**：Converter类命名为 `{EnumName}Converter`
+- ❌ **禁止String类型**：常量字段不得使用String类型存储枚举值
+
+**标准实现模式**：
+```java
+// ✅ 正确：实体类使用枚举类型
+@TableField(value = "type", typeHandler = BillingTypeConverter.class)
+private BillingType type;
+
+// ✅ 正确：自定义TypeHandler
+@MappedJdbcTypes(JdbcType.VARCHAR)
+@MappedTypes(BillingType.class)
+public class BillingTypeConverter extends BaseTypeHandler<BillingType> {
+    @Override
+    public void setNonNullParameter(PreparedStatement ps, int i, BillingType parameter, JdbcType jdbcType) throws SQLException {
+        ps.setString(i, parameter.getCode());
+    }
+    // ... 其他方法实现
+}
+
+// ❌ 错误：使用String类型
+@TableField("type")
+private String type; // 禁止这样写
+```
+
+**Assembler转换处理**：
+```java
+// DTO转Entity时手动转换枚举
+BeanUtils.copyProperties(request, entity, "type"); // 排除type字段
+if (request.getType() != null) {
+    entity.setType(BillingType.fromCode(request.getType()));
+}
+
+// Entity转DTO时转换为String
+BeanUtils.copyProperties(entity, dto, "type"); // 排除type字段  
+if (entity.getType() != null) {
+    dto.setType(entity.getType().getCode());
+}
+```
+
+**适用场景**：
+- 商品类型字段 (`BillingType`)
+- 规则处理器字段 (`RuleHandlerKey`) 
+- 工具类型字段 (`ToolType`)
+- 状态字段 (`ToolStatus`、`PublishStatus`)
+- 所有具有固定枚举值的常量字段
+
+**获取TypeHandler参考**：
+参考现有实现：`@AgentX/src/main/java/org/feynix/infrastructure/converter/ToolTypeConverter.java`
 
 ### Three-Layer Validation
 1. **API Layer**: Field format validation using `@Validated`

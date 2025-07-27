@@ -8,7 +8,6 @@
       "Bash(find:*)",
       "Bash(mvn clean:*)",
       "Bash(npm run build:*)",
-      "Bash(rm:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(mv:*)",
