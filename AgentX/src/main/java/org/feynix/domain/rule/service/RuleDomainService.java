@@ -132,6 +132,6 @@ public class RuleDomainService {
     }
 
     public IPage page(Integer page, Integer pageSize) {
-        return ruleRepository.selectMapsPage(new Page<>(page, pageSize), null);
+        return ruleRepository.selectPage(new Page<>(page, pageSize), null);
     }
 }
