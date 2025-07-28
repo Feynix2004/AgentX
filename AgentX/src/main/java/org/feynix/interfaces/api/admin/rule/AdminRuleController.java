@@ -1,11 +1,10 @@
-package org.feynix.interfaces.api.rule;
+package org.feynix.interfaces.api.admin.rule;
 
 import org.feynix.interfaces.dto.PageResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.feynix.application.rule.dto.RuleDTO;
 import org.feynix.application.rule.service.RuleAppService;
-import org.feynix.infrastructure.auth.UserContext;
 import org.feynix.interfaces.api.common.Result;
 import org.feynix.interfaces.dto.rule.request.CreateRuleRequest;
 import org.feynix.interfaces.dto.rule.request.QueryRuleRequest;
@@ -13,20 +12,17 @@ import org.feynix.interfaces.dto.rule.request.UpdateRuleRequest;
 
 import java.util.List;
 
-/**
- * 计费规则控制层
- * 提供规则管理的API接口
- */
+/** 计费规则控制层 提供规则管理的API接口 */
 @RestController
-@RequestMapping("/rules")
-public class RuleController {
-    
+@RequestMapping("/admin/rules")
+public class AdminRuleController {
+
     private final RuleAppService ruleAppService;
-    
-    public RuleController(RuleAppService ruleAppService) {
+
+    public AdminRuleController(RuleAppService ruleAppService) {
         this.ruleAppService = ruleAppService;
     }
-    
+
     /** 创建计费规则
      * 
      * @param request 创建规则请求
@@ -36,17 +32,17 @@ public class RuleController {
         RuleDTO rule = ruleAppService.createRule(request);
         return Result.success(rule);
     }
-    
+
     /** 更新计费规则
      * 
      * @param request 更新规则请求
      * @return 更新后的规则信息 */
-    @PutMapping
-    public Result<RuleDTO> updateRule(@RequestBody @Validated UpdateRuleRequest request) {
-        RuleDTO rule = ruleAppService.updateRule(request);
+    @PutMapping("/{ruleId}")
+    public Result<RuleDTO> updateRule(@RequestBody @Validated UpdateRuleRequest request, @PathVariable String ruleId) {
+        RuleDTO rule = ruleAppService.updateRule(request, ruleId);
         return Result.success(rule);
     }
-    
+
     /** 根据ID获取计费规则
      * 
      * @param ruleId 规则ID
@@ -56,7 +52,7 @@ public class RuleController {
         RuleDTO rule = ruleAppService.getRuleById(ruleId);
         return Result.success(rule);
     }
-    
+
     /** 根据处理器标识获取规则
      * 
      * @param handlerKey 处理器标识
@@ -66,7 +62,7 @@ public class RuleController {
         RuleDTO rule = ruleAppService.getRuleByHandlerKey(handlerKey);
         return Result.success(rule);
     }
-    
+
     /** 分页查询计费规则
      * 
      * @param request 查询参数
@@ -76,7 +72,7 @@ public class RuleController {
         PageResult<RuleDTO> rules = ruleAppService.getRules(request);
         return Result.success(rules);
     }
-    
+
     /** 获取所有计费规则
      * 
      * @return 所有规则列表 */
@@ -85,7 +81,7 @@ public class RuleController {
         List<RuleDTO> rules = ruleAppService.getAllRules();
         return Result.success(rules);
     }
-    
+
     /** 删除计费规则
      * 
      * @param ruleId 规则ID
@@ -95,7 +91,7 @@ public class RuleController {
         ruleAppService.deleteRule(ruleId);
         return Result.success();
     }
-    
+
     /** 检查规则是否存在
      * 
      * @param ruleId 规则ID
@@ -105,7 +101,7 @@ public class RuleController {
         boolean exists = ruleAppService.existsRule(ruleId);
         return Result.success(exists);
     }
-    
+
     /** 检查处理器标识是否存在
      * 
      * @param handlerKey 处理器标识

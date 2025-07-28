@@ -79,7 +79,7 @@ COMMENT ON COLUMN rules.handler_key IS '处理器标识，对应策略枚举';
 COMMENT ON COLUMN rules.description IS '规则描述';
 
 COMMENT ON COLUMN products.name IS '商品名称';
-COMMENT ON COLUMN products.type IS '计费类型：MODEL_USAGE, AGENT_CREATION, API_CALLS等';
+COMMENT ON COLUMN products.type IS '计费类型：MODEL_USAGE(模型调用), AGENT_CREATION(Agent创建), AGENT_USAGE(Agent使用), API_CALL(API调用), STORAGE_USAGE(存储使用)';
 COMMENT ON COLUMN products.service_id IS '业务服务标识';
 COMMENT ON COLUMN products.rule_id IS '关联的规则ID';
 COMMENT ON COLUMN products.pricing_config IS '价格配置（JSONB格式）';
@@ -104,9 +104,16 @@ INSERT INTO rules (id, name, handler_key, description) VALUES
 ('rule-per-unit', '按次计费规则', 'PER_UNIT_STRATEGY', '按使用次数固定计费，适用于Agent创建、API调用等'),
 ('rule-per-time', '按时长计费规则', 'PER_TIME_STRATEGY', '按使用时长计费，适用于资源占用类服务');
 
--- 插入初始数据：示例商品
+-- 插入初始数据：示例商品 
+-- 注意：service_id应该使用对应业务表的主键ID，这里使用占位符，实际部署时需要根据具体模型ID调整
 INSERT INTO products (id, name, type, service_id, rule_id, pricing_config, status) VALUES 
-('product-gpt-4', 'GPT-4模型服务', 'MODEL_USAGE', 'gpt-4', 'rule-model-token', '{"input_cost_per_million": 5.0, "output_cost_per_million": 15.0}', 1),
-('product-gpt-3.5', 'GPT-3.5模型服务', 'MODEL_USAGE', 'gpt-3.5-turbo', 'rule-model-token', '{"input_cost_per_million": 1.0, "output_cost_per_million": 2.0}', 1),
+('product-model-1', 'GPT-4模型服务', 'MODEL_USAGE', '1', 'rule-model-token', '{"input_cost_per_million": 5.0, "output_cost_per_million": 15.0}', 1),
+('product-model-2', 'GPT-3.5模型服务', 'MODEL_USAGE', '2', 'rule-model-token', '{"input_cost_per_million": 1.0, "output_cost_per_million": 2.0}', 1),
+('product-model-3', 'Claude-3模型服务', 'MODEL_USAGE', '3', 'rule-model-token', '{"input_cost_per_million": 3.0, "output_cost_per_million": 12.0}', 1),
 ('product-agent-creation', 'Agent创建服务', 'AGENT_CREATION', 'agent_creation', 'rule-per-unit', '{"cost_per_unit": 10.0}', 1),
 ('product-api-calls', 'API调用服务', 'API_CALLS', 'api_calls', 'rule-per-unit', '{"cost_per_unit": 0.1}', 1);
+
+-- 注释说明：
+-- MODEL_USAGE类型的service_id应该是models表中的主键ID（如1,2,3等）
+-- AGENT_CREATION类型使用固定标识'agent_creation'，因为不对应具体业务记录
+-- 实际部署时，需要根据models表的真实ID更新这些配置

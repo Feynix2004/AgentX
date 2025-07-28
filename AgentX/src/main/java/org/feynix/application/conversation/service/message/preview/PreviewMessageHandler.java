@@ -8,7 +8,6 @@ import org.feynix.application.conversation.service.handler.context.ChatContext;
 import org.feynix.application.conversation.service.message.AbstractMessageHandler;
 import org.feynix.application.conversation.service.message.Agent;
 import org.feynix.application.conversation.service.message.agent.AgentToolManager;
-import org.feynix.application.conversation.service.message.agent.tool.RagToolManager;
 import org.feynix.domain.conversation.constant.MessageType;
 import org.feynix.domain.conversation.model.MessageEntity;
 import org.feynix.domain.conversation.service.MessageDomainService;
@@ -18,6 +17,8 @@ import org.feynix.domain.llm.service.LLMDomainService;
 import org.feynix.domain.user.service.UserSettingsDomainService;
 import org.feynix.infrastructure.llm.LLMServiceFactory;
 import org.feynix.infrastructure.transport.MessageTransport;
+import org.feynix.application.billing.service.BillingService;
+import org.feynix.domain.user.service.AccountDomainService;
 
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicReference;
@@ -28,13 +29,24 @@ public class PreviewMessageHandler extends AbstractMessageHandler {
 
     private final AgentToolManager agentToolManager;
 
+    protected final HighAvailabilityDomainService highAvailabilityDomainService;
+
+    protected final SessionDomainService sessionDomainService;
+    protected final UserSettingsDomainService userSettingsDomainService;
+    protected final LLMDomainService llmDomainService;
+
     public PreviewMessageHandler(LLMServiceFactory llmServiceFactory, MessageDomainService messageDomainService,
             HighAvailabilityDomainService highAvailabilityDomainService, SessionDomainService sessionDomainService,
             UserSettingsDomainService userSettingsDomainService, LLMDomainService llmDomainService,
-            AgentToolManager agentToolManager, RagToolManager ragToolManager) {
+            BillingService billingService, AccountDomainService accountDomainService,
+            AgentToolManager agentToolManager) {
         super(llmServiceFactory, messageDomainService, highAvailabilityDomainService, sessionDomainService,
-                userSettingsDomainService, llmDomainService, ragToolManager);
+                userSettingsDomainService, llmDomainService, billingService, accountDomainService);
         this.agentToolManager = agentToolManager;
+        this.highAvailabilityDomainService = highAvailabilityDomainService;
+        this.sessionDomainService = sessionDomainService;
+        this.userSettingsDomainService = userSettingsDomainService;
+        this.llmDomainService = llmDomainService;
     }
 
     @Override
@@ -60,10 +72,6 @@ public class PreviewMessageHandler extends AbstractMessageHandler {
         // 部分响应处理
         tokenStream.onPartialResponse(reply -> {
             messageBuilder.get().append(reply);
-            // 删除换行后消息为空字符串
-            if (messageBuilder.get().toString().trim().isEmpty()) {
-                return;
-            }
             transport.sendMessage(connection, AgentChatResponse.build(reply, MessageType.TEXT));
         });
 
@@ -71,6 +79,10 @@ public class PreviewMessageHandler extends AbstractMessageHandler {
         tokenStream.onCompleteResponse(chatResponse -> {
             // 发送结束消息
             transport.sendEndMessage(connection, AgentChatResponse.buildEndMessage(MessageType.TEXT));
+
+            // 执行模型调用计费
+            performBillingWithErrorHandling(chatContext, chatResponse.tokenUsage().inputTokenCount(),
+                    chatResponse.tokenUsage().outputTokenCount(), transport, connection);
         });
 
         // 工具执行处理

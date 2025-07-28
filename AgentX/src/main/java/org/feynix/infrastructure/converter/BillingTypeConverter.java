@@ -11,16 +11,14 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-/**
- * 计费类型转换器
- * 用于MyBatis-Plus在数据库和Java对象间转换BillingType枚举
- */
+/** 计费类型转换器 用于MyBatis-Plus在数据库和Java对象间转换BillingType枚举 */
 @MappedJdbcTypes(JdbcType.VARCHAR)
 @MappedTypes(BillingType.class)
 public class BillingTypeConverter extends BaseTypeHandler<BillingType> {
 
     @Override
-    public void setNonNullParameter(PreparedStatement ps, int i, BillingType parameter, JdbcType jdbcType) throws SQLException {
+    public void setNonNullParameter(PreparedStatement ps, int i, BillingType parameter, JdbcType jdbcType)
+            throws SQLException {
         ps.setString(i, parameter.getCode());
     }
 

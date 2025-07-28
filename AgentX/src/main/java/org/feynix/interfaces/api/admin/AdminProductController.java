@@ -12,20 +12,17 @@ import org.feynix.interfaces.dto.product.request.UpdateProductRequest;
 
 import java.util.List;
 
-/**
- * 管理员商品管理控制器
- * 负责处理管理员对计费商品的管理操作
- */
+/** 管理员商品管理控制器 负责处理管理员对计费商品的管理操作 */
 @RestController
 @RequestMapping("/admin/products")
 public class AdminProductController {
-    
+
     private final ProductAppService productAppService;
-    
+
     public AdminProductController(ProductAppService productAppService) {
         this.productAppService = productAppService;
     }
-    
+
     /** 分页获取商品列表
      * 
      * @param queryProductRequest 查询参数
@@ -34,7 +31,7 @@ public class AdminProductController {
     public Result<Page<ProductDTO>> getProducts(QueryProductRequest queryProductRequest) {
         return Result.success(productAppService.getProducts(queryProductRequest));
     }
-    
+
     /** 获取所有商品列表
      * 
      * @return 商品列表 */
@@ -42,7 +39,7 @@ public class AdminProductController {
     public Result<List<ProductDTO>> getAllProducts() {
         return Result.success(productAppService.getAllProducts());
     }
-    
+
     /** 根据ID获取商品详情
      * 
      * @param productId 商品ID
@@ -51,7 +48,7 @@ public class AdminProductController {
     public Result<ProductDTO> getProductById(@PathVariable String productId) {
         return Result.success(productAppService.getProductById(productId));
     }
-    
+
     /** 根据业务标识获取商品
      * 
      * @param type 计费类型
@@ -61,7 +58,7 @@ public class AdminProductController {
     public Result<ProductDTO> getProductByBusinessKey(@RequestParam String type, @RequestParam String serviceId) {
         return Result.success(productAppService.getProductByBusinessKey(type, serviceId));
     }
-    
+
     /** 创建商品
      * 
      * @param request 创建商品请求
@@ -71,17 +68,18 @@ public class AdminProductController {
         ProductDTO product = productAppService.createProduct(request);
         return Result.success(product);
     }
-    
+
     /** 更新商品
      * 
      * @param request 更新商品请求
      * @return 更新后的商品 */
-    @PutMapping
-    public Result<ProductDTO> updateProduct(@RequestBody @Validated UpdateProductRequest request) {
-        ProductDTO product = productAppService.updateProduct(request);
+    @PutMapping("/{productId}")
+    public Result<ProductDTO> updateProduct(@RequestBody @Validated UpdateProductRequest request,
+            @PathVariable String productId) {
+        ProductDTO product = productAppService.updateProduct(request, productId);
         return Result.success(product);
     }
-    
+
     /** 删除商品
      * 
      * @param productId 商品ID
@@ -91,7 +89,7 @@ public class AdminProductController {
         productAppService.deleteProduct(productId);
         return Result.success();
     }
-    
+
     /** 启用商品
      * 
      * @param productId 商品ID
@@ -101,7 +99,7 @@ public class AdminProductController {
         ProductDTO product = productAppService.enableProduct(productId);
         return Result.success(product);
     }
-    
+
     /** 禁用商品
      * 
      * @param productId 商品ID
@@ -111,7 +109,7 @@ public class AdminProductController {
         ProductDTO product = productAppService.disableProduct(productId);
         return Result.success(product);
     }
-    
+
     /** 检查商品是否存在
      * 
      * @param productId 商品ID
@@ -120,7 +118,7 @@ public class AdminProductController {
     public Result<Boolean> existsProduct(@PathVariable String productId) {
         return Result.success(productAppService.existsProduct(productId));
     }
-    
+
     /** 检查业务标识是否存在
      * 
      * @param type 计费类型

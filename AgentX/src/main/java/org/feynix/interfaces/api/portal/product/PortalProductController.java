@@ -8,20 +8,17 @@ import org.feynix.interfaces.api.common.Result;
 
 import java.util.List;
 
-/**
- * 门户商品控制器
- * 负责处理用户对计费商品的查询操作
- */
+/** 门户商品控制器 负责处理用户对计费商品的查询操作 */
 @RestController
-@RequestMapping("/portal/products")
+@RequestMapping("/products")
 public class PortalProductController {
-    
+
     private final ProductAppService productAppService;
-    
+
     public PortalProductController(ProductAppService productAppService) {
         this.productAppService = productAppService;
     }
-    
+
     /** 根据ID获取商品详情
      * 
      * @param productId 商品ID
@@ -31,7 +28,7 @@ public class PortalProductController {
         String userId = UserContext.getCurrentUserId();
         return Result.success(productAppService.getProductById(productId));
     }
-    
+
     /** 根据业务标识获取商品
      * 
      * @param type 计费类型
@@ -42,7 +39,7 @@ public class PortalProductController {
         String userId = UserContext.getCurrentUserId();
         return Result.success(productAppService.getProductByBusinessKey(type, serviceId));
     }
-    
+
     /** 获取指定类型的活跃商品列表
      * 
      * @param type 计费类型（可选）
@@ -52,7 +49,7 @@ public class PortalProductController {
         String userId = UserContext.getCurrentUserId();
         return Result.success(productAppService.getActiveProducts(type));
     }
-    
+
     /** 检查商品是否存在且激活
      * 
      * @param type 计费类型

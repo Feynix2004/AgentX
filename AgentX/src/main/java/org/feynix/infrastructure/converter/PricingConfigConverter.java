@@ -16,14 +16,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Map;
 
-/**
- * 价格配置JSON字段转换器
- * 专门处理商品价格配置的序列化和反序列化
- */
+/** 价格配置JSON字段转换器 专门处理商品价格配置的序列化和反序列化 */
 @MappedJdbcTypes(JdbcType.OTHER)
 @MappedTypes({Map.class})
-public class
-PricingConfigConverter extends BaseTypeHandler<Map<String, Object>> {
+public class PricingConfigConverter extends BaseTypeHandler<Map<String, Object>> {
 
     private static final Logger logger = LoggerFactory.getLogger(PricingConfigConverter.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();

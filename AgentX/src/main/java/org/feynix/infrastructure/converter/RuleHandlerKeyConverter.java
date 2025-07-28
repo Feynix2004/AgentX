@@ -11,16 +11,14 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-/**
- * 规则处理器标识转换器
- * 用于MyBatis-Plus在数据库和Java对象间转换RuleHandlerKey枚举
- */
+/** 规则处理器标识转换器 用于MyBatis-Plus在数据库和Java对象间转换RuleHandlerKey枚举 */
 @MappedJdbcTypes(JdbcType.VARCHAR)
 @MappedTypes(RuleHandlerKey.class)
 public class RuleHandlerKeyConverter extends BaseTypeHandler<RuleHandlerKey> {
 
     @Override
-    public void setNonNullParameter(PreparedStatement ps, int i, RuleHandlerKey parameter, JdbcType jdbcType) throws SQLException {
+    public void setNonNullParameter(PreparedStatement ps, int i, RuleHandlerKey parameter, JdbcType jdbcType)
+            throws SQLException {
         ps.setString(i, parameter.getKey());
     }
 

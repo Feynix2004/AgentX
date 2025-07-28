@@ -1,7 +1,6 @@
 package org.feynix.application.conversation.service.message;
 
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.data.message.*;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.ChatModel;
@@ -9,14 +8,11 @@ import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.service.AiServices;
 import dev.langchain4j.service.TokenStream;
-import dev.langchain4j.service.tool.ToolExecutor;
 import dev.langchain4j.service.tool.ToolProvider;
 import dev.langchain4j.store.memory.chat.InMemoryChatMemoryStore;
 import org.feynix.application.conversation.dto.AgentChatResponse;
 import org.feynix.application.conversation.service.handler.context.AgentPromptTemplates;
 import org.feynix.application.conversation.service.handler.context.ChatContext;
-import org.feynix.application.conversation.service.message.agent.tool.RagToolManager;
-import org.feynix.domain.agent.model.AgentEntity;
 import org.feynix.domain.conversation.constant.MessageType;
 import org.feynix.domain.conversation.constant.Role;
 import org.feynix.domain.conversation.model.MessageEntity;
@@ -28,9 +24,19 @@ import org.feynix.domain.llm.model.ProviderEntity;
 import org.feynix.domain.llm.service.HighAvailabilityDomainService;
 import org.feynix.domain.llm.service.LLMDomainService;
 import org.feynix.domain.user.service.UserSettingsDomainService;
+import org.feynix.domain.user.service.AccountDomainService;
 import org.feynix.infrastructure.exception.BusinessException;
 import org.feynix.infrastructure.llm.LLMServiceFactory;
 import org.feynix.infrastructure.transport.MessageTransport;
+import org.feynix.application.billing.service.BillingService;
+import org.feynix.application.billing.dto.BillingContext;
+import org.feynix.infrastructure.exception.InsufficientBalanceException;
+import org.feynix.domain.product.constant.BillingType;
+import org.feynix.domain.product.constant.UsageDataKeys;
+import org.feynix.domain.user.model.AccountEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import java.math.BigDecimal;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -39,6 +45,9 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class AbstractMessageHandler {
+
+    /** 日志记录器 */
+    private static final Logger logger = LoggerFactory.getLogger(AbstractMessageHandler.class);
 
     /** 连接超时时间（毫秒） */
     protected static final long CONNECTION_TIMEOUT = 3000000L;
@@ -49,18 +58,20 @@ public abstract class AbstractMessageHandler {
     protected final SessionDomainService sessionDomainService;
     protected final UserSettingsDomainService userSettingsDomainService;
     protected final LLMDomainService llmDomainService;
-    protected final RagToolManager ragToolManager;
+    protected final BillingService billingService;
+    protected final AccountDomainService accountDomainService;
     public AbstractMessageHandler(LLMServiceFactory llmServiceFactory, MessageDomainService messageDomainService,
             HighAvailabilityDomainService highAvailabilityDomainService, SessionDomainService sessionDomainService,
             UserSettingsDomainService userSettingsDomainService, LLMDomainService llmDomainService,
-            RagToolManager ragToolManager) {
+            BillingService billingService, AccountDomainService accountDomainService) {
         this.llmServiceFactory = llmServiceFactory;
         this.messageDomainService = messageDomainService;
         this.highAvailabilityDomainService = highAvailabilityDomainService;
         this.sessionDomainService = sessionDomainService;
         this.userSettingsDomainService = userSettingsDomainService;
         this.llmDomainService = llmDomainService;
-        this.ragToolManager = ragToolManager;
+        this.billingService = billingService;
+        this.accountDomainService = accountDomainService;
     }
 
     /** 处理对话的模板方法
@@ -73,7 +84,10 @@ public abstract class AbstractMessageHandler {
         // 1. 创建连接
         T connection = transport.createConnection(CONNECTION_TIMEOUT);
 
-        // 2. 创建消息实体
+        // 2. 检查用户余额是否足够
+        checkBalanceBeforeChat(chatContext.getUserId(), transport, connection);
+
+        // 3. 创建消息实体
         MessageEntity llmMessageEntity = createLlmMessage(chatContext);
         MessageEntity userMessageEntity = createUserMessage(chatContext);
 
@@ -113,7 +127,7 @@ public abstract class AbstractMessageHandler {
                 chatContext.getModel());
 
         // 创建流式Agent
-        Agent agent = buildStreamingAgent(streamingClient, memory, toolProvider, chatContext.getAgent());
+        Agent agent = buildStreamingAgent(streamingClient, memory, toolProvider);
 
         // 使用现有的流式处理逻辑
         processChat(agent, connection, transport, chatContext, userEntity, llmEntity);
@@ -162,6 +176,10 @@ public abstract class AbstractMessageHandler {
             highAvailabilityDomainService.reportCallResult(chatContext.getInstanceId(), chatContext.getModel().getId(),
                     true, latency, null);
 
+            // 9. 执行模型调用计费
+            performBillingWithErrorHandling(chatContext, chatResponse.tokenUsage().inputTokenCount(),
+                    chatResponse.tokenUsage().outputTokenCount(), transport, connection);
+
         } catch (Exception e) {
             // 错误处理
             AgentChatResponse errorResponse = AgentChatResponse.buildEndMessage(e.getMessage(), MessageType.TEXT);
@@ -199,10 +217,6 @@ public abstract class AbstractMessageHandler {
         // 部分响应处理
         tokenStream.onPartialResponse(reply -> {
             messageBuilder.get().append(reply);
-            // 删除换行后消息为空字符串
-            if (messageBuilder.get().toString().trim().isEmpty()) {
-                return;
-            }
             transport.sendMessage(connection, AgentChatResponse.build(reply, MessageType.TEXT));
         });
 
@@ -226,6 +240,11 @@ public abstract class AbstractMessageHandler {
             long latency = System.currentTimeMillis() - startTime;
             highAvailabilityDomainService.reportCallResult(chatContext.getInstanceId(), chatContext.getModel().getId(),
                     true, latency, null);
+
+            // 执行模型调用计费
+            performBillingWithErrorHandling(chatContext, chatResponse.tokenUsage().inputTokenCount(),
+                    chatResponse.tokenUsage().outputTokenCount(), transport, connection);
+
             smartRenameSession(chatContext);
         });
 
@@ -265,21 +284,30 @@ public abstract class AbstractMessageHandler {
 
     /** 构建流式Agent */
     protected Agent buildStreamingAgent(StreamingChatModel model, MessageWindowChatMemory memory,
-            ToolProvider toolProvider, AgentEntity agent) {
-
-        Map<ToolSpecification, ToolExecutor> ragTools = ragToolManager.createRagTools(agent);
-
+            ToolProvider toolProvider) {
         AiServices<Agent> agentService = AiServices.builder(Agent.class).streamingChatModel(model).chatMemory(memory);
-
-        if (ragTools != null) {
-            agentService.tools(ragTools);
-        }
 
         if (toolProvider != null) {
             agentService.toolProvider(toolProvider);
         }
 
         return agentService.build();
+    }
+
+    /** 构建同步Agent */
+    protected SyncAgent buildSyncAgent(ChatModel model, MessageWindowChatMemory memory, ToolProvider toolProvider) {
+        AiServices<SyncAgent> agentService = AiServices.builder(SyncAgent.class).chatModel(model).chatMemory(memory);
+
+        if (toolProvider != null) {
+            agentService.toolProvider(toolProvider);
+        }
+
+        return agentService.build();
+    }
+
+    /** 构建Agent - 保持向后兼容 */
+    protected Agent buildAgent(StreamingChatModel model, MessageWindowChatMemory memory, ToolProvider toolProvider) {
+        return buildStreamingAgent(model, memory, toolProvider);
     }
 
     /** 创建用户消息实体 */
@@ -339,6 +367,7 @@ public abstract class AbstractMessageHandler {
     // 智能重命名会话
     protected void smartRenameSession(ChatContext chatContext) {
         Thread thread = new Thread(() -> {
+            System.out.println("2222");
             // 获取会话 id
             String sessionId = chatContext.getSessionId();
             // 是否是首次对话
@@ -368,5 +397,104 @@ public abstract class AbstractMessageHandler {
             }
         });
         thread.start();
+    }
+
+    /** 创建计费上下文
+     * 
+     * @param chatContext 聊天上下文
+     * @param inputTokens 输入Token数量
+     * @param outputTokens 输出Token数量
+     * @return 计费上下文 */
+    private BillingContext createBillingContext(ChatContext chatContext, Integer inputTokens, Integer outputTokens) {
+        String requestId = generateRequestId(chatContext.getSessionId(), chatContext.getUserId());
+
+        return BillingContext.builder().type(BillingType.MODEL_USAGE.getCode())
+                .serviceId(chatContext.getModel().getId().toString()) // 使用模型表主键ID
+                .usageData(Map.of(UsageDataKeys.INPUT_TOKENS, inputTokens != null ? inputTokens : 0,
+                        UsageDataKeys.OUTPUT_TOKENS, outputTokens != null ? outputTokens : 0))
+                .requestId(requestId).userId(chatContext.getUserId()) // 添加用户ID
+                .build();
+    }
+
+    /** 生成幂等性请求ID
+     * 
+     * @param sessionId 会话ID
+     * @param userId 用户ID
+     * @return 请求ID */
+    private String generateRequestId(String sessionId, String userId) {
+        long timestamp = System.currentTimeMillis();
+        return String.format("billing_%s_%s_%d", sessionId, userId, timestamp);
+    }
+
+    /** 执行计费并处理异常
+     * 
+     * @param chatContext 聊天上下文
+     * @param inputTokens 输入Token数
+     * @param outputTokens 输出Token数
+     * @param transport 消息传输
+     * @param connection 连接对象 */
+    protected <T> void performBillingWithErrorHandling(ChatContext chatContext, Integer inputTokens,
+            Integer outputTokens, MessageTransport<T> transport, T connection) {
+        try {
+            // 创建计费上下文
+            BillingContext billingContext = createBillingContext(chatContext, inputTokens, outputTokens);
+
+            // 执行计费
+            billingService.charge(billingContext);
+
+            logger.info("模型调用计费成功 - 用户: {}, 模型: {}, 输入Token: {}, 输出Token: {}, 费用已扣除", chatContext.getUserId(),
+                    chatContext.getModel().getId(), inputTokens, outputTokens);
+
+        } catch (InsufficientBalanceException e) {
+            // 余额不足异常处理
+            logger.warn("用户余额不足 - 用户: {}, 模型: {}, 错误: {}", chatContext.getUserId(), chatContext.getModel().getId(),
+                    e.getMessage());
+
+            // 发送余额不足提示消息
+            AgentChatResponse balanceWarning = new AgentChatResponse("⚠️ 账户余额不足，请及时充值以继续使用服务", false);
+            balanceWarning.setMessageType(MessageType.TEXT);
+            transport.sendMessage(connection, balanceWarning);
+
+        } catch (BusinessException e) {
+            // 业务异常：记录日志但不影响对话
+            logger.error("计费业务异常 - 用户: {}, 模型: {}, 错误: {}", chatContext.getUserId(), chatContext.getModel().getId(),
+                    e.getMessage(), e);
+
+        } catch (Exception e) {
+            // 系统异常：记录日志但不影响对话
+            logger.error("计费系统异常 - 用户: {}, 模型: {}, 错误: {}", chatContext.getUserId(), chatContext.getModel().getId(),
+                    e.getMessage(), e);
+        }
+    }
+
+    /** 检查用户余额是否足够开始对话
+     * 
+     * @param userId 用户ID
+     * @param transport 消息传输
+     * @param connection 连接对象
+     * @param <T> 连接类型
+     * @throws InsufficientBalanceException 余额不足时抛出 */
+    protected <T> void checkBalanceBeforeChat(String userId, MessageTransport<T> transport, T connection) {
+        try {
+            AccountEntity account = accountDomainService.getOrCreateAccount(userId);
+            if (account.getBalance().compareTo(BigDecimal.ZERO) <= 0) {
+                // 余额不足：发送错误消息
+                String errorMessage = "⚠️ 账户余额不足，当前余额：" + account.getBalance() + "元，请充值后继续使用";
+                AgentChatResponse errorResponse = AgentChatResponse.buildEndMessage(errorMessage, MessageType.TEXT);
+                transport.sendMessage(connection, errorResponse);
+
+                logger.warn("用户余额不足被拒绝对话 - 用户: {}, 当前余额: {}", userId, account.getBalance());
+                throw new InsufficientBalanceException("账户余额不足，请充值后继续使用");
+            }
+
+            logger.debug("用户余额检查通过 - 用户: {}, 当前余额: {}", userId, account.getBalance());
+        } catch (InsufficientBalanceException e) {
+            // 重新抛出余额不足异常
+            throw e;
+        } catch (Exception e) {
+            logger.error("余额检查异常 - 用户: {}, 错误: {}", userId, e.getMessage(), e);
+            // 余额检查异常时，为了不影响用户体验，允许继续对话
+            logger.warn("余额检查服务异常，允许用户继续对话 - 用户: {}", userId);
+        }
     }
 }
