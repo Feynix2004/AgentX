@@ -6,7 +6,7 @@ public enum BillingType {
     /** 模型调用计费 */
     MODEL_USAGE("MODEL_USAGE", "模型调用计费"),
 
-    /** Agent创建计费 */
+    /** Agent创建计费 - 已预留配置：按次收费10.0元，service_id='agent_creation' */
     AGENT_CREATION("AGENT_CREATION", "Agent创建计费"),
 
     /** Agent使用计费 */

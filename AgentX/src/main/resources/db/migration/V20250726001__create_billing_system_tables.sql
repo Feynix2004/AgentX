@@ -110,10 +110,12 @@ INSERT INTO products (id, name, type, service_id, rule_id, pricing_config, statu
 ('product-model-1', 'GPT-4模型服务', 'MODEL_USAGE', '1', 'rule-model-token', '{"input_cost_per_million": 5.0, "output_cost_per_million": 15.0}', 1),
 ('product-model-2', 'GPT-3.5模型服务', 'MODEL_USAGE', '2', 'rule-model-token', '{"input_cost_per_million": 1.0, "output_cost_per_million": 2.0}', 1),
 ('product-model-3', 'Claude-3模型服务', 'MODEL_USAGE', '3', 'rule-model-token', '{"input_cost_per_million": 3.0, "output_cost_per_million": 12.0}', 1),
+-- Agent创建计费商品（已预留配置，待业务集成）
 ('product-agent-creation', 'Agent创建服务', 'AGENT_CREATION', 'agent_creation', 'rule-per-unit', '{"cost_per_unit": 10.0}', 1),
 ('product-api-calls', 'API调用服务', 'API_CALLS', 'api_calls', 'rule-per-unit', '{"cost_per_unit": 0.1}', 1);
 
 -- 注释说明：
 -- MODEL_USAGE类型的service_id应该是models表中的主键ID（如1,2,3等）
--- AGENT_CREATION类型使用固定标识'agent_creation'，因为不对应具体业务记录
+-- AGENT_CREATION类型使用固定标识'agent_creation'，因为不对应具体业务记录（已预留配置）
 -- 实际部署时，需要根据models表的真实ID更新这些配置
+-- Agent创建计费已完整预留：type='AGENT_CREATION', service_id='agent_creation', cost_per_unit=10.0

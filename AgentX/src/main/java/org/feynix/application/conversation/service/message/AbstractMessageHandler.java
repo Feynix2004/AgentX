@@ -255,9 +255,9 @@ public abstract class AbstractMessageHandler {
 
         // 工具执行处理
         tokenStream.onToolExecuted(toolExecution -> {
-            if (!messageBuilder.get().isEmpty()) {
+            if (messageBuilder.get().length() > 0) {
                 transport.sendMessage(connection, AgentChatResponse.buildEndMessage(MessageType.TEXT));
-                llmEntity.setContent(messageBuilder.toString());
+                llmEntity.setContent(messageBuilder.get().toString());
                 messageDomainService.saveMessageAndUpdateContext(Collections.singletonList(llmEntity),
                         chatContext.getContextEntity());
                 messageBuilder.set(new StringBuilder());
@@ -410,7 +410,8 @@ public abstract class AbstractMessageHandler {
 
         return BillingContext.builder().type(BillingType.MODEL_USAGE.getCode())
                 .serviceId(chatContext.getModel().getId().toString()) // 使用模型表主键ID
-                .usageData(Map.of(UsageDataKeys.INPUT_TOKENS, inputTokens != null ? inputTokens : 0,
+                .usageData(Map.of(
+                        UsageDataKeys.INPUT_TOKENS, inputTokens != null ? inputTokens : 0,
                         UsageDataKeys.OUTPUT_TOKENS, outputTokens != null ? outputTokens : 0))
                 .requestId(requestId).userId(chatContext.getUserId()) // 添加用户ID
                 .build();

@@ -6,7 +6,7 @@ public enum RuleHandlerKey {
     /** 模型Token计费策略 */
     MODEL_TOKEN_STRATEGY("MODEL_TOKEN_STRATEGY", "模型Token计费策略"),
 
-    /** 按次计费策略 */
+    /** 按次计费策略 - 用于Agent创建等固定单价场景 */
     PER_UNIT_STRATEGY("PER_UNIT_STRATEGY", "按次计费策略"),
 
     /** 分层计费策略 */

@@ -12,11 +12,11 @@
 - **业务无侵入**：核心业务逻辑保持干净，通过配置驱动计费
 
 ### 1.3 支持的计费场景
-- 🤖 **模型调用计费**：按Token输入输出分别计费
-- 🎯 **Agent创建计费**：按次数固定收费  
-- 📊 **Agent使用计费**：按调用次数计费
-- 🔌 **API调用计费**：按接口类型分层计费
-- 💾 **存储使用计费**：按存储量阶梯计费
+- 🤖 **模型调用计费**：按Token输入输出分别计费 ✅ **已完成集成**
+- 🎯 **Agent创建计费**：按次数固定收费 ✅ **已预留配置，待业务集成**
+- 📊 **Agent使用计费**：按调用次数计费 ⏳ **待开发**
+- 🔌 **API调用计费**：按接口类型分层计费 ⏳ **待开发**
+- 💾 **存储使用计费**：按存储量阶梯计费 ⏳ **待开发**
 
 ## 2. 技术架构设计
 
@@ -170,8 +170,8 @@ org.feynix.interfaces.billing.*  // 接口层
 - [ ] 单元测试编写
 
 #### 阶段三：业务集成 (Week 5-6)
-- [ ] 模型调用计费集成
-- [ ] Agent创建计费集成  
+- [x] 模型调用计费集成
+- [ ] Agent创建计费集成 **（已预留配置，待集成到AgentAppService）**
 - [ ] 前端账户管理页面
 - [ ] 集成测试
 
@@ -206,15 +206,18 @@ org.feynix.interfaces.billing.*  // 接口层
   ```
 - **异常处理**：余额不足时优雅降级
 
-### 6.2 Agent创建计费集成  
+### 6.2 Agent创建计费集成 ✅ **已预留配置，待业务集成**
+- **预留状态**：计费规则和商品配置已完整预留，框架完全支持
 - **集成位置**：`AgentAppService.createAgent`
 - **计费时机**：创建前预检查，创建后计费
 - **商品查找**：通过`type='AGENT_CREATION'` + `service_id='agent_creation'`查找固定计费商品
 - **数据来源**：固定单价配置（此场景下不依赖具体业务记录）
+- **已配置价格**：每创建一个Agent收费 **10.0元**（可在products表中调整）
 - **计费逻辑**：
-  ```
+  ```java
+  // TODO: 在AgentAppService.createAgent中集成以下逻辑
   BillingContext context = BillingContext.builder()
-      .type("AGENT_CREATION")
+      .type(BillingType.AGENT_CREATION.getCode())
       .serviceId("agent_creation")  // 固定业务标识，不是主键ID
       .usageData(Map.of("quantity", 1))
       .requestId(generateRequestId())
@@ -222,6 +225,11 @@ org.feynix.interfaces.billing.*  // 接口层
   billingService.charge(userId, context);
   ```
 - **异常处理**：余额不足阻止创建
+- **数据库配置**：
+  - 商品ID: `product-agent-creation`
+  - 规则ID: `rule-per-unit` 
+  - 策略类型: `PER_UNIT_STRATEGY`
+  - 定价配置: `{"cost_per_unit": 10.0}`
 
 ### 6.3 Agent使用计费集成
 - **集成位置**：Agent调用处理逻辑
