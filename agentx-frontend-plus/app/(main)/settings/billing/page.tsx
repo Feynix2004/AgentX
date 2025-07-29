@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { CreditCard, Download, AlertTriangle, Wallet, TrendingUp, RefreshCw, Search, Calendar, Eye, RotateCcw, FileText } from "lucide-react";
+import { CreditCard, Download, AlertTriangle, Wallet, TrendingUp, RefreshCw, Search, Calendar, Eye, RotateCcw, FileText, ExternalLink, Tag } from "lucide-react";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -469,6 +470,33 @@ export default function BillingPage() {
                 </CardContent>
               </Card>
             )}
+
+            {/* 价格说明快速链接 */}
+            <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Tag className="h-5 w-5 text-blue-600" />
+                  价格说明
+                </CardTitle>
+                <CardDescription>了解各项服务的详细价格和计费方式</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="text-sm text-muted-foreground">
+                  <p>• 模型调用按Token数量计费</p>
+                  <p>• Agent创建和使用按次数计费</p>
+                  <p>• API调用和存储服务按用量计费</p>
+                  <p>• 支持价格计算器和商品比较功能</p>
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Link href="/settings/pricing" className="w-full">
+                  <Button className="w-full" variant="outline">
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                    查看详细价格说明
+                  </Button>
+                </Link>
+              </CardFooter>
+            </Card>
           </div>
         </TabsContent>
 
