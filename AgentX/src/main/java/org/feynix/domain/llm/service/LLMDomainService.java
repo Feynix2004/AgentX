@@ -158,7 +158,7 @@ public class LLMDomainService {
      * @param providerId 服务商id */
     public ProviderEntity findProviderById(String providerId) {
         Wrapper<ProviderEntity> wrapper = Wrappers.<ProviderEntity>lambdaQuery().eq(ProviderEntity::getId, providerId);
-        ProviderEntity provider = providerRepository.selectById(wrapper);
+        ProviderEntity provider = providerRepository.selectOne(wrapper);
         if (provider == null) {
             return null;
         }

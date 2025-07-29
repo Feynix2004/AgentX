@@ -33,6 +33,15 @@ public class ProductDTO {
     /** 更新时间 */
     private LocalDateTime updatedAt;
 
+    /** 模型名称 (仅MODEL_USAGE类型) */
+    private String modelName;
+
+    /** 模型标识符 (仅MODEL_USAGE类型) */
+    private String modelId;
+
+    /** 服务商名称 (仅MODEL_USAGE类型) */
+    private String providerName;
+
     public ProductDTO() {
     }
 
@@ -106,5 +115,29 @@ public class ProductDTO {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getModelName() {
+        return modelName;
+    }
+
+    public void setModelName(String modelName) {
+        this.modelName = modelName;
+    }
+
+    public String getModelId() {
+        return modelId;
+    }
+
+    public void setModelId(String modelId) {
+        this.modelId = modelId;
+    }
+
+    public String getProviderName() {
+        return providerName;
+    }
+
+    public void setProviderName(String providerName) {
+        this.providerName = providerName;
     }
 }

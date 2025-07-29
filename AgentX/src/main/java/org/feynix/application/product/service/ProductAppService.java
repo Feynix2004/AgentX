@@ -11,12 +11,18 @@ import org.feynix.application.product.dto.ProductDTO;
 import org.feynix.domain.product.model.ProductEntity;
 import org.feynix.domain.product.service.ProductDomainService;
 import org.feynix.domain.rule.service.RuleDomainService;
+import org.feynix.domain.llm.service.LLMDomainService;
+import org.feynix.domain.llm.model.ModelEntity;
+import org.feynix.domain.llm.model.ProviderEntity;
 import org.feynix.infrastructure.exception.BusinessException;
 import org.feynix.interfaces.dto.product.request.CreateProductRequest;
 import org.feynix.interfaces.dto.product.request.QueryProductRequest;
 import org.feynix.interfaces.dto.product.request.UpdateProductRequest;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /** 商品应用服务 处理商品相关的业务流程编排 */
 @Service
@@ -24,10 +30,12 @@ public class ProductAppService {
 
     private final ProductDomainService productDomainService;
     private final RuleDomainService ruleDomainService;
+    private final LLMDomainService llmDomainService;
 
-    public ProductAppService(ProductDomainService productDomainService, RuleDomainService ruleDomainService) {
+    public ProductAppService(ProductDomainService productDomainService, RuleDomainService ruleDomainService, LLMDomainService llmDomainService) {
         this.productDomainService = productDomainService;
         this.ruleDomainService = ruleDomainService;
+        this.llmDomainService = llmDomainService;
     }
 
     /** 创建商品
@@ -114,7 +122,73 @@ public class ProductAppService {
      * @return 商品DTO列表 */
     public List<ProductDTO> getActiveProducts(String type) {
         List<ProductEntity> entities = productDomainService.getActiveProducts(type);
-        return ProductAssembler.toDTOs(entities);
+        List<ProductDTO> productDTOs = ProductAssembler.toDTOs(entities);
+        
+        // 为模型类型的商品填充模型信息
+        enrichModelInfo(productDTOs);
+        
+        return productDTOs;
+    }
+    
+    /** 为模型类型商品填充模型信息
+     * @param productDTOs 商品DTO列表 */
+    private void enrichModelInfo(List<ProductDTO> productDTOs) {
+        // 筛选出模型类型的商品
+        List<ProductDTO> modelProducts = productDTOs.stream()
+                .filter(product -> "MODEL_USAGE".equals(product.getType()))
+                .collect(Collectors.toList());
+        
+        if (modelProducts.isEmpty()) {
+            return;
+        }
+        
+        // 收集所有需要查询的模型ID
+        Set<String> modelIds = modelProducts.stream()
+                .map(ProductDTO::getServiceId)
+                .collect(Collectors.toSet());
+        
+        try {
+            // 批量查询模型信息
+            List<ModelEntity> models = llmDomainService.getModelsByIds(modelIds);
+            Map<String, ModelEntity> modelMap = models.stream()
+                    .collect(Collectors.toMap(ModelEntity::getId, model -> model));
+                    
+            // 收集需要查询的服务商ID
+            Set<String> providerIds = models.stream()
+                    .map(ModelEntity::getProviderId)
+                    .collect(Collectors.toSet());
+                    
+            // 批量查询服务商信息
+            Map<String, ProviderEntity> providerMap = providerIds.stream()
+                    .collect(Collectors.toMap(
+                        providerId -> providerId,
+                        providerId -> {
+                            try {
+                                return llmDomainService.findProviderById(providerId);
+                            } catch (Exception e) {
+                                return null; // 如果服务商不存在，返回null
+                            }
+                        }
+                    ));
+            
+            // 为每个模型商品填充信息
+            for (ProductDTO product : modelProducts) {
+                ModelEntity model = modelMap.get(product.getServiceId());
+                if (model != null) {
+                    product.setModelName(model.getName());
+                    product.setModelId(model.getModelId());
+                    
+                    // 设置服务商名称
+                    ProviderEntity provider = providerMap.get(model.getProviderId());
+                    if (provider != null) {
+                        product.setProviderName(provider.getName());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // 如果查询模型信息失败，不影响商品查询，只是没有模型信息
+            // 可以记录日志但不抛出异常
+        }
     }
 
     /** 更新商品状态

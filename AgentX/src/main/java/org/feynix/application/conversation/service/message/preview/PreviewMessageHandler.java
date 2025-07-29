@@ -87,7 +87,7 @@ public class PreviewMessageHandler extends AbstractMessageHandler {
 
         // 工具执行处理
         tokenStream.onToolExecuted(toolExecution -> {
-            if (!messageBuilder.get().isEmpty()) {
+            if (messageBuilder.get().length() > 0) {
                 transport.sendMessage(connection, AgentChatResponse.buildEndMessage(MessageType.TEXT));
                 llmEntity.setContent(messageBuilder.toString());
 
