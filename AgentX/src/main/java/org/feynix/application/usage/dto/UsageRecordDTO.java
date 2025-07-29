@@ -34,6 +34,21 @@ public class UsageRecordDTO {
     /** 更新时间 */
     private LocalDateTime updatedAt;
 
+    /** 业务服务名称 （如：GPT-4 模型调用） */
+    private String serviceName;
+
+    /** 服务类型 （如：模型服务） */
+    private String serviceType;
+
+    /** 服务描述 */
+    private String serviceDescription;
+
+    /** 定价规则说明 （如：输入 ¥0.002/1K tokens，输出 ¥0.006/1K tokens） */
+    private String pricingRule;
+
+    /** 关联实体名称 （如：具体的模型名称或Agent名称） */
+    private String relatedEntityName;
+
     public UsageRecordDTO() {
     }
 
@@ -107,5 +122,45 @@ public class UsageRecordDTO {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getServiceName() {
+        return serviceName;
+    }
+
+    public void setServiceName(String serviceName) {
+        this.serviceName = serviceName;
+    }
+
+    public String getServiceType() {
+        return serviceType;
+    }
+
+    public void setServiceType(String serviceType) {
+        this.serviceType = serviceType;
+    }
+
+    public String getServiceDescription() {
+        return serviceDescription;
+    }
+
+    public void setServiceDescription(String serviceDescription) {
+        this.serviceDescription = serviceDescription;
+    }
+
+    public String getPricingRule() {
+        return pricingRule;
+    }
+
+    public void setPricingRule(String pricingRule) {
+        this.pricingRule = pricingRule;
+    }
+
+    public String getRelatedEntityName() {
+        return relatedEntityName;
+    }
+
+    public void setRelatedEntityName(String relatedEntityName) {
+        this.relatedEntityName = relatedEntityName;
     }
 }

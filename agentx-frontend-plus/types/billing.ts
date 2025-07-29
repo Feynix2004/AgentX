@@ -7,6 +7,7 @@ export interface ApiResponse<T> {
   timestamp: number;
 }
 
+// MyBatis-Plus分页响应类型（匹配后端Page类型）
 export interface PageResponse<T> {
   records: T[];
   total: number;

@@ -15,15 +15,21 @@ import org.feynix.interfaces.dto.usage.request.QueryUsageRecordRequest;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /** 使用记录应用服务 处理使用记录相关的业务流程编排 */
 @Service
 public class UsageRecordAppService {
 
     private final UsageRecordDomainService usageRecordDomainService;
+    private final UsageRecordBusinessInfoService businessInfoService;
 
-    public UsageRecordAppService(UsageRecordDomainService usageRecordDomainService) {
+    public UsageRecordAppService(UsageRecordDomainService usageRecordDomainService,
+                               UsageRecordBusinessInfoService businessInfoService) {
         this.usageRecordDomainService = usageRecordDomainService;
+        this.businessInfoService = businessInfoService;
     }
 
     /** 根据ID获取使用记录
@@ -34,7 +40,12 @@ public class UsageRecordAppService {
         if (entity == null) {
             throw new BusinessException("使用记录不存在");
         }
-        return UsageRecordAssembler.toDTO(entity);
+        UsageRecordDTO dto = UsageRecordAssembler.toDTO(entity);
+        
+        // 填充业务信息
+        fillBusinessInfo(List.of(dto));
+        
+        return dto;
     }
 
     /** 获取用户的使用记录（分页）
@@ -46,6 +57,9 @@ public class UsageRecordAppService {
         Page<UsageRecordEntity> entityPage = usageRecordDomainService.getUserUsageHistory(userId, page, size);
 
         List<UsageRecordDTO> dtoList = UsageRecordAssembler.toDTOs(entityPage.getRecords());
+        
+        // 填充业务信息
+        fillBusinessInfo(dtoList);
 
         Page<UsageRecordDTO> resultPage = new Page<>(entityPage.getCurrent(), entityPage.getSize(),
                 entityPage.getTotal());
@@ -75,6 +89,9 @@ public class UsageRecordAppService {
 
         // 转换结果
         List<UsageRecordDTO> dtoList = UsageRecordAssembler.toDTOs(entityPage.getRecords());
+        
+        // 填充业务信息
+        fillBusinessInfo(dtoList);
 
         Page<UsageRecordDTO> resultPage = new Page<>(entityPage.getCurrent(), entityPage.getSize(),
                 entityPage.getTotal());
@@ -94,6 +111,9 @@ public class UsageRecordAppService {
                 page, size);
 
         List<UsageRecordDTO> dtoList = UsageRecordAssembler.toDTOs(entityPage.getRecords());
+        
+        // 填充业务信息
+        fillBusinessInfo(dtoList);
 
         Page<UsageRecordDTO> resultPage = new Page<>(entityPage.getCurrent(), entityPage.getSize(),
                 entityPage.getTotal());
@@ -109,7 +129,12 @@ public class UsageRecordAppService {
      * @return 使用记录列表 */
     public List<UsageRecordDTO> getUserUsageByTimeRange(String userId, LocalDateTime startTime, LocalDateTime endTime) {
         List<UsageRecordEntity> entities = usageRecordDomainService.getUserUsageByTimeRange(userId, startTime, endTime);
-        return UsageRecordAssembler.toDTOs(entities);
+        List<UsageRecordDTO> dtoList = UsageRecordAssembler.toDTOs(entities);
+        
+        // 填充业务信息
+        fillBusinessInfo(dtoList);
+        
+        return dtoList;
     }
 
     /** 获取商品的使用记录（分页）
@@ -121,6 +146,9 @@ public class UsageRecordAppService {
         Page<UsageRecordEntity> entityPage = usageRecordDomainService.getProductUsageHistory(productId, page, size);
 
         List<UsageRecordDTO> dtoList = UsageRecordAssembler.toDTOs(entityPage.getRecords());
+        
+        // 填充业务信息
+        fillBusinessInfo(dtoList);
 
         Page<UsageRecordDTO> resultPage = new Page<>(entityPage.getCurrent(), entityPage.getSize(),
                 entityPage.getTotal());
@@ -155,5 +183,35 @@ public class UsageRecordAppService {
         List<UsageRecordEntity> entities = usageRecordDomainService.getUserUsageByTimeRange(userId, startTime, endTime);
 
         return entities.stream().map(UsageRecordEntity::getCost).reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    /** 批量填充用量记录的业务信息
+     * 
+     * @param dtoList 用量记录DTO列表 */
+    private void fillBusinessInfo(List<UsageRecordDTO> dtoList) {
+        if (dtoList == null || dtoList.isEmpty()) {
+            return;
+        }
+
+        // 1. 收集所有商品ID
+        Set<String> productIds = dtoList.stream()
+                .map(UsageRecordDTO::getProductId)
+                .collect(Collectors.toSet());
+
+        // 2. 批量获取业务信息映射
+        Map<String, UsageRecordBusinessInfoService.BusinessInfo> businessInfoMap = 
+                businessInfoService.getBatchBusinessInfo(productIds);
+
+        // 3. 填充业务信息到DTO
+        for (UsageRecordDTO dto : dtoList) {
+            UsageRecordBusinessInfoService.BusinessInfo businessInfo = businessInfoMap.get(dto.getProductId());
+            if (businessInfo != null) {
+                dto.setServiceName(businessInfo.getServiceName());
+                dto.setServiceType(businessInfo.getServiceType());
+                dto.setServiceDescription(businessInfo.getServiceDescription());
+                dto.setPricingRule(businessInfo.getPricingRule());
+                dto.setRelatedEntityName(businessInfo.getRelatedEntityName());
+            }
+        }
     }
 }

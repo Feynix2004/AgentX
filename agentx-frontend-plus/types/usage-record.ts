@@ -11,16 +11,21 @@ export interface UsageRecord {
   billedAt: string;
   createdAt: string;
   updatedAt: string;
+  // 业务信息字段（后端填充）
+  serviceName?: string;        // 业务服务名称（如：GPT-4 模型调用）
+  serviceType?: string;        // 服务类型（如：模型服务）
+  serviceDescription?: string; // 服务描述
+  pricingRule?: string;       // 定价规则说明（如：输入 ¥0.002/1K tokens，输出 ¥0.006/1K tokens）
+  relatedEntityName?: string; // 关联实体名称（如：具体的模型名称或Agent名称）
 }
 
-// 查询用量记录请求
+// 查询用量记录请求（匹配后端QueryUsageRecordRequest）
 export interface QueryUsageRecordRequest {
   userId?: string;
   productId?: string;
-  startDate?: string;
-  endDate?: string;
-  minCost?: number;
-  maxCost?: number;
+  requestId?: string;
+  startTime?: string; // 后端使用startTime/endTime而不是startDate/endDate
+  endTime?: string;
   page?: number;
   pageSize?: number;
 }

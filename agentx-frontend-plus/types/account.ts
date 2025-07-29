@@ -1,6 +1,6 @@
 // 账户相关类型定义
 
-// 账户接口
+// 账户接口（匹配后端AccountDTO）
 export interface Account {
   id: string;
   userId: string;
@@ -10,13 +10,13 @@ export interface Account {
   lastTransactionAt?: string;
   createdAt: string;
   updatedAt: string;
-  availableBalance: number; // 可用余额（余额+信用额度）
+  availableBalance: number; // 可用余额（余额+信用额度，后端计算字段）
 }
 
-// 充值请求
+// 充值请求（匹配后端RechargeRequest）
 export interface RechargeRequest {
   amount: number;
-  paymentMethod?: string;
+  remark?: string; // 后端使用remark而不是paymentMethod
 }
 
 // 添加信用额度请求

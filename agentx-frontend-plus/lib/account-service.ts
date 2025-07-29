@@ -9,9 +9,10 @@ import {
   BalanceTransaction
 } from '@/types/account';
 
-// API端点
+// API端点（匹配后端Controller路径）
 const API_ENDPOINTS = {
   CURRENT_ACCOUNT: '/accounts/current',
+  // 注意：以下端点在当前后端中尚未实现
   RECHARGE: '/accounts/recharge',
   ADD_CREDIT: '/accounts/credit',
   ACCOUNT_STATS: '/accounts/stats',

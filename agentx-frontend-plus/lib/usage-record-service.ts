@@ -10,11 +10,12 @@ import {
 } from '@/types/usage-record';
 import { PageResponse } from '@/types/billing';
 
-// API端点
+// API端点（匹配后端PortalUsageRecordController路径）
 const API_ENDPOINTS = {
   USAGE_RECORDS: '/usage-records',
   USAGE_RECORD_BY_ID: (id: string) => `/usage-records/${id}`,
   TOTAL_COST: '/usage-records/current/total-cost',
+  // 注意：以下端点在当前后端中尚未实现
   USAGE_STATS: '/usage-records/stats',
   USAGE_CHART: '/usage-records/chart'
 } as const;
@@ -48,10 +49,15 @@ export class UsageRecordService {
     }
   }
 
-  // 获取当前用户的总消费金额
+  // 获取当前用户的总消费金额（后端返回BigDecimal，转为number）
   static async getCurrentUserTotalCost(): Promise<ApiResponse<number>> {
     try {
-      return await httpClient.get(API_ENDPOINTS.TOTAL_COST);
+      const response = await httpClient.get(API_ENDPOINTS.TOTAL_COST);
+      // 如果后端返回BigDecimal格式，转换为number
+      if (response.code === 200 && response.data) {
+        response.data = Number(response.data);
+      }
+      return response;
     } catch (error) {
       return {
         code: 500,

@@ -10,6 +10,8 @@ import org.feynix.domain.product.repository.ProductRepository;
 import org.feynix.infrastructure.exception.BusinessException;
 
 import java.util.List;
+import java.util.Set;
+import java.util.Collections;
 
 /** 商品领域服务 处理商品相关的核心业务逻辑 */
 @Service
@@ -181,5 +183,19 @@ public class ProductDomainService {
     public boolean isProductActiveByBusinessKey(String type, String serviceId) {
         ProductEntity product = findProductByBusinessKey(type, serviceId);
         return product != null && product.isActive();
+    }
+
+    /** 批量根据ID获取商品 - 避免循环查询
+     * @param productIds 商品ID集合
+     * @return 商品列表 */
+    public List<ProductEntity> getProductsByIds(Set<String> productIds) {
+        if (productIds == null || productIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        LambdaQueryWrapper<ProductEntity> wrapper = Wrappers.<ProductEntity>lambdaQuery()
+                .in(ProductEntity::getId, productIds);
+
+        return productRepository.selectList(wrapper);
     }
 }
