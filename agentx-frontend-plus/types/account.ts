@@ -16,7 +16,9 @@ export interface Account {
 // 充值请求（匹配后端RechargeRequest）
 export interface RechargeRequest {
   amount: number;
-  remark?: string; // 后端使用remark而不是paymentMethod
+  paymentPlatform: string; // 支付平台代码（如：alipay, stripe, wechat）
+  paymentType: string; // 支付类型代码（如：WEB, QR_CODE, MOBILE）
+  remark?: string; // 备注信息
 }
 
 // 添加信用额度请求

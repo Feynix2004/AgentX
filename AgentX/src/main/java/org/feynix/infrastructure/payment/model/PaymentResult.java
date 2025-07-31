@@ -23,6 +23,9 @@ public class PaymentResult {
     /** 支付类型 */
     private String paymentType;
     
+    /** 支付状态 */
+    private String status;
+    
     /** 错误信息 */
     private String errorMessage;
     
@@ -88,6 +91,14 @@ public class PaymentResult {
     
     public void setPaymentType(String paymentType) {
         this.paymentType = paymentType;
+    }
+    
+    public String getStatus() {
+        return status;
+    }
+    
+    public void setStatus(String status) {
+        this.status = status;
     }
     
     public String getErrorMessage() {

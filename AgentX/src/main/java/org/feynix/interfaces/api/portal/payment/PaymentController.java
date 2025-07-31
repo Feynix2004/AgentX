@@ -10,10 +10,13 @@ import org.feynix.domain.order.constant.PaymentPlatform;
 import org.feynix.interfaces.api.common.Result;
 import org.feynix.interfaces.dto.account.request.RechargeRequest;
 import org.feynix.interfaces.dto.account.response.PaymentResponseDTO;
+import org.feynix.interfaces.dto.account.response.OrderStatusResponseDTO;
+import org.feynix.interfaces.dto.account.response.PaymentMethodDTO;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
 
 /** 支付控制器 */
 @RestController
@@ -49,6 +52,45 @@ public class PaymentController {
         } catch (Exception e) {
             logger.error("充值支付创建失败: amount={}, platform={}, type={}", 
                         request.getAmount(), request.getPaymentPlatform(), request.getPaymentType(), e);
+            return Result.error(500, e.getMessage());
+        }
+    }
+    
+    /** 查询订单状态
+     * 
+     * @param orderNo 订单号
+     * @return 订单状态响应 */
+    @GetMapping("/orders/{orderNo}/status")
+    public Result<OrderStatusResponseDTO> queryOrderStatus(@PathVariable String orderNo) {
+        
+        logger.info("查询订单状态: orderNo={}", orderNo);
+        
+        try {
+            OrderStatusResponseDTO response = paymentAppService.queryOrderStatus(orderNo);
+            logger.info("订单状态查询成功: orderNo={}, status={}", orderNo, response.getStatus());
+            return Result.success(response);
+            
+        } catch (Exception e) {
+            logger.error("订单状态查询失败: orderNo={}", orderNo, e);
+            return Result.error(500, e.getMessage());
+        }
+    }
+    
+    /** 获取可用的支付方法列表
+     * 
+     * @return 支付方法列表 */
+    @GetMapping("/methods")
+    public Result<List<PaymentMethodDTO>> getAvailablePaymentMethods() {
+        
+        logger.info("获取可用的支付方法列表");
+        
+        try {
+            List<PaymentMethodDTO> methods = paymentAppService.getAvailablePaymentMethods();
+            logger.info("支付方法列表获取成功: 共{}个平台", methods.size());
+            return Result.success(methods);
+            
+        } catch (Exception e) {
+            logger.error("获取支付方法列表失败", e);
             return Result.error(500, e.getMessage());
         }
     }

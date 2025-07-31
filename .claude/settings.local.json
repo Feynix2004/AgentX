@@ -40,7 +40,8 @@
       "Bash(docker inspect:*)",
       "Bash(docker stop:*)",
       "Bash(docker rm:*)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(npm install:*)"
     ],
     "deny": []
   }

@@ -4,16 +4,16 @@ package org.feynix.domain.order.constant;
 public enum PaymentType {
     
     /** 网页支付 */
-    WEB("web", "网页支付"),
+    WEB("WEB", "网页支付"),
     
     /** 二维码支付 */
-    QR_CODE("qr_code", "二维码支付"),
+    QR_CODE("QR_CODE", "二维码支付"),
     
     /** 移动端支付 */
-    MOBILE("mobile", "移动端支付"),
+    MOBILE("MOBILE", "移动端支付"),
     
     /** H5支付 */
-    H5("h5", "H5支付"),
+    H5("H5", "H5支付"),
     
     /** 小程序支付 */
     MINI_PROGRAM("mini_program", "小程序支付");
@@ -39,11 +39,22 @@ public enum PaymentType {
         if (code == null || code.trim().isEmpty()) {
             return null;
         }
+        
+        String normalizedCode = code.trim().toLowerCase();
         for (PaymentType type : values()) {
-            if (type.code.equals(code)) {
+            if (type.code.equals(normalizedCode)) {
                 return type;
             }
         }
+        
+        // 兼容大写格式
+        if ("QR_CODE".equalsIgnoreCase(code)) {
+            return QR_CODE;
+        }
+        if ("MINI_PROGRAM".equalsIgnoreCase(code)) {
+            return MINI_PROGRAM;
+        }
+        
         throw new IllegalArgumentException("未知的支付类型代码: " + code);
     }
     

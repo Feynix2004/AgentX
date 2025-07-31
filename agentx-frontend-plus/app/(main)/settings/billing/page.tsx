@@ -26,6 +26,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 
 import { Account, RechargeRequest } from "@/types/account";
+import { SimpleRechargeFlow } from "@/components/payment";
 import { UsageRecord, QueryUsageRecordRequest } from "@/types/usage-record";
 import { PageResponse } from "@/types/billing";
 import { AccountService, AccountServiceWithToast } from "@/lib/account-service";
@@ -36,9 +37,6 @@ export default function BillingPage() {
   const [account, setAccount] = useState<Account | null>(null);
   const [loading, setLoading] = useState(true);
   const [totalCost, setTotalCost] = useState<number>(0);
-  const [rechargeAmount, setRechargeAmount] = useState<string>("");
-  const [rechargeRemark, setRechargeRemark] = useState<string>("");
-  const [rechargeLoading, setRechargeLoading] = useState(false);
 
   // 用量记录相关状态
   const [records, setRecords] = useState<UsageRecord[]>([]);
@@ -95,39 +93,16 @@ export default function BillingPage() {
     }
   };
 
-  // 处理充值
-  const handleRecharge = async () => {
-    if (!rechargeAmount || parseFloat(rechargeAmount) <= 0) {
-      toast({
-        title: "充值金额无效",
-        description: "请输入有效的充值金额",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setRechargeLoading(true);
-    try {
-      const request: RechargeRequest = {
-        amount: parseFloat(rechargeAmount),
-        remark: rechargeRemark || undefined
-      };
-
-      const response = await AccountServiceWithToast.recharge(request);
-      if (response.code === 200) {
-        setRechargeAmount("");
-        setRechargeRemark("");
-        loadAccountData(); // 重新加载账户数据
-      }
-    } catch (error) {
-      toast({
-        title: "充值失败",
-        description: "网络错误，请稍后重试",
-        variant: "destructive"
-      });
-    } finally {
-      setRechargeLoading(false);
-    }
+  // 充值成功回调
+  const handleRechargeSuccess = (orderNo: string, amount: number) => {
+    toast({
+      title: "充值成功",
+      description: `¥${amount.toFixed(2)} 已成功充值到您的账户`,
+      variant: "default"
+    });
+    
+    // 重新加载账户数据
+    loadAccountData();
   };
 
   // 格式化金额
@@ -687,66 +662,11 @@ export default function BillingPage() {
         </TabsContent>
 
         <TabsContent value="recharge">
-          <div className="grid gap-6">
-            {/* 充值表单 */}
-            <Card>
-              <CardHeader>
-                <CardTitle>账户充值</CardTitle>
-                <CardDescription>为您的账户充值以继续使用服务</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="amount">充值金额 (元)</Label>
-                    <Input
-                      id="amount"
-                      type="number"
-                      placeholder="请输入充值金额"
-                      value={rechargeAmount}
-                      onChange={(e) => setRechargeAmount(e.target.value)}
-                      min="0.01"
-                      step="0.01"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="remark">备注 (可选)</Label>
-                    <Input
-                      id="remark"
-                      placeholder="充值备注"
-                      value={rechargeRemark}
-                      onChange={(e) => setRechargeRemark(e.target.value)}
-                    />
-                  </div>
-                </div>
-                
-                {/* 快速金额选择 */}
-                <div className="space-y-2">
-                  <Label>快速选择</Label>
-                  <div className="flex gap-2 flex-wrap">
-                    {[10, 50, 100, 200, 500, 1000].map((amount) => (
-                      <Button
-                        key={amount}
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setRechargeAmount(amount.toString())}
-                      >
-                        ¥{amount}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button
-                  onClick={handleRecharge}
-                  disabled={rechargeLoading || !rechargeAmount}
-                  className="w-full"
-                >
-                  {rechargeLoading ? "充值中..." : "立即充值"}
-                </Button>
-              </CardFooter>
-            </Card>
-
+          <div className="space-y-6">
+            <SimpleRechargeFlow 
+              onSuccess={handleRechargeSuccess}
+            />
+            
             {/* 充值说明 */}
             <Card>
               <CardHeader>
@@ -754,10 +674,11 @@ export default function BillingPage() {
               </CardHeader>
               <CardContent className="space-y-3 text-sm text-muted-foreground">
                 <p>• 充值金额将直接添加到您的账户余额中</p>
-                <p>• 最低充值金额为 ¥0.01</p>
+                <p>• 最低充值金额为 ¥0.01，最高单次充值 ¥100,000</p>
+                <p>• 目前支持支付宝扫码支付</p>
                 <p>• 充值后余额可用于平台内所有付费服务</p>
-                <p>• 如需退款或有其他问题，请联系客服</p>
-                <p>• 当前充值功能仅为界面展示，实际支付功能尚未集成</p>
+                <p>• 支付过程中请不要关闭页面，等待支付完成</p>
+                <p>• 如遇到问题或需要退款，请联系客服</p>
               </CardContent>
             </Card>
           </div>

@@ -1,5 +1,6 @@
 package org.feynix.infrastructure.payment.provider;
 
+import org.feynix.domain.order.constant.OrderStatus;
 import org.feynix.domain.order.constant.PaymentPlatform;
 import org.feynix.infrastructure.payment.model.PaymentCallback;
 import org.feynix.infrastructure.payment.model.PaymentRequest;
@@ -50,6 +51,12 @@ public abstract class PaymentProvider {
      * @param refundReason 退款原因
      * @return 支付结果 */
     public abstract PaymentResult refundPayment(String providerOrderId, String refundAmount, String refundReason);
+    
+    /** 将支付平台状态转换为系统订单状态
+     * 
+     * @param platformStatus 支付平台状态
+     * @return 系统订单状态 */
+    public abstract OrderStatus convertToOrderStatus(String platformStatus);
     
     /** 验证回调签名
      * 

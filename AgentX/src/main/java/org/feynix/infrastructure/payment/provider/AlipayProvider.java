@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
+import org.feynix.domain.order.constant.OrderStatus;
 import org.feynix.domain.order.constant.PaymentPlatform;
 import org.feynix.infrastructure.payment.constant.AlipayPaymentType;
 import org.feynix.infrastructure.payment.model.PaymentCallback;
@@ -62,19 +63,19 @@ public class AlipayProvider extends PaymentProvider {
     }
 
 
-    @Value("${alipay.app-id:}")
+    @Value("${payment.alipay.app-id:}")
     private String appId;
     
-    @Value("${alipay.private-key:}")
+    @Value("${payment.alipay.private-key:}")
     private String privateKey;
     
-    @Value("${alipay.alipay-public-key:}")
+    @Value("${payment.alipay.public-key:}")
     private String alipayPublicKey;
     
-    @Value("${alipay.gateway-host:openapi.alipay.com}")
+    @Value("${payment.alipay.gateway-host:openapi-sandbox.dl.alipaydev.com}")
     private String gatewayHost;
     
-    @Value("${alipay.sign-type:RSA2}")
+    @Value("${payment.alipay.sign-type:RSA2}") 
     private String signType;
     
     private volatile boolean initialized = false;
@@ -188,23 +189,46 @@ public class AlipayProvider extends PaymentProvider {
             
             if (ResponseChecker.success(response)) {
                 PaymentResult result = new PaymentResult();
+                
+                // 设置基本信息
                 result.setProviderOrderId(response.outTradeNo);
                 result.setProviderPaymentId(response.tradeNo);
+                result.setPaymentMethod("ALIPAY");
+                result.setPaymentType(AlipayPaymentType.QR_CODE); // 默认二维码支付，可以根据实际情况调整
+                
+                // 设置支付平台原始状态（重要！）
+                result.setStatus(response.tradeStatus);
                 
                 // 检查支付状态
                 if ("TRADE_SUCCESS".equals(response.tradeStatus) || "TRADE_FINISHED".equals(response.tradeStatus)) {
                     result.setSuccess(true);
-                    logger.info("支付宝支付成功: providerOrderId={}, tradeNo={}", providerOrderId, response.tradeNo);
+                    logger.info("支付宝支付成功: providerOrderId={}, tradeNo={}, status={}", 
+                        providerOrderId, response.tradeNo, response.tradeStatus);
                 } else {
                     result.setSuccess(false);
                     result.setErrorMessage("支付未成功, 状态: " + response.tradeStatus);
                     logger.info("支付宝支付未成功: providerOrderId={}, status={}", providerOrderId, response.tradeStatus);
                 }
                 
+                // 设置原始响应数据
+                Map<String, Object> rawResponse = new HashMap<>();
+                rawResponse.put("outTradeNo", response.outTradeNo);
+                rawResponse.put("tradeNo", response.tradeNo);
+                rawResponse.put("tradeStatus", response.tradeStatus);
+                rawResponse.put("totalAmount", response.totalAmount);
+                rawResponse.put("receiptAmount", response.receiptAmount);
+                rawResponse.put("buyerPayAmount", response.buyerPayAmount);
+                rawResponse.put("pointAmount", response.pointAmount);
+                rawResponse.put("invoiceAmount", response.invoiceAmount);
+                rawResponse.put("sendPayDate", response.sendPayDate);
+                result.setRawResponse(rawResponse);
+                
                 return result;
             } else {
-                logger.error("支付宝支付查询失败: providerOrderId={}", providerOrderId);
-                return PaymentResult.failure("PAYMENT_QUERY_FAILED", "支付查询失败");
+                logger.error("支付宝支付查询失败: providerOrderId={}, msg={}, subMsg={}", 
+                    providerOrderId, response.msg, response.subMsg);
+                return PaymentResult.failure("PAYMENT_QUERY_FAILED", 
+                    "支付查询失败: " + response.subMsg);
             }
             
         } catch (Exception e) {
@@ -390,5 +414,36 @@ public class AlipayProvider extends PaymentProvider {
         return StringUtils.hasText(appId) && 
                StringUtils.hasText(privateKey) && 
                StringUtils.hasText(alipayPublicKey);
+    }
+
+    @Override  
+    public OrderStatus convertToOrderStatus(String platformStatus) {
+        if (platformStatus == null || platformStatus.trim().isEmpty()) {
+            logger.warn("支付宝平台状态为空，默认返回PENDING");
+            return OrderStatus.PENDING;
+        }
+        
+        String status = platformStatus.trim().toUpperCase();
+        logger.debug("转换支付宝状态: {} -> 系统状态", status);
+        
+        switch (status) {
+            // 支付成功状态
+            case "TRADE_SUCCESS":
+            case "TRADE_FINISHED":
+                return OrderStatus.PAID;
+                
+            // 待支付状态
+            case "WAIT_BUYER_PAY":
+                return OrderStatus.PENDING;
+                
+            // 交易关闭/取消状态
+            case "TRADE_CLOSED":
+                return OrderStatus.CANCELLED;
+                
+            // 其他未知状态，默认为待支付
+            default:
+                logger.warn("未知的支付宝状态: {}，默认转换为PENDING", platformStatus);
+                return OrderStatus.PENDING;
+        }
     }
 }
