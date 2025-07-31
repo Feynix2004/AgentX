@@ -1,7 +1,7 @@
 package org.feynix.infrastructure.payment.factory;
 
 import org.springframework.stereotype.Component;
-import org.feynix.infrastructure.payment.constant.PaymentMethod;
+import org.feynix.domain.order.constant.PaymentPlatform;
 import org.feynix.infrastructure.exception.BusinessException;
 import org.feynix.infrastructure.payment.provider.PaymentProvider;
 
@@ -16,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class PaymentProviderFactory {
     
     /** 支付提供商缓存 */
-    private final Map<PaymentMethod, PaymentProvider> providerCache = new ConcurrentHashMap<>();
+    private final Map<PaymentPlatform, PaymentProvider> providerCache = new ConcurrentHashMap<>();
     
     /** 所有支付提供商列表 */
     private final List<PaymentProvider> allProviders;
@@ -30,44 +30,44 @@ public class PaymentProviderFactory {
     private void initializeProviders() {
         for (PaymentProvider provider : allProviders) {
             if (provider.isConfigured()) {
-                providerCache.put(provider.getPaymentMethod(), provider);
+                providerCache.put(provider.getPaymentPlatform(), provider);
             }
         }
     }
     
     /** 获取支付提供商
      * 
-     * @param paymentMethod 支付方式
+     * @param paymentPlatform 支付平台
      * @return 支付提供商
-     * @throws BusinessException 不支持的支付方式 */
-    public PaymentProvider getProvider(PaymentMethod paymentMethod) {
-        if (paymentMethod == null) {
-            throw new BusinessException("支付方式不能为空");
+     * @throws BusinessException 不支持的支付平台 */
+    public PaymentProvider getProvider(PaymentPlatform paymentPlatform) {
+        if (paymentPlatform == null) {
+            throw new BusinessException("支付平台不能为空");
         }
         
-        PaymentProvider provider = providerCache.get(paymentMethod);
+        PaymentProvider provider = providerCache.get(paymentPlatform);
         if (provider == null) {
-            throw new BusinessException("不支持的支付方式: " + paymentMethod);
+            throw new BusinessException("不支持的支付平台: " + paymentPlatform);
         }
         
         return provider;
     }
     
-    /** 检查支付方式是否可用
+    /** 检查支付平台是否可用
      * 
-     * @param paymentMethod 支付方式
+     * @param paymentPlatform 支付平台
      * @return 是否可用 */
-    public boolean isAvailable(PaymentMethod paymentMethod) {
-        if (paymentMethod == null) {
+    public boolean isAvailable(PaymentPlatform paymentPlatform) {
+        if (paymentPlatform == null) {
             return false;
         }
-        return providerCache.containsKey(paymentMethod);
+        return providerCache.containsKey(paymentPlatform);
     }
     
-    /** 获取所有可用的支付方式
+    /** 获取所有可用的支付平台
      * 
-     * @return 支付方式列表 */
-    public List<PaymentMethod> getAvailablePaymentMethods() {
+     * @return 支付平台列表 */
+    public List<PaymentPlatform> getAvailablePaymentPlatforms() {
         return new ArrayList<>(providerCache.keySet());
     }
     
@@ -80,17 +80,17 @@ public class PaymentProviderFactory {
                 .collect(java.util.stream.Collectors.toList());
     }
     
-    /** 检查支付方式是否支持特定功能
+    /** 检查支付平台是否支持特定功能
      * 
-     * @param paymentMethod 支付方式
+     * @param paymentPlatform 支付平台
      * @param feature 功能名称
      * @return 是否支持 */
-    public boolean supportsFeature(PaymentMethod paymentMethod, String feature) {
-        if (!isAvailable(paymentMethod)) {
+    public boolean supportsFeature(PaymentPlatform paymentPlatform, String feature) {
+        if (!isAvailable(paymentPlatform)) {
             return false;
         }
         
-        PaymentProvider provider = providerCache.get(paymentMethod);
+        PaymentProvider provider = providerCache.get(paymentPlatform);
         return provider.supportsFeature(feature);
     }
     
@@ -112,31 +112,31 @@ public class PaymentProviderFactory {
             throw new BusinessException("支付提供商配置不完整: " + provider.getProviderName());
         }
         
-        providerCache.put(provider.getPaymentMethod(), provider);
+        providerCache.put(provider.getPaymentPlatform(), provider);
     }
     
     /** 注销支付提供商
      * 
-     * @param paymentMethod 支付方式 */
-    public void unregisterProvider(PaymentMethod paymentMethod) {
-        if (paymentMethod != null) {
-            providerCache.remove(paymentMethod);
+     * @param paymentPlatform 支付平台 */
+    public void unregisterProvider(PaymentPlatform paymentPlatform) {
+        if (paymentPlatform != null) {
+            providerCache.remove(paymentPlatform);
         }
     }
     
     /** 获取提供商状态信息 */
-    public Map<PaymentMethod, String> getProviderStatus() {
-        Map<PaymentMethod, String> statusMap = new ConcurrentHashMap<>();
+    public Map<PaymentPlatform, String> getProviderStatus() {
+        Map<PaymentPlatform, String> statusMap = new ConcurrentHashMap<>();
         
         for (PaymentProvider provider : allProviders) {
-            PaymentMethod method = provider.getPaymentMethod();
+            PaymentPlatform platform = provider.getPaymentPlatform();
             String status = provider.isConfigured() ? "已配置" : "未配置";
-            if (providerCache.containsKey(method)) {
+            if (providerCache.containsKey(platform)) {
                 status += " (可用)";
             } else {
                 status += " (不可用)";
             }
-            statusMap.put(method, status);
+            statusMap.put(platform, status);
         }
         
         return statusMap;

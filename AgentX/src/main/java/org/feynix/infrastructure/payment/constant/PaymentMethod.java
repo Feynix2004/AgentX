@@ -1,25 +1,40 @@
 package org.feynix.infrastructure.payment.constant;
 
-/** 支付方式枚举 */
+/** 支付方式枚举（支付类型） */
 public enum PaymentMethod {
     
-    /** 支付宝 */
-    ALIPAY,
+    /** 网页支付 */
+    WEB,
     
-    /** Stripe */
-    STRIPE,
+    /** 二维码支付 */
+    QR_CODE,
     
-    /** 微信支付 */
-    WECHAT;
+    /** 移动端支付 */
+    MOBILE,
     
-
-    /** 检查是否支持退款 */
-    public boolean supportsRefund() {
-        return this == ALIPAY || this == STRIPE;
+    /** H5支付 */
+    H5,
+    
+    /** 小程序支付 */
+    MINI_PROGRAM;
+    
+    /** 检查是否需要跳转到第三方页面 */
+    public boolean requiresRedirect() {
+        return this == WEB || this == H5;
     }
     
-    /** 检查是否为第三方支付 */
-    public boolean isThirdParty() {
-        return true; // 目前所有支付方式都是第三方
+    /** 检查是否支持移动端 */
+    public boolean isMobileCompatible() {
+        return this == MOBILE || this == H5 || this == MINI_PROGRAM;
+    }
+    
+    /** 检查是否支持桌面端 */
+    public boolean isDesktopCompatible() {
+        return this == WEB || this == QR_CODE;
+    }
+    
+    /** 检查是否是扫码类型 */
+    public boolean isQrCodeBased() {
+        return this == QR_CODE;
     }
 }

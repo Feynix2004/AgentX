@@ -17,6 +17,12 @@ public class PaymentResult {
     /** 第三方支付ID */
     private String providerPaymentId;
     
+    /** 支付方式 */
+    private String paymentMethod;
+    
+    /** 支付类型 */
+    private String paymentType;
+    
     /** 错误信息 */
     private String errorMessage;
     
@@ -68,6 +74,22 @@ public class PaymentResult {
         this.providerPaymentId = providerPaymentId;
     }
     
+    public String getPaymentMethod() {
+        return paymentMethod;
+    }
+    
+    public void setPaymentMethod(String paymentMethod) {
+        this.paymentMethod = paymentMethod;
+    }
+    
+    public String getPaymentType() {
+        return paymentType;
+    }
+    
+    public void setPaymentType(String paymentType) {
+        this.paymentType = paymentType;
+    }
+    
     public String getErrorMessage() {
         return errorMessage;
     }
@@ -116,6 +138,22 @@ public class PaymentResult {
     public static PaymentResult success(String providerOrderId, String paymentUrl) {
         PaymentResult result = success(paymentUrl);
         result.setProviderOrderId(providerOrderId);
+        return result;
+    }
+    
+    /** 创建成功结果（带支付方式和类型） */
+    public static PaymentResult success(String paymentUrl, String paymentMethod, String paymentType) {
+        PaymentResult result = success(paymentUrl);
+        result.setPaymentMethod(paymentMethod);
+        result.setPaymentType(paymentType);
+        return result;
+    }
+    
+    /** 创建成功结果（完整参数） */
+    public static PaymentResult success(String providerOrderId, String paymentUrl, String paymentMethod, String paymentType) {
+        PaymentResult result = success(providerOrderId, paymentUrl);
+        result.setPaymentMethod(paymentMethod);
+        result.setPaymentType(paymentType);
         return result;
     }
     

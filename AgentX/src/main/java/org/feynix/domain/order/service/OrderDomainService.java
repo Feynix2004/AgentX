@@ -270,4 +270,28 @@ public class OrderDomainService {
                 .map(OrderEntity::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
+    
+    /** 更新订单状态
+     * 
+     * @param orderId 订单ID
+     * @param newStatus 新状态 */
+    public void updateOrderStatus(String orderId, OrderStatus newStatus) {
+        if (!StringUtils.hasText(orderId)) {
+            throw new BusinessException("订单ID不能为空");
+        }
+        if (newStatus == null) {
+            throw new BusinessException("订单状态不能为空");
+        }
+        
+        OrderEntity updateEntity = new OrderEntity();
+        updateEntity.setStatus(newStatus);
+        
+        LambdaUpdateWrapper<OrderEntity> wrapper = Wrappers.<OrderEntity>lambdaUpdate()
+                .eq(OrderEntity::getId, orderId);
+        
+        int updated = orderRepository.update(updateEntity, wrapper);
+        if (updated == 0) {
+            throw new EntityNotFoundException("订单不存在或更新失败: " + orderId);
+        }
+    }
 }

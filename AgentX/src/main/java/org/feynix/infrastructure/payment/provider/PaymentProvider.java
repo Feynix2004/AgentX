@@ -1,6 +1,6 @@
 package org.feynix.infrastructure.payment.provider;
 
-import org.feynix.infrastructure.payment.constant.PaymentMethod;
+import org.feynix.domain.order.constant.PaymentPlatform;
 import org.feynix.infrastructure.payment.model.PaymentCallback;
 import org.feynix.infrastructure.payment.model.PaymentRequest;
 import org.feynix.infrastructure.payment.model.PaymentResult;
@@ -10,8 +10,8 @@ import java.util.Map;
 /** 支付提供商抽象类 */
 public abstract class PaymentProvider {
     
-    /** 获取支付方式 */
-    public abstract PaymentMethod getPaymentMethod();
+    /** 获取支付平台 */
+    public abstract PaymentPlatform getPaymentPlatform();
     
     /** 获取提供商代码 */
     public abstract String getProviderCode();
@@ -113,13 +113,13 @@ public abstract class PaymentProvider {
     
     /** 获取支付提供商的显示信息 */
     public String getDisplayInfo() {
-        return getProviderName() + " (" + getPaymentMethod() + ")";
+        return getProviderName() + " (" + getPaymentPlatform() + ")";
     }
     
     @Override
     public String toString() {
         return "PaymentProvider{" +
-                "method=" + getPaymentMethod() +
+                "platform=" + getPaymentPlatform() +
                 ", code='" + getProviderCode() + '\'' +
                 ", name='" + getProviderName() + '\'' +
                 ", configured=" + isConfigured() +
@@ -131,12 +131,12 @@ public abstract class PaymentProvider {
         if (this == obj) return true;
         if (obj == null || getClass() != obj.getClass()) return false;
         PaymentProvider that = (PaymentProvider) obj;
-        return getPaymentMethod() == that.getPaymentMethod() && 
+        return getPaymentPlatform() == that.getPaymentPlatform() && 
                getProviderCode().equals(that.getProviderCode());
     }
     
     @Override
     public int hashCode() {
-        return java.util.Objects.hash(getPaymentMethod(), getProviderCode());
+        return java.util.Objects.hash(getPaymentPlatform(), getProviderCode());
     }
 }

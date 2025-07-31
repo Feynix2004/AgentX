@@ -35,7 +35,7 @@ public class OrderAssembler {
         // 订单状态转换
         if (entity.getStatus() != null) {
             dto.setStatus(entity.getStatus().getCode());
-            dto.setStatusName(entity.getStatus().getName());
+            dto.setStatusName(entity.getStatus().getDescription());
         }
         
         // 支付平台转换

@@ -1,24 +1,19 @@
 package org.feynix.infrastructure.payment.provider;
 
-import com.alipay.api.AlipayApiException;
-import com.alipay.api.AlipayClient;
-import com.alipay.api.DefaultAlipayClient;
-import com.alipay.api.domain.AlipayTradePagePayModel;
-import com.alipay.api.domain.AlipayTradeQueryModel;
-import com.alipay.api.domain.AlipayTradeRefundModel;
-import com.alipay.api.internal.util.AlipaySignature;
-import com.alipay.api.request.AlipayTradePagePayRequest;
-import com.alipay.api.request.AlipayTradeQueryRequest;
-import com.alipay.api.request.AlipayTradeRefundRequest;
-import com.alipay.api.response.AlipayTradePagePayResponse;
-import com.alipay.api.response.AlipayTradeQueryResponse;
-import com.alipay.api.response.AlipayTradeRefundResponse;
+import com.alipay.easysdk.factory.Factory;
+import com.alipay.easysdk.kernel.Config;
+import com.alipay.easysdk.payment.page.models.AlipayTradePagePayResponse;
+import com.alipay.easysdk.payment.common.models.AlipayTradeQueryResponse;
+import com.alipay.easysdk.payment.common.models.AlipayTradeRefundResponse;
+import com.alipay.easysdk.payment.facetoface.models.AlipayTradePrecreateResponse;
+import com.alipay.easysdk.kernel.util.ResponseChecker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
-import org.feynix.infrastructure.payment.constant.PaymentMethod;
+import org.feynix.domain.order.constant.PaymentPlatform;
+import org.feynix.infrastructure.payment.constant.AlipayPaymentType;
 import org.feynix.infrastructure.payment.model.PaymentCallback;
 import org.feynix.infrastructure.payment.model.PaymentRequest;
 import org.feynix.infrastructure.payment.model.PaymentResult;
@@ -33,320 +28,303 @@ public class AlipayProvider extends PaymentProvider {
     
     private static final Logger logger = LoggerFactory.getLogger(AlipayProvider.class);
     
-    /** 支付宝网关地址 */
-    @Value("${payment.alipay.gateway-url:https://openapi.alipay.com/gateway.do}")
-    private String gatewayUrl;
-    
-    /** 应用ID */
-    @Value("${payment.alipay.app-id:}")
-    private String appId;
-    
-    /** 应用私钥 */
-    @Value("${payment.alipay.private-key:}")
-    private String privateKey;
-    
-    /** 支付宝公钥 */
-    @Value("${payment.alipay.public-key:}")
-    private String alipayPublicKey;
-    
-    /** 签名类型 */
-    @Value("${payment.alipay.sign-type:RSA2}")
-    private String signType;
-    
-    /** 字符编码 */
-    @Value("${payment.alipay.charset:UTF-8}")
-    private String charset;
-    
-    /** 数据格式 */
-    @Value("${payment.alipay.format:json}")
-    private String format;
-    
-    /** 是否沙箱环境 */
-    @Value("${payment.alipay.sandbox:true}")
-    private boolean sandbox;
-    
-    /** 超时时间（分钟） */
-    @Value("${payment.alipay.timeout:30}")
-    private int timeoutMinutes;
-    
-    private AlipayClient alipayClient;
-    
-    /** 获取支付宝客户端 */
-    private AlipayClient getAlipayClient() {
-        if (alipayClient == null) {
-            synchronized (this) {
-                if (alipayClient == null) {
-                    String actualGatewayUrl = sandbox ? 
-                        "https://openapi.alipaydev.com/gateway.do" : gatewayUrl;
-                    
-                    alipayClient = new DefaultAlipayClient(
-                        actualGatewayUrl, appId, privateKey, format, charset, alipayPublicKey, signType
-                    );
-                }
-            }
-        }
-        return alipayClient;
+    @Override
+    protected boolean supportsRefund() {
+        return true;
     }
     
     @Override
-    public PaymentMethod getPaymentMethod() {
-        return PaymentMethod.ALIPAY;
+    protected boolean supportsCancellation() {
+        return false;
     }
     
+    private void initializeConfig() throws Exception {
+        if (!initialized && isConfigured()) {
+            synchronized (this) {
+                if (!initialized) {
+                    Config config = new Config();
+                    config.protocol = "https";
+                    config.gatewayHost = this.gatewayHost;
+                    config.signType = this.signType;
+                    config.appId = this.appId;
+                    config.merchantPrivateKey = this.privateKey;
+                    config.alipayPublicKey = this.alipayPublicKey;
+                    config.notifyUrl = "";
+                    
+                    Factory.setOptions(config);
+                    initialized = true;
+                    logger.info("支付宝 EasySDK 初始化成功");
+                }
+            }
+        } else if (!isConfigured()) {
+            throw new IllegalStateException("支付宝配置不完整，请检查 app-id, private-key, alipay-public-key 配置");
+        }
+    }
+
+
+    @Value("${alipay.app-id:}")
+    private String appId;
+    
+    @Value("${alipay.private-key:}")
+    private String privateKey;
+    
+    @Value("${alipay.alipay-public-key:}")
+    private String alipayPublicKey;
+    
+    @Value("${alipay.gateway-host:openapi.alipay.com}")
+    private String gatewayHost;
+    
+    @Value("${alipay.sign-type:RSA2}")
+    private String signType;
+    
+    private volatile boolean initialized = false;
+    
+    @Override
+    public PaymentPlatform getPaymentPlatform() {
+        return PaymentPlatform.ALIPAY;
+    }
+
     @Override
     public String getProviderCode() {
         return "alipay";
     }
-    
+
     @Override
     public String getProviderName() {
         return "支付宝";
     }
-    
+
     @Override
     public PaymentResult createPayment(PaymentRequest request) {
-        logger.info("创建支付宝支付: orderId={}, amount={}", request.getOrderId(), request.getAmount());
-        
         try {
-            // 创建支付请求
-            AlipayTradePagePayRequest alipayRequest = new AlipayTradePagePayRequest();
+            initializeConfig();
+            request.validate();
             
-            // 设置回调地址
-            alipayRequest.setReturnUrl(request.getSuccessUrl());
-            alipayRequest.setNotifyUrl(request.getNotifyUrl());
-            
-            // 设置请求参数
-            AlipayTradePagePayModel model = new AlipayTradePagePayModel();
-            model.setOutTradeNo(request.getOrderNo());
-            model.setTotalAmount(request.getAmount().toString());
-            model.setSubject(request.getTitle());
-            model.setBody(request.getDescription());
-            model.setProductCode("FAST_INSTANT_TRADE_PAY");
-            model.setTimeoutExpress(timeoutMinutes + "m");
-            
-            alipayRequest.setBizModel(model);
-            
-            // 调用支付宝API
-            AlipayTradePagePayResponse response = getAlipayClient().pageExecute(alipayRequest);
-            
-            if (response.isSuccess()) {
-                PaymentResult result = PaymentResult.success();
-                result.setProviderOrderId(request.getOrderNo());
-                result.setPaymentUrl(response.getBody());
-                
-                // 设置原始响应数据
-                Map<String, Object> rawResponse = new HashMap<>();
-                rawResponse.put("body", response.getBody());
-                rawResponse.put("code", response.getCode());
-                rawResponse.put("msg", response.getMsg());
-                rawResponse.put("subCode", response.getSubCode());
-                rawResponse.put("subMsg", response.getSubMsg());
-                result.setRawResponse(rawResponse);
-                
-                logger.info("支付宝支付创建成功: orderId={}, orderNo={}", 
-                    request.getOrderId(), request.getOrderNo());
-                return result;
-            } else {
-                String errorMsg = String.format("支付宝支付创建失败: %s - %s", 
-                    response.getSubCode(), response.getSubMsg());
-                logger.warn(errorMsg);
-                return PaymentResult.failure(response.getSubCode(), errorMsg);
+            // 获取支付类型，默认为WEB支付
+            String paymentType = request.getPaymentType();
+            if (paymentType == null || !AlipayPaymentType.isValid(paymentType)) {
+                paymentType = AlipayPaymentType.getDefault();
             }
             
-        } catch (AlipayApiException e) {
-            logger.error("支付宝支付创建异常: orderId={}", request.getOrderId(), e);
-            return PaymentResult.failure("API_ERROR", "支付宝接口调用异常: " + e.getMessage());
+            logger.info("创建支付宝支付请求: orderId={}, amount={}, paymentType={}", 
+                request.getOrderId(), request.getAmount(), paymentType);
+            
+            PaymentResult result;
+            switch (paymentType) {
+                case AlipayPaymentType.WEB:
+                    result = createWebPayment(request);
+                    break;
+                case AlipayPaymentType.QR_CODE:
+                    result = createQrCodePayment(request);
+                    break;
+                default:
+                    result = createWebPayment(request);
+                    break;
+            }
+            
+            // 设置支付方式和类型
+            if (result.isSuccess()) {
+                result.setPaymentMethod("ALIPAY");
+                result.setPaymentType(paymentType);
+            }
+            
+            return result;
+            
         } catch (Exception e) {
-            logger.error("支付宝支付创建系统异常: orderId={}", request.getOrderId(), e);
+            logger.error("支付宝支付创建异常: orderId={}", request.getOrderId(), e);
             return PaymentResult.failure("SYSTEM_ERROR", "系统异常: " + e.getMessage());
         }
     }
     
+    /** 创建网页支付 */
+    private PaymentResult createWebPayment(PaymentRequest request) throws Exception {
+        AlipayTradePagePayResponse response = Factory.Payment.Page().pay(
+            request.getTitle(),
+            request.getOrderNo(),
+            formatAmount(request.getAmount().toString()),
+            request.getSuccessUrl()
+        );
+        
+        if (ResponseChecker.success(response)) {
+            PaymentResult result = PaymentResult.success();
+            result.setPaymentUrl(response.body);
+            result.setProviderOrderId(request.getOrderNo());
+            logger.info("支付宝WEB支付创建成功: orderId={}", request.getOrderId());
+            return result;
+        } else {
+            logger.error("支付宝WEB支付创建失败: orderId={}", request.getOrderId());
+            return PaymentResult.failure("WEB_PAYMENT_CREATE_FAILED", "WEB支付创建失败");
+        }
+    }
+    
+    /** 创建二维码支付 */
+    private PaymentResult createQrCodePayment(PaymentRequest request) throws Exception {
+        AlipayTradePrecreateResponse response = Factory.Payment.FaceToFace().preCreate(
+            request.getTitle(),
+            request.getOrderNo(),
+            formatAmount(request.getAmount().toString())
+        );
+        
+        if (ResponseChecker.success(response)) {
+            PaymentResult result = PaymentResult.success();
+            result.setPaymentUrl(response.qrCode); // 二维码内容字符串
+            result.setProviderOrderId(request.getOrderNo());
+            logger.info("支付宝二维码支付创建成功: orderId={}, qrCode={}", request.getOrderId(), response.qrCode);
+            return result;
+        } else {
+            logger.error("支付宝二维码支付创建失败: orderId={}", request.getOrderId());
+            return PaymentResult.failure("QR_CODE_PAYMENT_CREATE_FAILED", "二维码支付创建失败");
+        }
+    }
+
     @Override
     public PaymentResult queryPayment(String providerOrderId) {
-        logger.info("查询支付宝支付状态: orderNo={}", providerOrderId);
-        
         try {
-            // 创建查询请求
-            AlipayTradeQueryRequest request = new AlipayTradeQueryRequest();
+            initializeConfig();
             
-            AlipayTradeQueryModel model = new AlipayTradeQueryModel();
-            model.setOutTradeNo(providerOrderId);
-            request.setBizModel(model);
+            logger.info("查询支付宝支付状态: providerOrderId={}", providerOrderId);
             
-            // 调用支付宝API
-            AlipayTradeQueryResponse response = getAlipayClient().execute(request);
+            AlipayTradeQueryResponse response = Factory.Payment.Common().query(providerOrderId);
             
-            if (response.isSuccess()) {
-                PaymentResult result = PaymentResult.success();
-                result.setProviderOrderId(providerOrderId);
-                result.setProviderPaymentId(response.getTradeNo());
+            if (ResponseChecker.success(response)) {
+                PaymentResult result = new PaymentResult();
+                result.setProviderOrderId(response.outTradeNo);
+                result.setProviderPaymentId(response.tradeNo);
                 
-                // 设置原始响应数据
-                Map<String, Object> rawResponse = new HashMap<>();
-                rawResponse.put("tradeNo", response.getTradeNo());
-                rawResponse.put("outTradeNo", response.getOutTradeNo());
-                rawResponse.put("tradeStatus", response.getTradeStatus());
-                rawResponse.put("totalAmount", response.getTotalAmount());
-                rawResponse.put("buyerLogonId", response.getBuyerLogonId());
-                rawResponse.put("buyerUserId", response.getBuyerUserId());
-                result.setRawResponse(rawResponse);
-                
-                // 根据交易状态判断支付是否成功
-                String tradeStatus = response.getTradeStatus();
-                if ("TRADE_SUCCESS".equals(tradeStatus) || "TRADE_FINISHED".equals(tradeStatus)) {
+                // 检查支付状态
+                if ("TRADE_SUCCESS".equals(response.tradeStatus) || "TRADE_FINISHED".equals(response.tradeStatus)) {
                     result.setSuccess(true);
+                    logger.info("支付宝支付成功: providerOrderId={}, tradeNo={}", providerOrderId, response.tradeNo);
                 } else {
                     result.setSuccess(false);
-                    result.setErrorMessage("支付未完成，状态: " + tradeStatus);
+                    result.setErrorMessage("支付未成功, 状态: " + response.tradeStatus);
+                    logger.info("支付宝支付未成功: providerOrderId={}, status={}", providerOrderId, response.tradeStatus);
                 }
                 
-                logger.info("支付宝支付状态查询成功: orderNo={}, status={}", 
-                    providerOrderId, tradeStatus);
                 return result;
             } else {
-                String errorMsg = String.format("支付宝支付查询失败: %s - %s", 
-                    response.getSubCode(), response.getSubMsg());
-                logger.warn(errorMsg);
-                return PaymentResult.failure(response.getSubCode(), errorMsg);
+                logger.error("支付宝支付查询失败: providerOrderId={}", providerOrderId);
+                return PaymentResult.failure("PAYMENT_QUERY_FAILED", "支付查询失败");
             }
             
-        } catch (AlipayApiException e) {
-            logger.error("支付宝支付查询异常: orderNo={}", providerOrderId, e);
-            return PaymentResult.failure("API_ERROR", "支付宝接口调用异常: " + e.getMessage());
         } catch (Exception e) {
-            logger.error("支付宝支付查询系统异常: orderNo={}", providerOrderId, e);
+            logger.error("支付宝支付查询异常: providerOrderId={}", providerOrderId, e);
             return PaymentResult.failure("SYSTEM_ERROR", "系统异常: " + e.getMessage());
         }
     }
-    
+
     @Override
     public PaymentCallback handleCallback(Map<String, Object> callbackData) {
-        logger.info("处理支付宝支付回调: dataSize={}", callbackData.size());
-        
         PaymentCallback callback = new PaymentCallback();
         callback.setRawData(callbackData);
         
         try {
-            // 验证签名
-            boolean signatureValid = verifyCallback(callbackData);
-            callback.setSignatureValid(signatureValid);
+            logger.info("处理支付宝支付回调: data={}", callbackData);
             
-            if (!signatureValid) {
+            // 验证签名
+            boolean isValid = verifyCallback(callbackData);
+            callback.setSignatureValid(isValid);
+            
+            if (!isValid) {
                 logger.warn("支付宝回调验签失败");
-                callback.setErrorMessage("签名验证失败");
                 return callback;
             }
             
             // 解析回调数据
-            String orderNo = getStringValue(callbackData, "out_trade_no");
-            String tradeNo = getStringValue(callbackData, "trade_no");
-            String tradeStatus = getStringValue(callbackData, "trade_status");
-            String totalAmount = getStringValue(callbackData, "total_amount");
-            String buyerLogonId = getStringValue(callbackData, "buyer_logon_id");
-            String buyerId = getStringValue(callbackData, "buyer_id");
-            String gmtPayment = getStringValue(callbackData, "gmt_payment");
+            String tradeStatus = (String) callbackData.get("trade_status");
+            String outTradeNo = (String) callbackData.get("out_trade_no");
+            String tradeNo = (String) callbackData.get("trade_no");
+            String totalAmount = (String) callbackData.get("total_amount");
+            String gmtPayment = (String) callbackData.get("gmt_payment");
+            String buyerLogonId = (String) callbackData.get("buyer_logon_id");
             
-            callback.setOrderNo(orderNo);
-            callback.setProviderOrderId(orderNo);
+            callback.setOrderNo(outTradeNo);
+            callback.setProviderOrderId(outTradeNo);
             callback.setProviderPaymentId(tradeNo);
-            callback.setPaymentStatus(tradeStatus);
-            callback.setPaymentMethod("支付宝");
             callback.setPaymentTime(gmtPayment);
             callback.setBuyerInfo(buyerLogonId);
+            callback.setCurrency("CNY");
             
-            // 解析金额
             if (StringUtils.hasText(totalAmount)) {
-                try {
-                    callback.setAmount(new BigDecimal(totalAmount));
-                } catch (NumberFormatException e) {
-                    logger.warn("支付宝回调金额格式错误: {}", totalAmount);
-                }
+                callback.setAmount(new BigDecimal(totalAmount));
             }
             
-            // 设置扩展数据
-            Map<String, Object> extraData = new HashMap<>();
-            extraData.put("buyerId", buyerId);
-            extraData.put("tradeNo", tradeNo);
-            extraData.put("tradeStatus", tradeStatus);
-            callback.setExtraData(extraData);
-            
-            // 判断支付是否成功
+            // 判断支付状态
             if ("TRADE_SUCCESS".equals(tradeStatus) || "TRADE_FINISHED".equals(tradeStatus)) {
                 callback.setPaymentSuccess(true);
-                logger.info("支付宝支付成功回调: orderNo={}, tradeNo={}", orderNo, tradeNo);
+                callback.setPaymentStatus("SUCCESS");
+                logger.info("支付宝支付成功回调: outTradeNo={}, tradeNo={}, amount={}", 
+                    outTradeNo, tradeNo, totalAmount);
             } else {
                 callback.setPaymentSuccess(false);
-                logger.info("支付宝支付非成功回调: orderNo={}, status={}", orderNo, tradeStatus);
+                callback.setPaymentStatus(tradeStatus);
+                logger.info("支付宝支付未成功回调: outTradeNo={}, status={}", outTradeNo, tradeStatus);
             }
             
         } catch (Exception e) {
-            logger.error("处理支付宝回调异常", e);
+            logger.error("支付宝回调处理异常", e);
             callback.setSignatureValid(false);
+            callback.setPaymentSuccess(false);
             callback.setErrorMessage("回调处理异常: " + e.getMessage());
         }
         
         return callback;
     }
-    
+
     @Override
     public PaymentResult cancelPayment(String providerOrderId) {
-        // 支付宝不支持主动取消支付
-        return PaymentResult.failure("NOT_SUPPORTED", "支付宝不支持主动取消支付");
+        logger.warn("支付宝不支持取消支付操作: providerOrderId={}", providerOrderId);
+        return PaymentResult.failure("NOT_SUPPORTED", "支付宝不支持取消支付操作");
     }
-    
+
     @Override
     public PaymentResult refundPayment(String providerOrderId, String refundAmount, String refundReason) {
-        logger.info("申请支付宝退款: orderNo={}, amount={}", providerOrderId, refundAmount);
-        
         try {
-            // 创建退款请求
-            AlipayTradeRefundRequest request = new AlipayTradeRefundRequest();
+            initializeConfig();
             
-            AlipayTradeRefundModel model = new AlipayTradeRefundModel();
-            model.setOutTradeNo(providerOrderId);
-            model.setRefundAmount(refundAmount);
-            model.setRefundReason(refundReason);
-            request.setBizModel(model);
+            logger.info("申请支付宝退款: providerOrderId={}, amount={}, reason={}", 
+                providerOrderId, refundAmount, refundReason);
             
-            // 调用支付宝API
-            AlipayTradeRefundResponse response = getAlipayClient().execute(request);
+            // 生成退款请求号
+            String refundNo = "RF" + System.currentTimeMillis();
             
-            if (response.isSuccess()) {
+            AlipayTradeRefundResponse response = Factory.Payment.Common().refund(
+                providerOrderId, 
+                formatAmount(refundAmount)
+            );
+            
+            if (ResponseChecker.success(response)) {
                 PaymentResult result = PaymentResult.success();
-                result.setProviderOrderId(providerOrderId);
+                result.setProviderOrderId(response.outTradeNo);
+                result.setProviderPaymentId(response.tradeNo);
                 
-                // 设置原始响应数据
-                Map<String, Object> rawResponse = new HashMap<>();
-                rawResponse.put("tradeNo", response.getTradeNo());
-                rawResponse.put("outTradeNo", response.getOutTradeNo());
-                rawResponse.put("refundFee", response.getRefundFee());
-                rawResponse.put("gmtRefundPay", response.getGmtRefundPay());
-                result.setRawResponse(rawResponse);
+                // 设置退款信息
+                Map<String, Object> extraData = new HashMap<>();
+                extraData.put("refundAmount", response.refundFee);
+                extraData.put("refundDate", response.gmtRefundPay);
+                extraData.put("refundReason", refundReason);
+                result.setExtraData(extraData);
                 
-                logger.info("支付宝退款申请成功: orderNo={}, refundFee={}", 
-                    providerOrderId, response.getRefundFee());
+                logger.info("支付宝退款成功: providerOrderId={}, refundAmount={}, tradeNo={}", 
+                    providerOrderId, response.refundFee, response.tradeNo);
                 return result;
             } else {
-                String errorMsg = String.format("支付宝退款申请失败: %s - %s", 
-                    response.getSubCode(), response.getSubMsg());
-                logger.warn(errorMsg);
-                return PaymentResult.failure(response.getSubCode(), errorMsg);
+                logger.error("支付宝退款失败: providerOrderId={}", providerOrderId);
+                return PaymentResult.failure("REFUND_FAILED", "退款失败");
             }
             
-        } catch (AlipayApiException e) {
-            logger.error("支付宝退款申请异常: orderNo={}", providerOrderId, e);
-            return PaymentResult.failure("API_ERROR", "支付宝接口调用异常: " + e.getMessage());
         } catch (Exception e) {
-            logger.error("支付宝退款申请系统异常: orderNo={}", providerOrderId, e);
+            logger.error("支付宝退款异常: providerOrderId={}", providerOrderId, e);
             return PaymentResult.failure("SYSTEM_ERROR", "系统异常: " + e.getMessage());
         }
     }
-    
+
     @Override
     protected boolean verifyCallback(Map<String, Object> callbackData) {
         try {
-            // 转换为支付宝SDK需要的格式
+            initializeConfig();
+            
+            // 将Map转换为适合的格式
             Map<String, String> params = new HashMap<>();
             for (Map.Entry<String, Object> entry : callbackData.entrySet()) {
                 if (entry.getValue() != null) {
@@ -354,70 +332,63 @@ public class AlipayProvider extends PaymentProvider {
                 }
             }
             
-            // 验证签名
-            return AlipaySignature.rsaCheckV1(params, alipayPublicKey, charset, signType);
-        } catch (AlipayApiException e) {
+            // 使用EasySDK验证回调
+            return Factory.Payment.Common().verifyNotify(params);
+            
+        } catch (Exception e) {
             logger.error("支付宝回调验签异常", e);
             return false;
         }
     }
-    
-    @Override
-    protected boolean supportsRefund() {
-        return true;
-    }
-    
+
     @Override
     public String getCallbackResponse(boolean success) {
         return success ? "success" : "failure";
     }
-    
+
     @Override
     protected String formatAmount(String amount) {
-        // 支付宝金额格式：元，保留两位小数
         try {
-            BigDecimal amountDecimal = new BigDecimal(amount);
-            return amountDecimal.setScale(2, BigDecimal.ROUND_HALF_UP).toString();
-        } catch (NumberFormatException e) {
-            logger.warn("金额格式化失败: {}", amount);
-            return amount;
+            BigDecimal amt = new BigDecimal(amount);
+            return amt.setScale(2, BigDecimal.ROUND_HALF_UP).toString();
+        } catch (Exception e) {
+            logger.error("金额格式化失败: amount={}", amount, e);
+            return "0.00";
         }
     }
-    
+
     @Override
     protected String parseAmount(String amount) {
-        // 支付宝金额已经是元格式，直接返回
-        return amount;
+        try {
+            return new BigDecimal(amount).toString();
+        } catch (Exception e) {
+            logger.error("金额解析失败: amount={}", amount, e);
+            return "0";
+        }
     }
-    
+
     @Override
     protected String getConfig(String key) {
         switch (key) {
-            case "appId":
+            case "app-id":
                 return appId;
-            case "privateKey":
+            case "private-key":
                 return privateKey;
-            case "publicKey":
+            case "alipay-public-key":
                 return alipayPublicKey;
-            case "gatewayUrl":
-                return gatewayUrl;
-            case "sandbox":
-                return String.valueOf(sandbox);
+            case "gateway-host":
+                return gatewayHost;
+            case "sign-type":
+                return signType;
             default:
                 return null;
         }
     }
-    
+
     @Override
     public boolean isConfigured() {
         return StringUtils.hasText(appId) && 
                StringUtils.hasText(privateKey) && 
                StringUtils.hasText(alipayPublicKey);
-    }
-    
-    /** 获取字符串值 */
-    private String getStringValue(Map<String, Object> map, String key) {
-        Object value = map.get(key);
-        return value != null ? value.toString() : null;
     }
 }
