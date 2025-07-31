@@ -40,9 +40,8 @@ public enum PaymentType {
             return null;
         }
 
-        String normalizedCode = code.trim().toLowerCase();
         for (PaymentType type : values()) {
-            if (type.code.equals(normalizedCode)) {
+            if (type.code.equals(code)) {
                 return type;
             }
         }

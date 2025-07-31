@@ -432,4 +432,10 @@ public class AlipayProvider extends PaymentProvider {
                 return OrderStatus.PENDING;
         }
     }
+
+    @Override
+    public String getProviderOrderIdForQuery(String systemOrderNo, String providerOrderId) {
+        // 支付宝使用商户订单号进行查询，直接返回系统订单号
+        return systemOrderNo;
+    }
 }

@@ -118,6 +118,13 @@ public abstract class PaymentProvider {
     /** 检查配置是否完整 */
     public abstract boolean isConfigured();
 
+    /** 根据订单信息获取用于查询的第三方平台订单ID
+     * 
+     * @param systemOrderNo 系统订单号
+     * @param providerOrderId 数据库中存储的第三方平台订单ID（可能为null）
+     * @return 用于查询的第三方平台订单ID */
+    public abstract String getProviderOrderIdForQuery(String systemOrderNo, String providerOrderId);
+
     /** 获取支付提供商的显示信息 */
     public String getDisplayInfo() {
         return getProviderName() + " (" + getPaymentPlatform() + ")";

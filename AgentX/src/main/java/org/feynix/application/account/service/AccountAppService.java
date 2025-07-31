@@ -52,7 +52,7 @@ public class AccountAppService {
         }
 
         // 执行充值
-        accountDomainService.rechargeBalance(userId,amount);
+        accountDomainService.rechargeBalance(userId, amount);
 
         // 返回更新后的账户信息
         AccountEntity updatedEntity = accountDomainService.getAccountByUserId(userId);

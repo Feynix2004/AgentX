@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.feynix.application.payment.assembler.PaymentAssembler;
 import org.feynix.domain.order.constant.OrderStatus;
 import org.feynix.domain.order.constant.OrderType;
@@ -178,9 +179,13 @@ public class PaymentAppService {
 
         // 设置回调URL，使用平台代码作为路径参数
         String platformCode = order.getPaymentPlatform().getCode();
-        paymentRequest.setNotifyUrl("/api/payments/callback/" + platformCode);
-        paymentRequest.setSuccessUrl("/api/payments/success");
-        paymentRequest.setCancelUrl("/api/payments/cancel");
+        paymentRequest.setNotifyUrl(
+                "https://www.bilibili.com/video/BV1nL8NzkEaH/?spm_id_from=333.1007.tianma.1-3-3.click&vd_source=884a1f9702167e8936a8d6d773a193ae/api/payments/callback/"
+                        + platformCode);
+        paymentRequest.setSuccessUrl(
+                "https://www.bilibili.com/video/BV1nL8NzkEaH/?spm_id_from=333.1007.tianma.1-3-3.click&vd_source=884a1f9702167e8936a8d6d773a193ae/api/payments/success");
+        paymentRequest.setCancelUrl(
+                "https://www.bilibili.com/video/BV1nL8NzkEaH/?spm_id_from=333.1007.tianma.1-3-3.click&vd_source=884a1f9702167e8936a8d6d773a193ae/api/payments/cancel");
 
         return paymentRequest;
     }
@@ -265,7 +270,8 @@ public class PaymentAppService {
             }
 
             // 同时更新订单状态和支付平台信息
-            orderDomainService.updateOrderStatusAndProviderInfo(order.getId(), newStatus, callback.getProviderOrderId());
+            orderDomainService.updateOrderStatusAndProviderInfo(order.getId(), newStatus,
+                    callback.getProviderOrderId());
 
             // 更新内存中的订单对象
             order.setStatus(newStatus);
@@ -329,17 +335,26 @@ public class PaymentAppService {
         return order.getStatus() == OrderStatus.PENDING;
     }
 
+    /** 获取用于查询的第三方平台订单ID */
+    private String getProviderOrderIdForQuery(PaymentProvider provider, OrderEntity order) {
+        // 让支付提供商自己决定使用哪个ID进行查询
+        return provider.getProviderOrderIdForQuery(order.getOrderNo(), order.getProviderOrderId());
+    }
+
     /** 同步支付平台状态 */
     private void syncOrderStatusFromProvider(OrderEntity order) {
         try {
             PaymentProvider provider = paymentProviderFactory.getProvider(order.getPaymentPlatform());
-            PaymentResult platformResult = provider.queryPayment(order.getOrderNo());
+
+            // 获取第三方平台的订单ID
+            String providerOrderId = getProviderOrderIdForQuery(provider, order);
+
+            PaymentResult platformResult = provider.queryPayment(providerOrderId);
 
             if (!platformResult.isSuccess() && platformResult.getStatus() == null) {
                 logger.warn("查询支付平台订单状态失败: orderNo={}, error={}", order.getOrderNo(), platformResult.getErrorMessage());
                 return;
             }
-
             // 转换支付平台状态
             OrderStatus platformStatus = provider.convertToOrderStatus(platformResult.getStatus());
 
