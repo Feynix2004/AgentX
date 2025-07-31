@@ -25,9 +25,8 @@ import java.util.Map;
 /** Stripe支付提供商 */
 @Component
 public class StripeProvider extends PaymentProvider {
-    
-    private static final Logger logger = LoggerFactory.getLogger(StripeProvider.class);
 
+    private static final Logger logger = LoggerFactory.getLogger(StripeProvider.class);
 
     @Override
     public PaymentPlatform getPaymentPlatform() {

@@ -142,8 +142,8 @@ public class PortalLLMController {
      * @param official 是否只获取官方模型（可选），true-仅官方模型，false或不传-所有模型
      * @return 模型列表 */
     @GetMapping("/models")
-    public Result<List<ModelDTO>> getModels(@RequestParam(required = false) String modelType, 
-                                            @RequestParam(required = false) Boolean official) {
+    public Result<List<ModelDTO>> getModels(@RequestParam(required = false) String modelType,
+            @RequestParam(required = false) Boolean official) {
         String userId = UserContext.getCurrentUserId();
         ModelType type = modelType != null ? ModelType.fromCode(modelType) : null;
         ProviderType providerType = (official != null && official) ? ProviderType.OFFICIAL : ProviderType.ALL;

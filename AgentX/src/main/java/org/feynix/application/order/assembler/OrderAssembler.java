@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 
 /** 订单实体与DTO转换器 */
 public class OrderAssembler {
-    
+
     /** 将订单实体转换为DTO
      * 
      * @param entity 订单实体
@@ -23,36 +23,36 @@ public class OrderAssembler {
         if (entity == null) {
             return null;
         }
-        
+
         OrderDTO dto = new OrderDTO();
         BeanUtils.copyProperties(entity, dto, "orderType", "paymentPlatform", "paymentType");
-        
+
         // 订单类型转换
         if (entity.getOrderType() != null) {
             dto.setOrderType(entity.getOrderType().getCode());
         }
-        
+
         // 订单状态转换
         if (entity.getStatus() != null) {
             dto.setStatus(entity.getStatus().getCode());
             dto.setStatusName(entity.getStatus().getDescription());
         }
-        
+
         // 支付平台转换
         if (entity.getPaymentPlatform() != null) {
             dto.setPaymentPlatform(entity.getPaymentPlatform().getCode());
             dto.setPaymentPlatformName(entity.getPaymentPlatform().getName());
         }
-        
+
         // 支付类型转换
         if (entity.getPaymentType() != null) {
             dto.setPaymentType(entity.getPaymentType().getCode());
             dto.setPaymentTypeName(entity.getPaymentType().getName());
         }
-        
+
         return dto;
     }
-    
+
     /** 将订单实体列表转换为DTO列表
      * 
      * @param entities 订单实体列表
@@ -63,7 +63,7 @@ public class OrderAssembler {
         }
         return entities.stream().map(OrderAssembler::toDTO).collect(Collectors.toList());
     }
-    
+
     /** 从DTO构建订单实体（创建订单时使用）
      * 
      * @param dto 订单DTO
@@ -73,33 +73,33 @@ public class OrderAssembler {
         if (dto == null) {
             return null;
         }
-        
+
         OrderEntity entity = new OrderEntity();
         BeanUtils.copyProperties(dto, entity, "orderType", "status", "paymentPlatform", "paymentType");
-        
+
         // 设置用户ID
         entity.setUserId(userId);
-        
+
         // 订单类型转换
         if (dto.getOrderType() != null) {
             entity.setOrderType(OrderType.fromCode(dto.getOrderType()));
         }
-        
+
         // 订单状态转换
         if (dto.getStatus() != null) {
             entity.setStatus(OrderStatus.fromCode(dto.getStatus()));
         }
-        
+
         // 支付平台转换
         if (dto.getPaymentPlatform() != null) {
             entity.setPaymentPlatform(PaymentPlatform.fromCode(dto.getPaymentPlatform()));
         }
-        
+
         // 支付类型转换
         if (dto.getPaymentType() != null) {
             entity.setPaymentType(PaymentType.fromCode(dto.getPaymentType()));
         }
-        
+
         return entity;
     }
 }

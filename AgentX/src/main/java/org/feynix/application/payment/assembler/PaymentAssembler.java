@@ -6,7 +6,7 @@ import org.feynix.interfaces.dto.account.response.PaymentResponseDTO;
 
 /** 支付相关对象转换器 */
 public class PaymentAssembler {
-    
+
     /** 转换为支付响应DTO
      * 
      * @param order 订单实体
@@ -16,7 +16,7 @@ public class PaymentAssembler {
         if (order == null || paymentResult == null) {
             return null;
         }
-        
+
         PaymentResponseDTO response = new PaymentResponseDTO();
         response.setOrderId(order.getId());
         response.setOrderNo(order.getOrderNo());
@@ -26,10 +26,10 @@ public class PaymentAssembler {
         response.setAmount(order.getAmount());
         response.setTitle(order.getTitle());
         response.setStatus(String.valueOf(order.getStatus().getCode()));
-        
+
         return response;
     }
-    
+
     private PaymentAssembler() {
         // 私有构造函数，防止实例化
     }

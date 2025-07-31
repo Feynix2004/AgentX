@@ -19,11 +19,11 @@ public class RechargeRequest {
     /** 支付平台 */
     @NotBlank(message = "支付平台不能为空")
     private String paymentPlatform;
-    
+
     /** 支付类型 */
     @NotBlank(message = "支付类型不能为空")
     private String paymentType;
-    
+
     /** 备注信息 */
     private String remark;
 
@@ -45,19 +45,19 @@ public class RechargeRequest {
     public String getPaymentPlatform() {
         return paymentPlatform;
     }
-    
+
     public void setPaymentPlatform(String paymentPlatform) {
         this.paymentPlatform = paymentPlatform;
     }
-    
+
     public String getPaymentType() {
         return paymentType;
     }
-    
+
     public void setPaymentType(String paymentType) {
         this.paymentType = paymentType;
     }
-    
+
     public void setRemark(String remark) {
         this.remark = remark;
     }

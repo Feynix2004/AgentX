@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Database, FileText, Home, Menu, Search, Settings, PenToolIcon as Tool, UploadCloud, LogOut, Wrench, BarChart3, Tag } from "lucide-react"
+import { Database, FileText, Home, Menu, Search, Settings, PenToolIcon as Tool, UploadCloud, LogOut, Wrench, BarChart3, Tag, Wallet } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 
 import { cn } from "@/lib/utils"
@@ -20,6 +20,7 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { deleteCookie } from "@/lib/utils"
 import { getUserInfoWithToast, type UserInfo } from "@/lib/user-service"
+import { useBalance } from "@/contexts/account-context"
 
 const navItems = [
   {
@@ -50,6 +51,7 @@ export function NavigationBar() {
   const [open, setOpen] = useState(false)
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null)
   const [loading, setLoading] = useState(true)
+  const { balance, formatAmount } = useBalance()
 
   // 获取用户信息
   useEffect(() => {
@@ -192,6 +194,14 @@ export function NavigationBar() {
                     )}
                   </div>
                 </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="cursor-default">
+                  <Wallet className="mr-2 h-4 w-4" />
+                  <div className="flex items-center justify-between w-full">
+                    <span>账户余额</span>
+                    <span className="font-medium text-green-600">{formatAmount(balance)}</span>
+                  </div>
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <Link href="/settings/profile">

@@ -27,7 +27,7 @@ public class UsageRecordAppService {
     private final UsageRecordBusinessInfoService businessInfoService;
 
     public UsageRecordAppService(UsageRecordDomainService usageRecordDomainService,
-                               UsageRecordBusinessInfoService businessInfoService) {
+            UsageRecordBusinessInfoService businessInfoService) {
         this.usageRecordDomainService = usageRecordDomainService;
         this.businessInfoService = businessInfoService;
     }
@@ -41,10 +41,10 @@ public class UsageRecordAppService {
             throw new BusinessException("使用记录不存在");
         }
         UsageRecordDTO dto = UsageRecordAssembler.toDTO(entity);
-        
+
         // 填充业务信息
         fillBusinessInfo(List.of(dto));
-        
+
         return dto;
     }
 
@@ -57,7 +57,7 @@ public class UsageRecordAppService {
         Page<UsageRecordEntity> entityPage = usageRecordDomainService.getUserUsageHistory(userId, page, size);
 
         List<UsageRecordDTO> dtoList = UsageRecordAssembler.toDTOs(entityPage.getRecords());
-        
+
         // 填充业务信息
         fillBusinessInfo(dtoList);
 
@@ -89,7 +89,7 @@ public class UsageRecordAppService {
 
         // 转换结果
         List<UsageRecordDTO> dtoList = UsageRecordAssembler.toDTOs(entityPage.getRecords());
-        
+
         // 填充业务信息
         fillBusinessInfo(dtoList);
 
@@ -111,7 +111,7 @@ public class UsageRecordAppService {
                 page, size);
 
         List<UsageRecordDTO> dtoList = UsageRecordAssembler.toDTOs(entityPage.getRecords());
-        
+
         // 填充业务信息
         fillBusinessInfo(dtoList);
 
@@ -130,10 +130,10 @@ public class UsageRecordAppService {
     public List<UsageRecordDTO> getUserUsageByTimeRange(String userId, LocalDateTime startTime, LocalDateTime endTime) {
         List<UsageRecordEntity> entities = usageRecordDomainService.getUserUsageByTimeRange(userId, startTime, endTime);
         List<UsageRecordDTO> dtoList = UsageRecordAssembler.toDTOs(entities);
-        
+
         // 填充业务信息
         fillBusinessInfo(dtoList);
-        
+
         return dtoList;
     }
 
@@ -146,7 +146,7 @@ public class UsageRecordAppService {
         Page<UsageRecordEntity> entityPage = usageRecordDomainService.getProductUsageHistory(productId, page, size);
 
         List<UsageRecordDTO> dtoList = UsageRecordAssembler.toDTOs(entityPage.getRecords());
-        
+
         // 填充业务信息
         fillBusinessInfo(dtoList);
 
@@ -194,13 +194,11 @@ public class UsageRecordAppService {
         }
 
         // 1. 收集所有商品ID
-        Set<String> productIds = dtoList.stream()
-                .map(UsageRecordDTO::getProductId)
-                .collect(Collectors.toSet());
+        Set<String> productIds = dtoList.stream().map(UsageRecordDTO::getProductId).collect(Collectors.toSet());
 
         // 2. 批量获取业务信息映射
-        Map<String, UsageRecordBusinessInfoService.BusinessInfo> businessInfoMap = 
-                businessInfoService.getBatchBusinessInfo(productIds);
+        Map<String, UsageRecordBusinessInfoService.BusinessInfo> businessInfoMap = businessInfoService
+                .getBatchBusinessInfo(productIds);
 
         // 3. 填充业务信息到DTO
         for (UsageRecordDTO dto : dtoList) {

@@ -28,10 +28,8 @@ public class Main {
         // 为避免私钥随源码泄露，推荐从文件中读取私钥字符串而不是写入源码中
         config.merchantPrivateKey = "";
 
-
-        //注：如果采用非证书模式，则无需赋值上面的三个证书路径，改为赋值如下的支付宝公钥字符串即可
-         config.alipayPublicKey = "";
-
+        // 注：如果采用非证书模式，则无需赋值上面的三个证书路径，改为赋值如下的支付宝公钥字符串即可
+        config.alipayPublicKey = "";
 
         return config;
     }

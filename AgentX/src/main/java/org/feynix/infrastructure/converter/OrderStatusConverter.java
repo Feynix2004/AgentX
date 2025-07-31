@@ -17,7 +17,8 @@ import java.sql.SQLException;
 public class OrderStatusConverter extends BaseTypeHandler<OrderStatus> {
 
     @Override
-    public void setNonNullParameter(PreparedStatement ps, int i, OrderStatus parameter, JdbcType jdbcType) throws SQLException {
+    public void setNonNullParameter(PreparedStatement ps, int i, OrderStatus parameter, JdbcType jdbcType)
+            throws SQLException {
         ps.setInt(i, parameter.getCode());
     }
 

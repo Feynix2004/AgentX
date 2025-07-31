@@ -65,8 +65,7 @@ public class OrderDomainService {
         }
 
         LambdaQueryWrapper<OrderEntity> wrapper = Wrappers.<OrderEntity>lambdaQuery()
-                .eq(OrderEntity::getOrderNo, orderNo)
-                .last("LIMIT 1");
+                .eq(OrderEntity::getOrderNo, orderNo).last("LIMIT 1");
         return orderRepository.selectOne(wrapper);
     }
 
@@ -94,11 +93,9 @@ public class OrderDomainService {
             throw new BusinessException("用户ID不能为空");
         }
 
-        LambdaQueryWrapper<OrderEntity> wrapper = Wrappers.<OrderEntity>lambdaQuery()
-                .eq(OrderEntity::getUserId, userId)
+        LambdaQueryWrapper<OrderEntity> wrapper = Wrappers.<OrderEntity>lambdaQuery().eq(OrderEntity::getUserId, userId)
                 .eq(orderType != null, OrderEntity::getOrderType, orderType)
-                .eq(status != null, OrderEntity::getStatus, status)
-                .orderByDesc(OrderEntity::getCreatedAt);
+                .eq(status != null, OrderEntity::getStatus, status).orderByDesc(OrderEntity::getCreatedAt);
 
         return orderRepository.selectList(wrapper);
     }
@@ -111,16 +108,15 @@ public class OrderDomainService {
      * @param orderType 订单类型（可选）
      * @param status 订单状态（可选）
      * @return 分页结果 */
-    public Page<OrderEntity> getOrdersByUserIdWithPage(String userId, int page, int pageSize, OrderType orderType, OrderStatus status) {
+    public Page<OrderEntity> getOrdersByUserIdWithPage(String userId, int page, int pageSize, OrderType orderType,
+            OrderStatus status) {
         if (!StringUtils.hasText(userId)) {
             throw new BusinessException("用户ID不能为空");
         }
 
-        LambdaQueryWrapper<OrderEntity> wrapper = Wrappers.<OrderEntity>lambdaQuery()
-                .eq(OrderEntity::getUserId, userId)
+        LambdaQueryWrapper<OrderEntity> wrapper = Wrappers.<OrderEntity>lambdaQuery().eq(OrderEntity::getUserId, userId)
                 .eq(orderType != null, OrderEntity::getOrderType, orderType)
-                .eq(status != null, OrderEntity::getStatus, status)
-                .orderByDesc(OrderEntity::getCreatedAt);
+                .eq(status != null, OrderEntity::getStatus, status).orderByDesc(OrderEntity::getCreatedAt);
 
         Page<OrderEntity> orderPage = new Page<>(page, pageSize);
         return orderRepository.selectPage(orderPage, wrapper);
@@ -135,7 +131,8 @@ public class OrderDomainService {
      * @param status 订单状态（可选）
      * @param keyword 关键词搜索（可选）
      * @return 分页结果 */
-    public Page<OrderEntity> getAllOrdersWithPage(int page, int pageSize, String userId, OrderType orderType, OrderStatus status, String keyword) {
+    public Page<OrderEntity> getAllOrdersWithPage(int page, int pageSize, String userId, OrderType orderType,
+            OrderStatus status, String keyword) {
         LambdaQueryWrapper<OrderEntity> wrapper = Wrappers.<OrderEntity>lambdaQuery()
                 .eq(StringUtils.hasText(userId), OrderEntity::getUserId, userId)
                 .eq(orderType != null, OrderEntity::getOrderType, orderType)
@@ -143,9 +140,8 @@ public class OrderDomainService {
 
         // 关键词搜索：订单号、标题、描述
         if (StringUtils.hasText(keyword)) {
-            wrapper.and(w -> w.like(OrderEntity::getOrderNo, keyword)
-                    .or().like(OrderEntity::getTitle, keyword)
-                    .or().like(OrderEntity::getDescription, keyword));
+            wrapper.and(w -> w.like(OrderEntity::getOrderNo, keyword).or().like(OrderEntity::getTitle, keyword).or()
+                    .like(OrderEntity::getDescription, keyword));
         }
 
         wrapper.orderByDesc(OrderEntity::getCreatedAt);
@@ -209,10 +205,8 @@ public class OrderDomainService {
      * @return 过期订单列表 */
     public List<OrderEntity> findExpiredPendingOrders(int limit) {
         LambdaQueryWrapper<OrderEntity> wrapper = Wrappers.<OrderEntity>lambdaQuery()
-                .eq(OrderEntity::getStatus, OrderStatus.PENDING)
-                .le(OrderEntity::getExpiredAt, LocalDateTime.now())
-                .orderByAsc(OrderEntity::getExpiredAt)
-                .last("LIMIT " + limit);
+                .eq(OrderEntity::getStatus, OrderStatus.PENDING).le(OrderEntity::getExpiredAt, LocalDateTime.now())
+                .orderByAsc(OrderEntity::getExpiredAt).last("LIMIT " + limit);
 
         return orderRepository.selectList(wrapper);
     }
@@ -228,8 +222,7 @@ public class OrderDomainService {
         OrderEntity updateEntity = new OrderEntity();
         updateEntity.setStatus(OrderStatus.EXPIRED);
 
-        LambdaUpdateWrapper<OrderEntity> wrapper = Wrappers.<OrderEntity>lambdaUpdate()
-                .in(OrderEntity::getId, orderIds)
+        LambdaUpdateWrapper<OrderEntity> wrapper = Wrappers.<OrderEntity>lambdaUpdate().in(OrderEntity::getId, orderIds)
                 .eq(OrderEntity::getStatus, OrderStatus.PENDING);
 
         orderRepository.update(updateEntity, wrapper);
@@ -246,8 +239,7 @@ public class OrderDomainService {
             return 0L;
         }
 
-        LambdaQueryWrapper<OrderEntity> wrapper = Wrappers.<OrderEntity>lambdaQuery()
-                .eq(OrderEntity::getUserId, userId)
+        LambdaQueryWrapper<OrderEntity> wrapper = Wrappers.<OrderEntity>lambdaQuery().eq(OrderEntity::getUserId, userId)
                 .eq(orderType != null, OrderEntity::getOrderType, orderType)
                 .eq(status != null, OrderEntity::getStatus, status);
 
@@ -266,11 +258,9 @@ public class OrderDomainService {
         }
 
         List<OrderEntity> orders = getOrdersByUserId(userId, orderType, status);
-        return orders.stream()
-                .map(OrderEntity::getAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        return orders.stream().map(OrderEntity::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
-    
+
     /** 更新订单状态
      * 
      * @param orderId 订单ID
@@ -282,13 +272,47 @@ public class OrderDomainService {
         if (newStatus == null) {
             throw new BusinessException("订单状态不能为空");
         }
-        
+
         OrderEntity updateEntity = new OrderEntity();
         updateEntity.setStatus(newStatus);
-        
-        LambdaUpdateWrapper<OrderEntity> wrapper = Wrappers.<OrderEntity>lambdaUpdate()
-                .eq(OrderEntity::getId, orderId);
-        
+
+        LambdaUpdateWrapper<OrderEntity> wrapper = Wrappers.<OrderEntity>lambdaUpdate().eq(OrderEntity::getId, orderId);
+
+        int updated = orderRepository.update(updateEntity, wrapper);
+        if (updated == 0) {
+            throw new EntityNotFoundException("订单不存在或更新失败: " + orderId);
+        }
+    }
+
+    /** 更新订单状态和支付平台信息
+     * 
+     * @param orderId 订单ID
+     * @param newStatus 新状态
+     * @param providerOrderId 第三方支付平台订单ID
+     * @param providerOrderId 第三方支付平台支付ID */
+    public void updateOrderStatusAndProviderInfo(String orderId, OrderStatus newStatus, String providerOrderId) {
+        if (!StringUtils.hasText(orderId)) {
+            throw new BusinessException("订单ID不能为空");
+        }
+        if (newStatus == null) {
+            throw new BusinessException("订单状态不能为空");
+        }
+
+        OrderEntity updateEntity = new OrderEntity();
+        updateEntity.setStatus(newStatus);
+
+        // 只有当支付平台信息不为空时才更新
+        if (StringUtils.hasText(providerOrderId)) {
+            updateEntity.setProviderOrderId(providerOrderId);
+        }
+
+        // 如果状态变为已支付，设置支付时间
+        if (newStatus == OrderStatus.PAID) {
+            updateEntity.setPaidAt(LocalDateTime.now());
+        }
+
+        LambdaUpdateWrapper<OrderEntity> wrapper = Wrappers.<OrderEntity>lambdaUpdate().eq(OrderEntity::getId, orderId);
+
         int updated = orderRepository.update(updateEntity, wrapper);
         if (updated == 0) {
             throw new EntityNotFoundException("订单不存在或更新失败: " + orderId);

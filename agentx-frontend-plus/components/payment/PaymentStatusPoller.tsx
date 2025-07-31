@@ -84,10 +84,25 @@ export default function PaymentStatusPoller({
             console.log(`[PaymentStatusPoller] 支付成功回调 - orderNo: ${orderNo}`);
             toast({
               title: "支付成功",
-              description: "您的充值已完成，余额将自动更新",
+              description: "您的充值已完成，余额正在更新...",
               variant: "default"
             });
-            callbacksRef.current.onSuccess?.(orderNo);
+            
+            // 延迟执行成功回调，确保后端数据同步
+            setTimeout(() => {
+              console.log(`[PaymentStatusPoller] 延迟执行成功回调 - orderNo: ${orderNo}`);
+              callbacksRef.current.onSuccess?.(orderNo);
+              
+              // 再次延迟显示更新完成提示
+              setTimeout(() => {
+                toast({
+                  title: "余额已更新",
+                  description: "账户余额已成功更新",
+                  variant: "default"
+                });
+              }, 1000);
+            }, 2000); // 延迟2秒确保后端数据同步
+            
             if (stopPollingRef.current) {
               stopPollingRef.current();
               stopPollingRef.current = null;

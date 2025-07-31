@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { CreditCard, Download, AlertTriangle, Wallet, TrendingUp, RefreshCw, Search, Calendar, Eye, RotateCcw, FileText, ExternalLink, Tag } from "lucide-react";
+import { CreditCard, Download, AlertTriangle, Wallet, TrendingUp, RefreshCw, Search, Calendar, Eye, RotateCcw, FileText, ExternalLink, Tag, CheckCircle } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -31,12 +31,20 @@ import { UsageRecord, QueryUsageRecordRequest } from "@/types/usage-record";
 import { PageResponse } from "@/types/billing";
 import { AccountService, AccountServiceWithToast } from "@/lib/account-service";
 import { UsageRecordService, UsageRecordServiceWithToast } from "@/lib/usage-record-service";
+import { useAccount } from "@/contexts/account-context";
 
 export default function BillingPage() {
-  // 账户相关状态
-  const [account, setAccount] = useState<Account | null>(null);
-  const [loading, setLoading] = useState(true);
+  // 使用全局账户状态
+  const { 
+    account, 
+    loading: accountLoading, 
+    refreshAccount, 
+    isLowBalance, 
+    formatAmount 
+  } = useAccount();
+  
   const [totalCost, setTotalCost] = useState<number>(0);
+  const [balanceUpdated, setBalanceUpdated] = useState(false);
 
   // 用量记录相关状态
   const [records, setRecords] = useState<UsageRecord[]>([]);
@@ -59,56 +67,43 @@ export default function BillingPage() {
   const [selectedRecord, setSelectedRecord] = useState<UsageRecord | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
 
-  // 加载账户信息
-  const loadAccountData = async () => {
-    setLoading(true);
+  // 加载总消费数据
+  const loadTotalCost = async () => {
     try {
-      // 并行加载账户信息和总消费
-      const [accountResponse, totalCostResponse] = await Promise.all([
-        AccountService.getCurrentUserAccount(),
-        UsageRecordService.getCurrentUserTotalCost()
-      ]);
-
-      if (accountResponse.code === 200) {
-        setAccount(accountResponse.data);
-      } else {
-        toast({
-          title: "获取账户信息失败",
-          description: accountResponse.message,
-          variant: "destructive"
-        });
-      }
-
+      const totalCostResponse = await UsageRecordService.getCurrentUserTotalCost();
       if (totalCostResponse.code === 200) {
         setTotalCost(totalCostResponse.data);
       }
     } catch (error) {
-      toast({
-        title: "加载失败",
-        description: "网络错误，请稍后重试",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
+      console.error('加载总消费失败:', error);
     }
   };
 
   // 充值成功回调
   const handleRechargeSuccess = (orderNo: string, amount: number) => {
+    // 立即显示更新动画
+    setBalanceUpdated(true);
+    
     toast({
       title: "充值成功",
       description: `¥${amount.toFixed(2)} 已成功充值到您的账户`,
       variant: "default"
     });
     
-    // 重新加载账户数据
-    loadAccountData();
+    // 延迟刷新数据，让动画先显示
+    setTimeout(() => {
+      // 刷新全局账户数据
+      refreshAccount();
+      // 同时刷新总消费数据
+      loadTotalCost();
+      
+      // 3秒后隐藏更新动画
+      setTimeout(() => {
+        setBalanceUpdated(false);
+      }, 3000);
+    }, 500);
   };
 
-  // 格式化金额
-  const formatAmount = (amount: number) => {
-    return `¥${amount.toFixed(2)}`;
-  };
 
   // 格式化时间
   const formatDateTime = (dateTime?: string) => {
@@ -306,12 +301,10 @@ export default function BillingPage() {
     return pages;
   };
 
-  // 判断余额是否不足
-  const isLowBalance = account && account.balance < 10;
 
   useEffect(() => {
-    loadAccountData();
-    loadUsageRecords(); // 同时加载用量记录
+    loadTotalCost(); // 加载总消费数据
+    loadUsageRecords(); // 加载用量记录
   }, []);
 
   return (
@@ -322,8 +315,16 @@ export default function BillingPage() {
             <h1 className="text-3xl font-bold tracking-tight">账单与用量</h1>
             <p className="text-muted-foreground">管理您的账户和查看使用情况</p>
           </div>
-          <Button onClick={loadAccountData} disabled={loading} variant="outline" size="sm">
-            <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+          <Button 
+            onClick={() => {
+              refreshAccount();
+              loadTotalCost();
+            }} 
+            disabled={accountLoading} 
+            variant="outline" 
+            size="sm"
+          >
+            <RefreshCw className={`mr-2 h-4 w-4 ${accountLoading ? 'animate-spin' : ''}`} />
             刷新
           </Button>
         </div>
@@ -352,16 +353,24 @@ export default function BillingPage() {
             )}
 
             {/* 账户余额卡片 */}
-            <Card>
+            <Card className={`transition-all duration-500 ${balanceUpdated ? 'ring-2 ring-green-500 shadow-lg' : ''}`}>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Wallet className="h-5 w-5" />
                   账户余额
+                  {balanceUpdated && (
+                    <CheckCircle className="h-5 w-5 text-green-500 animate-pulse" />
+                  )}
                 </CardTitle>
-                <CardDescription>当前账户资金状况</CardDescription>
+                <CardDescription>
+                  当前账户资金状况
+                  {balanceUpdated && (
+                    <span className="text-green-600 font-medium ml-2">余额已更新</span>
+                  )}
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {loading ? (
+                {accountLoading ? (
                   <div className="flex items-center justify-center py-8">
                     <div className="text-sm text-muted-foreground">加载中...</div>
                   </div>
@@ -369,7 +378,9 @@ export default function BillingPage() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <p className="text-sm font-medium text-muted-foreground">当前余额</p>
-                      <p className="text-2xl font-bold">{formatAmount(account.balance)}</p>
+                      <p className={`text-2xl font-bold transition-all duration-500 ${balanceUpdated ? 'scale-110 text-green-600' : ''}`}>
+                        {formatAmount(account.balance)}
+                      </p>
                     </div>
                     <div className="space-y-2">
                       <p className="text-sm font-medium text-muted-foreground">信用额度</p>
@@ -377,7 +388,9 @@ export default function BillingPage() {
                     </div>
                     <div className="space-y-2">
                       <p className="text-sm font-medium text-muted-foreground">可用余额</p>
-                      <p className="text-2xl font-bold text-green-600">{formatAmount(account.availableBalance)}</p>
+                      <p className={`text-2xl font-bold text-green-600 transition-all duration-500 ${balanceUpdated ? 'scale-110' : ''}`}>
+                        {formatAmount(account.availableBalance)}
+                      </p>
                     </div>
                   </div>
                 ) : (
@@ -398,7 +411,7 @@ export default function BillingPage() {
                 <CardDescription>账户使用情况统计</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {loading ? (
+                {accountLoading ? (
                   <div className="flex items-center justify-center py-8">
                     <div className="text-sm text-muted-foreground">加载中...</div>
                   </div>

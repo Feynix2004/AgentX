@@ -193,8 +193,8 @@ public class ProductDomainService {
             return Collections.emptyList();
         }
 
-        LambdaQueryWrapper<ProductEntity> wrapper = Wrappers.<ProductEntity>lambdaQuery()
-                .in(ProductEntity::getId, productIds);
+        LambdaQueryWrapper<ProductEntity> wrapper = Wrappers.<ProductEntity>lambdaQuery().in(ProductEntity::getId,
+                productIds);
 
         return productRepository.selectList(wrapper);
     }

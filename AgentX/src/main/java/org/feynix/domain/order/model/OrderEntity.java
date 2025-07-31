@@ -250,7 +250,8 @@ public class OrderEntity extends BaseEntity {
     /** 生成订单号 */
     public void generateOrderNo() {
         if (this.orderNo == null) {
-            this.orderNo = "ORD" + System.currentTimeMillis() + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+            this.orderNo = "ORD" + System.currentTimeMillis()
+                    + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
         }
     }
 
@@ -335,7 +336,8 @@ public class OrderEntity extends BaseEntity {
     }
 
     /** 创建新订单 */
-    public static OrderEntity createNew(String userId, OrderType orderType, String title, String description, BigDecimal amount) {
+    public static OrderEntity createNew(String userId, OrderType orderType, String title, String description,
+            BigDecimal amount) {
         OrderEntity order = new OrderEntity();
         order.setUserId(userId);
         order.setOrderType(orderType);
@@ -349,8 +351,8 @@ public class OrderEntity extends BaseEntity {
     }
 
     /** 创建新订单（包含支付信息） */
-    public static OrderEntity createNew(String userId, OrderType orderType, String title, String description, 
-                                        BigDecimal amount, PaymentPlatform paymentPlatform, PaymentType paymentType) {
+    public static OrderEntity createNew(String userId, OrderType orderType, String title, String description,
+            BigDecimal amount, PaymentPlatform paymentPlatform, PaymentType paymentType) {
         OrderEntity order = createNew(userId, orderType, title, description, amount);
         order.setPaymentPlatform(paymentPlatform);
         order.setPaymentType(paymentType);
@@ -365,22 +367,23 @@ public class OrderEntity extends BaseEntity {
     }
 
     /** 创建充值订单（包含支付信息） */
-    public static OrderEntity createRechargeOrder(String userId, BigDecimal amount, String remark, 
-                                                  PaymentPlatform paymentPlatform, PaymentType paymentType) {
+    public static OrderEntity createRechargeOrder(String userId, BigDecimal amount, String remark,
+            PaymentPlatform paymentPlatform, PaymentType paymentType) {
         String title = "账户充值";
         String description = remark != null && !remark.trim().isEmpty() ? remark : "充值 ¥" + amount + " 到账户余额";
         return createNew(userId, OrderType.RECHARGE, title, description, amount, paymentPlatform, paymentType);
     }
 
     /** 创建购买订单 */
-    public static OrderEntity createPurchaseOrder(String userId, String productName, BigDecimal amount, String description) {
+    public static OrderEntity createPurchaseOrder(String userId, String productName, BigDecimal amount,
+            String description) {
         String title = "购买 " + productName;
         return createNew(userId, OrderType.PURCHASE, title, description, amount);
     }
 
     /** 创建购买订单（包含支付信息） */
-    public static OrderEntity createPurchaseOrder(String userId, String productName, BigDecimal amount, String description,
-                                                  PaymentPlatform paymentPlatform, PaymentType paymentType) {
+    public static OrderEntity createPurchaseOrder(String userId, String productName, BigDecimal amount,
+            String description, PaymentPlatform paymentPlatform, PaymentType paymentType) {
         String title = "购买 " + productName;
         return createNew(userId, OrderType.PURCHASE, title, description, amount, paymentPlatform, paymentType);
     }

@@ -17,7 +17,8 @@ import java.sql.SQLException;
 public class PaymentPlatformConverter extends BaseTypeHandler<PaymentPlatform> {
 
     @Override
-    public void setNonNullParameter(PreparedStatement ps, int i, PaymentPlatform parameter, JdbcType jdbcType) throws SQLException {
+    public void setNonNullParameter(PreparedStatement ps, int i, PaymentPlatform parameter, JdbcType jdbcType)
+            throws SQLException {
         ps.setString(i, parameter.getCode());
     }
 

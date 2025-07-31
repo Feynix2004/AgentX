@@ -368,9 +368,8 @@ public class LLMDomainService {
         if (modelIds == null || modelIds.isEmpty()) {
             return new ArrayList<>();
         }
-        
-        Wrapper<ModelEntity> wrapper = Wrappers.<ModelEntity>lambdaQuery()
-                .in(ModelEntity::getId, modelIds);
+
+        Wrapper<ModelEntity> wrapper = Wrappers.<ModelEntity>lambdaQuery().in(ModelEntity::getId, modelIds);
         return modelRepository.selectList(wrapper);
     }
 

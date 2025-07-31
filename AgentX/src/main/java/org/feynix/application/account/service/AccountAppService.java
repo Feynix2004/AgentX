@@ -43,16 +43,16 @@ public class AccountAppService {
 
     /** 账户充值
      * @param userId 用户ID
-     * @param request 充值请求
+     * @param amount 充值金额
      * @return 充值后的账户信息 */
     @Transactional
-    public AccountDTO recharge(String userId, RechargeRequest request) {
-        if (request.getAmount() == null || request.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+    public AccountDTO recharge(String userId, BigDecimal amount) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new BusinessException("充值金额必须大于0");
         }
 
         // 执行充值
-        accountDomainService.rechargeBalance(userId, request.getAmount());
+        accountDomainService.rechargeBalance(userId,amount);
 
         // 返回更新后的账户信息
         AccountEntity updatedEntity = accountDomainService.getAccountByUserId(userId);

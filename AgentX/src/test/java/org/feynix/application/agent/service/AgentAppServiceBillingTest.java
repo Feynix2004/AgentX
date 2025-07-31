@@ -68,7 +68,7 @@ public class AgentAppServiceBillingTest {
         product.setId(UUID.randomUUID().toString());
         product.setName("Agent创建服务");
         product.setType(BillingType.AGENT_CREATION);
-        product.setServiceId("agent_creation");  // 固定业务标识
+        product.setServiceId("agent_creation"); // 固定业务标识
         product.setRuleId(testRuleId);
         product.activate();
 
@@ -91,7 +91,7 @@ public class AgentAppServiceBillingTest {
         // 1. 创建测试用户账户并充值
         String testUserId = "test-user-" + System.currentTimeMillis();
         AccountEntity account = AccountEntity.createNew(testUserId);
-        account.setBalance(new BigDecimal("100.00"));  // 充足余额
+        account.setBalance(new BigDecimal("100.00")); // 充足余额
         account.setCredit(BigDecimal.ZERO);
         account.setTotalConsumed(BigDecimal.ZERO);
         accountDomainService.createAccount(account);
@@ -105,10 +105,8 @@ public class AgentAppServiceBillingTest {
         request.setSystemPrompt("你是一个测试助手");
 
         // 3. 执行Agent创建
-        AgentDTO createdAgent = assertDoesNotThrow(
-            () -> agentAppService.createAgent(request, testUserId),
-            "余额充足时Agent创建应该成功"
-        );
+        AgentDTO createdAgent = assertDoesNotThrow(() -> agentAppService.createAgent(request, testUserId),
+                "余额充足时Agent创建应该成功");
 
         assertNotNull(createdAgent);
         assertNotNull(createdAgent.getId());
@@ -119,14 +117,11 @@ public class AgentAppServiceBillingTest {
         // 4. 验证余额扣减
         AccountEntity updatedAccount = accountDomainService.getAccountByUserId(testUserId);
         BigDecimal expectedBalance = new BigDecimal("100.00").subtract(new BigDecimal("10.00"));
-        assertEquals(0, updatedAccount.getBalance().compareTo(expectedBalance), 
-            "余额应该正确扣减10.0元");
+        assertEquals(0, updatedAccount.getBalance().compareTo(expectedBalance), "余额应该正确扣减10.0元");
         System.out.println("✓ 余额扣减正确，剩余: " + updatedAccount.getBalance());
 
         // 5. 验证用量记录
-        boolean hasUsageRecord = usageRecordDomainService.existsByRequestId(
-            "agent_creation_" + testUserId + "_"
-        );
+        boolean hasUsageRecord = usageRecordDomainService.existsByRequestId("agent_creation_" + testUserId + "_");
         // 注意：由于requestId包含时间戳，这里只能验证记录确实生成了
         // 实际测试中可以通过其他方式验证，比如查询该用户的使用记录
         System.out.println("✓ 验证完成，Agent创建计费功能正常");
@@ -142,7 +137,7 @@ public class AgentAppServiceBillingTest {
         // 1. 创建余额不足的测试账户
         String testUserId = "poor-user-" + System.currentTimeMillis();
         AccountEntity account = AccountEntity.createNew(testUserId);
-        account.setBalance(new BigDecimal("5.00"));  // 余额不足10元
+        account.setBalance(new BigDecimal("5.00")); // 余额不足10元
         account.setCredit(BigDecimal.ZERO);
         account.setTotalConsumed(BigDecimal.ZERO);
         accountDomainService.createAccount(account);
@@ -156,20 +151,15 @@ public class AgentAppServiceBillingTest {
         request.setSystemPrompt("你是一个测试助手");
 
         // 3. 尝试创建Agent，应该失败
-        InsufficientBalanceException exception = assertThrows(
-            InsufficientBalanceException.class,
-            () -> agentAppService.createAgent(request, testUserId),
-            "余额不足时应该抛出InsufficientBalanceException"
-        );
+        InsufficientBalanceException exception = assertThrows(InsufficientBalanceException.class,
+                () -> agentAppService.createAgent(request, testUserId), "余额不足时应该抛出InsufficientBalanceException");
 
-        assertTrue(exception.getMessage().contains("账户余额不足"), 
-            "异常消息应该包含余额不足提示");
+        assertTrue(exception.getMessage().contains("账户余额不足"), "异常消息应该包含余额不足提示");
         System.out.println("✓ 余额不足正确抛出异常: " + exception.getMessage());
 
         // 4. 验证余额未变化
         AccountEntity unchangedAccount = accountDomainService.getAccountByUserId(testUserId);
-        assertEquals(0, unchangedAccount.getBalance().compareTo(new BigDecimal("5.00")), 
-            "余额不足时余额应该保持不变");
+        assertEquals(0, unchangedAccount.getBalance().compareTo(new BigDecimal("5.00")), "余额不足时余额应该保持不变");
         System.out.println("✓ 余额保持不变: " + unchangedAccount.getBalance());
 
         System.out.println("=== 余额不足Agent创建计费测试完成 ===\n");
@@ -183,7 +173,7 @@ public class AgentAppServiceBillingTest {
         // 1. 创建余额刚好等于费用的账户
         String testUserId = "exact-user-" + System.currentTimeMillis();
         AccountEntity account = AccountEntity.createNew(testUserId);
-        account.setBalance(new BigDecimal("10.00"));  // 刚好等于10元费用
+        account.setBalance(new BigDecimal("10.00")); // 刚好等于10元费用
         account.setCredit(BigDecimal.ZERO);
         account.setTotalConsumed(BigDecimal.ZERO);
         accountDomainService.createAccount(account);
@@ -197,18 +187,15 @@ public class AgentAppServiceBillingTest {
         request.setSystemPrompt("你是一个测试助手");
 
         // 3. 执行Agent创建，应该成功
-        AgentDTO createdAgent = assertDoesNotThrow(
-            () -> agentAppService.createAgent(request, testUserId),
-            "余额刚好时Agent创建应该成功"
-        );
+        AgentDTO createdAgent = assertDoesNotThrow(() -> agentAppService.createAgent(request, testUserId),
+                "余额刚好时Agent创建应该成功");
 
         assertNotNull(createdAgent);
         System.out.println("✓ Agent创建成功 - ID: " + createdAgent.getId());
 
         // 4. 验证余额变为0
         AccountEntity updatedAccount = accountDomainService.getAccountByUserId(testUserId);
-        assertEquals(0, updatedAccount.getBalance().compareTo(BigDecimal.ZERO), 
-            "余额应该刚好扣完变为0");
+        assertEquals(0, updatedAccount.getBalance().compareTo(BigDecimal.ZERO), "余额应该刚好扣完变为0");
         System.out.println("✓ 余额正确扣完，剩余: " + updatedAccount.getBalance());
 
         System.out.println("=== 刚好余额Agent创建测试完成 ===\n");
