@@ -1,6 +1,5 @@
 # AgentX统一Docker Compose配置
 # 支持通过环境变量控制不同部署模式：local/production/external
-version: '3.8'
 
 networks:
   agentx-network:
