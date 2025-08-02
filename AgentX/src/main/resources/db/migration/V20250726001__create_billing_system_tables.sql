@@ -104,15 +104,6 @@ INSERT INTO rules (id, name, handler_key, description) VALUES
 ('rule-per-unit', '按次计费规则', 'PER_UNIT_STRATEGY', '按使用次数固定计费，适用于Agent创建、API调用等'),
 ('rule-per-time', '按时长计费规则', 'PER_TIME_STRATEGY', '按使用时长计费，适用于资源占用类服务');
 
--- 插入初始数据：示例商品 
--- 注意：service_id应该使用对应业务表的主键ID，这里使用占位符，实际部署时需要根据具体模型ID调整
-INSERT INTO products (id, name, type, service_id, rule_id, pricing_config, status) VALUES 
-('product-model-1', 'GPT-4模型服务', 'MODEL_USAGE', '1', 'rule-model-token', '{"input_cost_per_million": 5.0, "output_cost_per_million": 15.0}', 1),
-('product-model-2', 'GPT-3.5模型服务', 'MODEL_USAGE', '2', 'rule-model-token', '{"input_cost_per_million": 1.0, "output_cost_per_million": 2.0}', 1),
-('product-model-3', 'Claude-3模型服务', 'MODEL_USAGE', '3', 'rule-model-token', '{"input_cost_per_million": 3.0, "output_cost_per_million": 12.0}', 1),
--- Agent创建计费商品（已预留配置，待业务集成）
-('product-agent-creation', 'Agent创建服务', 'AGENT_CREATION', 'agent_creation', 'rule-per-unit', '{"cost_per_unit": 10.0}', 1),
-('product-api-calls', 'API调用服务', 'API_CALLS', 'api_calls', 'rule-per-unit', '{"cost_per_unit": 0.1}', 1);
 
 -- 注释说明：
 -- MODEL_USAGE类型的service_id应该是models表中的主键ID（如1,2,3等）
