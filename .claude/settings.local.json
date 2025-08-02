@@ -49,7 +49,10 @@
       "mcp__postgres-server__query",
       "Bash(docker compose:*)",
       "Bash(npm --version)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(./start.sh:*)",
+      "Bash(timeout:*)",
+      "Bash(docker volume rm:*)"
     ],
     "deny": []
   }

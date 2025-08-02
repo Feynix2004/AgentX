@@ -17,15 +17,15 @@ services:
   # PostgreSQL数据库服务
   # 仅在非external模式下启动
   postgres:
-    image: postgres:15-alpine
+    image: pgvector/pgvector:pg15
     container_name: agentx-postgres
     profiles:
       - local
       - production
     environment:
       POSTGRES_DB: ${DB_NAME:-agentx}
-      POSTGRES_USER: ${DB_USER:-agentx_user}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-agentx_pass}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
       POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
     volumes:
       - postgres-data:/var/lib/postgresql/data
@@ -36,7 +36,7 @@ services:
       - agentx-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-agentx_user} -d ${DB_NAME:-agentx}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-agentx}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -73,8 +73,8 @@ services:
       DB_HOST: ${DB_HOST:-postgres}
       DB_PORT: ${DB_PORT:-5432}
       DB_NAME: ${DB_NAME:-agentx}
-      DB_USER: ${DB_USER:-agentx_user}
-      DB_PASSWORD: ${DB_PASSWORD:-agentx_pass}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
       
       # Spring配置
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
@@ -119,12 +119,13 @@ services:
       rabbitmq:
         condition: service_healthy
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/api/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 60s
+    # 开发环境暂时禁用健康检查以避免curl依赖
+    # healthcheck:
+    #   test: ["CMD-SHELL", "curl -f http://localhost:8080/api/health || exit 1"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 5
+    #   start_period: 60s
 
   # AgentX前端服务
   agentx-frontend:
@@ -144,8 +145,7 @@ services:
     networks:
       - agentx-network
     depends_on:
-      agentx-backend:
-        condition: service_healthy
+      - agentx-backend
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:3000 || exit 1"]

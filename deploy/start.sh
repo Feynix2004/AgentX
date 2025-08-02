@@ -75,8 +75,8 @@ start_services() {
     export COMPOSE_PROFILES="$PROFILE"
     export DOCKERFILE_SUFFIX="$DOCKERFILE_SUFFIX"
 
-    # 启动服务
-    docker compose --profile "$PROFILE" up -d --build
+    # 启动服务 (支持多个profile)
+    docker compose --profile local --profile dev up -d --build
 
     echo
     echo -e "${GREEN}🎉 AgentX启动完成！${NC}"

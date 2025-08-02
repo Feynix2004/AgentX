@@ -47,8 +47,8 @@ spring:
   datasource:
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:agentx}
-    username: ${DB_USER:agentx_user}
-    password: ${DB_PASSWORD:agentx_pass}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: GMT+8
@@ -136,7 +136,7 @@ embedding:
   vector-store:
     host: ${VECTOR_DB_HOST:${DB_HOST:localhost}}
     port: ${VECTOR_DB_PORT:${DB_PORT:5432}}
-    user: ${VECTOR_DB_USER:${DB_USERNAME:postgres}}
+    user: ${VECTOR_DB_USER:${DB_USER:postgres}}
     password: ${VECTOR_DB_PASSWORD:${DB_PASSWORD:postgres}}
     database: ${VECTOR_DB_NAME:${DB_NAME:agentx}}
     table: ${VECTOR_DB_TABLE:public.vector_store}

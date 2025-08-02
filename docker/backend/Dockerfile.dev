@@ -1,12 +1,7 @@
 # AgentX后端开发环境Dockerfile
 FROM openjdk:17-jdk-slim
 
-# 安装开发工具
-RUN apt-get update && apt-get install -y \
-    curl \
-    vim \
-    git \
-    && rm -rf /var/lib/apt/lists/*
+# 开发环境不安装额外工具，直接使用Java基础镜像
 
 # 设置工作目录
 WORKDIR /app
