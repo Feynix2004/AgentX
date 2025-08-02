@@ -12,6 +12,7 @@ import org.feynix.interfaces.dto.account.request.RechargeRequest;
 import org.feynix.interfaces.dto.account.response.PaymentResponseDTO;
 import org.feynix.interfaces.dto.account.response.OrderStatusResponseDTO;
 import org.feynix.interfaces.dto.account.response.PaymentMethodDTO;
+import org.feynix.infrastructure.exception.RateLimitException;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.HashMap;
@@ -47,6 +48,11 @@ public class PaymentController {
             logger.info("充值支付创建成功: orderId={}, orderNo={}", response.getOrderId(), response.getOrderNo());
             return Result.success(response);
 
+        } catch (RateLimitException e) {
+            logger.warn("充值支付请求触发限流: amount={}, platform={}, type={}, error={}", 
+                    request.getAmount(), request.getPaymentPlatform(), request.getPaymentType(), e.getMessage());
+            return Result.error(429, "请求过于频繁，请稍后再试");
+            
         } catch (Exception e) {
             logger.error("充值支付创建失败: amount={}, platform={}, type={}", request.getAmount(), request.getPaymentPlatform(),
                     request.getPaymentType(), e);

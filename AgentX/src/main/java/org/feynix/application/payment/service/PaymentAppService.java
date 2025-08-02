@@ -17,6 +17,7 @@ import org.feynix.domain.order.service.OrderDomainService;
 import org.feynix.infrastructure.auth.UserContext;
 import org.feynix.infrastructure.exception.BusinessException;
 import org.feynix.infrastructure.payment.constant.PaymentMethod;
+import org.feynix.infrastructure.ratelimit.service.RateLimitService;
 import org.feynix.infrastructure.payment.factory.PaymentProviderFactory;
 import org.feynix.infrastructure.payment.model.PaymentCallback;
 import org.feynix.infrastructure.payment.model.PaymentRequest;
@@ -44,12 +45,14 @@ public class PaymentAppService {
     private final OrderDomainService orderDomainService;
     private final PaymentProviderFactory paymentProviderFactory;
     private final ApplicationEventPublisher eventPublisher;
+    private final RateLimitService rateLimitService;
 
     public PaymentAppService(OrderDomainService orderDomainService, PaymentProviderFactory paymentProviderFactory,
-            ApplicationEventPublisher eventPublisher) {
+            ApplicationEventPublisher eventPublisher, RateLimitService rateLimitService) {
         this.orderDomainService = orderDomainService;
         this.paymentProviderFactory = paymentProviderFactory;
         this.eventPublisher = eventPublisher;
+        this.rateLimitService = rateLimitService;
     }
 
     /** 创建充值订单并发起支付
@@ -59,6 +62,9 @@ public class PaymentAppService {
     @Transactional
     public PaymentResponseDTO createRechargePayment(RechargeRequest request) {
         String userId = UserContext.getCurrentUserId();
+
+        // 限流检查
+        rateLimitService.checkRechargeRateLimit(userId);
 
         // 转换支付平台和类型
         PaymentPlatform paymentPlatform = PaymentPlatform.fromCode(request.getPaymentPlatform());

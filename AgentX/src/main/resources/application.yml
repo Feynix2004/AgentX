@@ -56,10 +56,10 @@ logging:
     name: logs/agent-x.log
 mail:
   smtp:
-    host: ${MAIL_SMTP_HOST:qq}
-    port: ${MAIL_SMTP_PORT:25}
-    username: ${MAIL_SMTP_USERNAME:xx}
-    password: ${MAIL_SMTP_PASSWORD:xx}
+    host: ${MAIL_SMTP_HOST:smtp.qq.com}
+    port: ${MAIL_SMTP_PORT:587}
+    username: ${MAIL_SMTP_USERNAME:}
+    password: ${MAIL_SMTP_PASSWORD:}
   verification:
     template: ${MAIL_VERIFICATION_TEMPLATE:您的验证码是:%s，有效期10分钟，请勿泄露给他人。}
     subject: ${MAIL_VERIFICATION_SUBJECT:AgentX - 邮箱验证码}
@@ -67,14 +67,9 @@ mail:
 # GitHub OAuth 配置
 oauth:
   github:
-    client-id: ${GITHUB_CLIENT_ID}
-    client-secret: ${GITHUB_CLIENT_SECRET}
-    redirect-uri: ${GITHUB_REDIRECT_URI:https://xxx/oauth/github/callback}
-
-mcp:
-  gateway:
-    api-key: 123456
-    base-url: ${MCP_GATEWAY_URL:http://localhost:8005}
+    client-id: ${GITHUB_CLIENT_ID:}
+    client-secret: ${GITHUB_CLIENT_SECRET:}
+    redirect-uri: ${GITHUB_REDIRECT_URI:https://localhost:8088/oauth/github/callback}
 
 # 高可用网关配置
 high-availability:
@@ -103,9 +98,9 @@ s3:
   url-prefix: ${S3_URL_PREFIX:}
 payment:
   alipay:
-    app-id: ${ALIPAY_APP_ID}
-    private-key: ${ALIPAY_PRIVATE_KEY}
-    public-key: ${ALIPAY_PUBLIC_KEY}
+    app-id: ${ALIPAY_APP_ID:}
+    private-key: ${ALIPAY_PRIVATE_KEY:}
+    public-key: ${ALIPAY_PUBLIC_KEY:}
   stripe:
-    secret-key: ${STRIPE_SECRET_KEY}
-    publishable-key: ${STRIPE_PUBLISHABLE_KEY}
+    secret-key: ${STRIPE_SECRET_KEY:}
+    publishable-key: ${STRIPE_PUBLISHABLE_KEY:}
