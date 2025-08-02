@@ -37,55 +37,19 @@ check_docker() {
     fi
 }
 
-# 显示部署模式选择
-show_deployment_modes() {
-    echo -e "${YELLOW}请选择部署模式:${NC}"
-    echo "  1) ${GREEN}local${NC}      - 本地开发环境（内置数据库，支持热重载）"
-    echo "  2) ${BLUE}production${NC} - 生产环境（内置数据库，优化配置）"
-    echo "  3) ${YELLOW}external${NC}   - 外部数据库（连接已有PostgreSQL）"
-    echo "  4) ${RED}dev${NC}        - 开发环境+管理工具（包含Adminer）"
+# 设置开发模式配置
+set_development_mode() {
+    MODE="dev"
+    ENV_FILE=".env.local.example"
+    PROFILE="local,dev"
+    DOCKERFILE_SUFFIX=".dev"
+    
+    echo -e "${GREEN}🔥 启动开发模式${NC}"
+    echo "  - 内置数据库 + 消息队列"
+    echo "  - 代码热重载支持"
+    echo "  - 数据库管理工具 (Adminer)"
+    echo "  - 调试端口开放"
     echo
-}
-
-# 选择部署模式
-select_deployment_mode() {
-    while true; do
-        show_deployment_modes
-        read -p "请输入选择 (1-4): " choice
-        case $choice in
-            1)
-                MODE="local"
-                ENV_FILE=".env.local.example"
-                PROFILE="local"
-                DOCKERFILE_SUFFIX=".dev"
-                break
-                ;;
-            2)
-                MODE="production"
-                ENV_FILE=".env.production.example"
-                PROFILE="production"
-                DOCKERFILE_SUFFIX=""
-                break
-                ;;
-            3)
-                MODE="external"
-                ENV_FILE=".env.external.example"
-                PROFILE="external"
-                DOCKERFILE_SUFFIX=""
-                break
-                ;;
-            4)
-                MODE="dev"
-                ENV_FILE=".env.local.example"
-                PROFILE="local,dev"
-                DOCKERFILE_SUFFIX=".dev"
-                break
-                ;;
-            *)
-                echo -e "${RED}无效选择，请重新输入${NC}"
-                ;;
-        esac
-    done
 }
 
 # 准备环境配置
@@ -95,13 +59,6 @@ prepare_env() {
         cp "$ENV_FILE" ".env"
         echo -e "${GREEN}✅ 已创建 .env 文件，基于模板: $ENV_FILE${NC}"
         
-        if [ "$MODE" = "external" ]; then
-            echo -e "${YELLOW}⚠️  外部数据库模式需要手动配置数据库连接信息${NC}"
-            echo "   请编辑 .env 文件中的 DB_HOST, DB_USER, DB_PASSWORD 等配置"
-            echo "   并确保数据库已执行初始化脚本: docs/sql/01_init.sql"
-            echo
-            read -p "配置完成后按回车继续..."
-        fi
     else
         echo -e "${GREEN}✅ 使用现有 .env 配置文件${NC}"
     fi
@@ -152,40 +109,12 @@ start_services() {
 main() {
     check_docker
     
-    # 解析命令行参数
-    if [ "$1" ]; then
-        MODE="$1"
-        case "$MODE" in
-            local)
-                ENV_FILE=".env.local.example"
-                PROFILE="local"
-                DOCKERFILE_SUFFIX=".dev"
-                ;;
-            production)
-                ENV_FILE=".env.production.example"
-                PROFILE="production"
-                DOCKERFILE_SUFFIX=""
-                ;;
-            external)
-                ENV_FILE=".env.external.example"
-                PROFILE="external"
-                DOCKERFILE_SUFFIX=""
-                ;;
-            dev)
-                ENV_FILE=".env.local.example"
-                PROFILE="local,dev"
-                DOCKERFILE_SUFFIX=".dev"
-                ;;
-            *)
-                echo -e "${RED}无效的部署模式: $MODE${NC}"
-                echo "支持的模式: local, production, external, dev"
-                exit 1
-                ;;
-        esac
-    else
-        select_deployment_mode
-    fi
+    echo -e "${YELLOW}AgentX 开发环境启动${NC}"
+    echo "本脚本适用于开发者进行本地开发"
+    echo "如需生产环境部署，请参考: docs/deployment/PRODUCTION_DEPLOY.md"
+    echo
     
+    set_development_mode
     prepare_env
     start_services
 }
