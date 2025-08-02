@@ -549,4 +549,5 @@ public class ConversationAppService {
         environment.setContextEntity(contextEntity);
         environment.setMessageHistory(messageEntities);
     }
+
 }

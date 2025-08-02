@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 import org.feynix.application.conversation.dto.AgentChatResponse;
 import org.feynix.application.conversation.service.handler.context.ChatContext;
 import org.feynix.application.conversation.service.message.AbstractMessageHandler;
-import org.feynix.application.conversation.service.message.Agent;
+import org.feynix.application.conversation.service.handler.Agent;
 import org.feynix.application.conversation.service.message.agent.AgentToolManager;
 import org.feynix.application.conversation.service.message.agent.tool.RagToolManager;
 import org.feynix.domain.conversation.constant.MessageType;
