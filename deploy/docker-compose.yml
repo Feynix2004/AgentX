@@ -1,0 +1,171 @@
+# AgentX统一Docker Compose配置
+# 支持通过环境变量控制不同部署模式：local/production/external
+version: '3.8'
+
+networks:
+  agentx-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+    driver: local
+  rabbitmq-data:
+    driver: local
+  storage-data:
+    driver: local
+
+services:
+  # PostgreSQL数据库服务
+  # 仅在非external模式下启动
+  postgres:
+    image: postgres:15-alpine
+    container_name: agentx-postgres
+    profiles:
+      - local
+      - production
+    environment:
+      POSTGRES_DB: ${DB_NAME:-agentx}
+      POSTGRES_USER: ${DB_USER:-agentx_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-agentx_pass}
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ../docs/sql/01_init.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    networks:
+      - agentx-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-agentx_user} -d ${DB_NAME:-agentx}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # RabbitMQ消息队列服务
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: agentx-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-guest}
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+    networks:
+      - agentx-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # AgentX后端服务
+  agentx-backend:
+    build:
+      context: ..
+      dockerfile: docker/backend/Dockerfile${DOCKERFILE_SUFFIX:-}
+    container_name: agentx-backend
+    environment:
+      # 数据库配置
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-agentx}
+      DB_USER: ${DB_USER:-agentx_user}
+      DB_PASSWORD: ${DB_PASSWORD:-agentx_pass}
+      
+      # Spring配置
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      JPA_DDL_AUTO: ${JPA_DDL_AUTO:-update}
+      SHOW_SQL: ${SHOW_SQL:-true}
+      
+      # 默认用户配置
+      AGENTX_ADMIN_EMAIL: ${AGENTX_ADMIN_EMAIL:-admin@agentx.ai}
+      AGENTX_ADMIN_PASSWORD: ${AGENTX_ADMIN_PASSWORD:-admin123}
+      AGENTX_ADMIN_NICKNAME: ${AGENTX_ADMIN_NICKNAME:-AgentX管理员}
+      AGENTX_TEST_ENABLED: ${AGENTX_TEST_ENABLED:-true}
+      AGENTX_TEST_EMAIL: ${AGENTX_TEST_EMAIL:-test@agentx.ai}
+      AGENTX_TEST_PASSWORD: ${AGENTX_TEST_PASSWORD:-test123}
+      
+      # 消息队列配置
+      RABBITMQ_HOST: ${RABBITMQ_HOST:-rabbitmq}
+      RABBITMQ_PORT: ${RABBITMQ_PORT:-5672}
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:-guest}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-guest}
+      
+      # 日志配置
+      LOG_LEVEL_ROOT: ${LOG_LEVEL_ROOT:-info}
+      LOG_LEVEL_APP: ${LOG_LEVEL_APP:-debug}
+      
+      # 安全配置
+      JWT_SECRET: ${JWT_SECRET:-default_jwt_secret_please_change_in_production}
+      
+      # 其他配置
+      FILE_STORAGE_PATH: ${FILE_STORAGE_PATH:-/app/storage}
+    volumes:
+      - storage-data:/app/storage
+      - ./logs:/app/logs
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+      - "${DEBUG_PORT:-5005}:5005"  # 调试端口（仅开发环境）
+    networks:
+      - agentx-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+        required: false  # external模式不需要postgres
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # AgentX前端服务
+  agentx-frontend:
+    build:
+      context: ..
+      dockerfile: docker/frontend/Dockerfile${DOCKERFILE_SUFFIX:-}
+    container_name: agentx-frontend
+    environment:
+      # API配置
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8080/api}
+      
+      # Next.js配置
+      NODE_ENV: ${NODE_ENV:-development}
+      NEXT_TELEMETRY_DISABLED: 1
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    networks:
+      - agentx-network
+    depends_on:
+      agentx-backend:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+# 开发模式配置（--profile dev）
+  # 数据库管理工具（仅开发环境）
+  adminer:
+    image: adminer:4-standalone
+    container_name: agentx-adminer
+    profiles:
+      - dev
+    ports:
+      - "8081:8080"
+    networks:
+      - agentx-network
+    depends_on:
+      - postgres
+    restart: unless-stopped
