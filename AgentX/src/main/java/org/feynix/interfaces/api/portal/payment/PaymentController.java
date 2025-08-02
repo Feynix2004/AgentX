@@ -49,10 +49,10 @@ public class PaymentController {
             return Result.success(response);
 
         } catch (RateLimitException e) {
-            logger.warn("充值支付请求触发限流: amount={}, platform={}, type={}, error={}", 
-                    request.getAmount(), request.getPaymentPlatform(), request.getPaymentType(), e.getMessage());
+            logger.warn("充值支付请求触发限流: amount={}, platform={}, type={}, error={}", request.getAmount(),
+                    request.getPaymentPlatform(), request.getPaymentType(), e.getMessage());
             return Result.error(429, "请求过于频繁，请稍后再试");
-            
+
         } catch (Exception e) {
             logger.error("充值支付创建失败: amount={}, platform={}, type={}", request.getAmount(), request.getPaymentPlatform(),
                     request.getPaymentType(), e);

@@ -17,16 +17,16 @@ public class RateLimitConfig {
 
     /** 充值限流配置 */
     public static class Recharge {
-        
+
         /** 每秒允许的请求数（每分钟60次） */
         private double permitsPerSecond = 1.0;
-        
+
         /** 是否启用限流 */
         private boolean enabled = true;
-        
+
         /** 限流器缓存的最大用户数 */
         private int maxCachedUsers = 10000;
-        
+
         /** 缓存清理间隔（分钟） */
         private int cleanupIntervalMinutes = 30;
 

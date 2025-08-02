@@ -36,9 +36,9 @@ public class RateLimitService {
         }
 
         UserRateLimiter userLimiter = getUserRechargeRateLimiter(userId);
-        
+
         if (!userLimiter.getRateLimiter().tryAcquire()) {
-            logger.warn("用户充值触发限流: userId={}, permitsPerSecond={}", userId, 
+            logger.warn("用户充值触发限流: userId={}, permitsPerSecond={}", userId,
                     rateLimitConfig.getRecharge().getPermitsPerSecond());
             throw new RateLimitException("请求过于频繁，请稍后再试");
         }
@@ -49,16 +49,15 @@ public class RateLimitService {
     /** 获取用户充值限流器 */
     private UserRateLimiter getUserRechargeRateLimiter(String userId) {
         return rechargeRateLimiters.computeIfAbsent(userId, k -> {
-            logger.debug("为用户创建充值限流器: userId={}, permitsPerSecond={}", 
-                    userId, rateLimitConfig.getRecharge().getPermitsPerSecond());
-            
+            logger.debug("为用户创建充值限流器: userId={}, permitsPerSecond={}", userId,
+                    rateLimitConfig.getRecharge().getPermitsPerSecond());
+
             RateLimiter rateLimiter = RateLimiter.create(rateLimitConfig.getRecharge().getPermitsPerSecond());
             return new UserRateLimiter(rateLimiter, LocalDateTime.now());
         });
     }
 
-    /** 定时清理不活跃的限流器缓存
-     * 每30分钟执行一次 */
+    /** 定时清理不活跃的限流器缓存 每30分钟执行一次 */
     @Scheduled(fixedRate = 30 * 60 * 1000) // 30分钟
     public void cleanupInactiveRateLimiters() {
         if (!rateLimitConfig.getRecharge().isEnabled()) {
@@ -67,9 +66,9 @@ public class RateLimitService {
 
         LocalDateTime cutoffTime = LocalDateTime.now()
                 .minusMinutes(rateLimitConfig.getRecharge().getCleanupIntervalMinutes());
-        
+
         int removedCount = 0;
-        
+
         rechargeRateLimiters.entrySet().removeIf(entry -> {
             if (entry.getValue().getLastAccessTime().isBefore(cutoffTime)) {
                 logger.debug("清理不活跃的充值限流器: userId={}", entry.getKey());
@@ -79,14 +78,13 @@ public class RateLimitService {
         });
 
         if (removedCount > 0) {
-            logger.info("清理不活跃的充值限流器完成: 清理数量={}, 剩余数量={}", 
-                    removedCount, rechargeRateLimiters.size());
+            logger.info("清理不活跃的充值限流器完成: 清理数量={}, 剩余数量={}", removedCount, rechargeRateLimiters.size());
         }
 
         // 检查缓存大小，防止内存泄漏
         int currentSize = rechargeRateLimiters.size();
         int maxSize = rateLimitConfig.getRecharge().getMaxCachedUsers();
-        
+
         if (currentSize > maxSize) {
             logger.warn("充值限流器缓存大小超过限制: 当前大小={}, 最大限制={}", currentSize, maxSize);
         }
@@ -94,11 +92,8 @@ public class RateLimitService {
 
     /** 获取限流统计信息 */
     public RateLimitStats getRechargeRateLimitStats() {
-        return new RateLimitStats(
-                rechargeRateLimiters.size(),
-                rateLimitConfig.getRecharge().getPermitsPerSecond(),
-                rateLimitConfig.getRecharge().isEnabled()
-        );
+        return new RateLimitStats(rechargeRateLimiters.size(), rateLimitConfig.getRecharge().getPermitsPerSecond(),
+                rateLimitConfig.getRecharge().isEnabled());
     }
 
     /** 用户限流器包装类 */
