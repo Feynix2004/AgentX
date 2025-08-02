@@ -10,12 +10,12 @@ import java.util.Map;
 
 /** 按次计费策略 按使用次数进行固定计费 */
 @Component
-public class PerUnitStrategy implements BillingStrategy {
+public class PerUnitStrategy implements RuleStrategy {
 
     // 使用统一的常量定义
 
     @Override
-    public BigDecimal calculate(Map<String, Object> usageData, Map<String, Object> pricingConfig) {
+    public BigDecimal process(Map<String, Object> usageData, Map<String, Object> pricingConfig) {
         if (!validateUsageData(usageData) || !validatePricingConfig(pricingConfig)) {
             throw new IllegalArgumentException("无效的用量数据或价格配置");
         }

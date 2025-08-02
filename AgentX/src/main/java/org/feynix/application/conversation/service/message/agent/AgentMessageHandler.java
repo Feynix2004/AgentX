@@ -27,6 +27,7 @@ public class AgentMessageHandler extends AbstractMessageHandler {
             AgentToolManager agentToolManager) {
         super(llmServiceFactory, messageDomainService, highAvailabilityDomainService, sessionDomainService,
                 userSettingsDomainService, llmDomainService, ragToolManager, billingService, accountDomainService);
+        this.agentToolManager = agentToolManager;
     }
 
     @Override

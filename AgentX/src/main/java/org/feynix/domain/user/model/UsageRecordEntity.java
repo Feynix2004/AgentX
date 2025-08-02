@@ -44,6 +44,26 @@ public class UsageRecordEntity extends BaseEntity {
     @TableField("billed_at")
     private LocalDateTime billedAt;
 
+    /** 业务服务名称 （如：GPT-4 模型调用） */
+    @TableField("service_name")
+    private String serviceName;
+
+    /** 服务类型 （如：模型服务） */
+    @TableField("service_type")
+    private String serviceType;
+
+    /** 服务描述 */
+    @TableField("service_description")
+    private String serviceDescription;
+
+    /** 定价规则说明 （如：输入 ¥0.002/1K tokens，输出 ¥0.006/1K tokens） */
+    @TableField("pricing_rule")
+    private String pricingRule;
+
+    /** 关联实体名称 （如：具体的模型名称或Agent名称） */
+    @TableField("related_entity_name")
+    private String relatedEntityName;
+
     public UsageRecordEntity() {
         this.cost = BigDecimal.ZERO;
         this.billedAt = LocalDateTime.now();
@@ -103,6 +123,46 @@ public class UsageRecordEntity extends BaseEntity {
 
     public void setBilledAt(LocalDateTime billedAt) {
         this.billedAt = billedAt;
+    }
+
+    public String getServiceName() {
+        return serviceName;
+    }
+
+    public void setServiceName(String serviceName) {
+        this.serviceName = serviceName;
+    }
+
+    public String getServiceType() {
+        return serviceType;
+    }
+
+    public void setServiceType(String serviceType) {
+        this.serviceType = serviceType;
+    }
+
+    public String getServiceDescription() {
+        return serviceDescription;
+    }
+
+    public void setServiceDescription(String serviceDescription) {
+        this.serviceDescription = serviceDescription;
+    }
+
+    public String getPricingRule() {
+        return pricingRule;
+    }
+
+    public void setPricingRule(String pricingRule) {
+        this.pricingRule = pricingRule;
+    }
+
+    public String getRelatedEntityName() {
+        return relatedEntityName;
+    }
+
+    public void setRelatedEntityName(String relatedEntityName) {
+        this.relatedEntityName = relatedEntityName;
     }
 
     /** 验证记录信息 */
@@ -214,6 +274,36 @@ public class UsageRecordEntity extends BaseEntity {
         record.setQuantityData(quantityData);
         record.setCost(cost);
         record.setRequestId(requestId);
+        record.validate();
+        return record;
+    }
+
+    /** 创建新的用量记录（包含业务信息）
+     * @param userId 用户ID
+     * @param productId 商品ID
+     * @param quantityData 用量数据
+     * @param cost 费用
+     * @param requestId 请求ID
+     * @param serviceName 服务名称
+     * @param serviceType 服务类型
+     * @param serviceDescription 服务描述
+     * @param pricingRule 定价规则
+     * @param relatedEntityName 关联实体名称
+     * @return 用量记录实体 */
+    public static UsageRecordEntity createNewWithBusinessInfo(String userId, String productId, Map<String, Object> quantityData,
+            BigDecimal cost, String requestId, String serviceName, String serviceType, 
+            String serviceDescription, String pricingRule, String relatedEntityName) {
+        UsageRecordEntity record = new UsageRecordEntity();
+        record.setUserId(userId);
+        record.setProductId(productId);
+        record.setQuantityData(quantityData);
+        record.setCost(cost);
+        record.setRequestId(requestId);
+        record.setServiceName(serviceName);
+        record.setServiceType(serviceType);
+        record.setServiceDescription(serviceDescription);
+        record.setPricingRule(pricingRule);
+        record.setRelatedEntityName(relatedEntityName);
         record.validate();
         return record;
     }

@@ -12,14 +12,14 @@ import java.util.Map;
 @Component
 public class BillingStrategyFactory {
 
-    private final Map<String, BillingStrategy> strategyMap;
+    private final Map<String, RuleStrategy> strategyMap;
 
     /** 构造函数，自动注册所有策略实例 */
-    public BillingStrategyFactory(List<BillingStrategy> strategies) {
+    public BillingStrategyFactory(List<RuleStrategy> strategies) {
         this.strategyMap = new HashMap<>();
 
         // 注册所有策略实例
-        for (BillingStrategy strategy : strategies) {
+        for (RuleStrategy strategy : strategies) {
             strategyMap.put(strategy.getStrategyName(), strategy);
         }
     }
@@ -29,13 +29,13 @@ public class BillingStrategyFactory {
      * @param handlerKey 规则处理器标识
      * @return 计费策略实例
      * @throws BusinessException 如果策略不存在 */
-    public BillingStrategy getStrategy(String handlerKey) {
+    public RuleStrategy getStrategy(String handlerKey) {
         // 验证handler_key是否有效
         if (!RuleHandlerKey.isValidKey(handlerKey)) {
             throw new BusinessException("无效的规则处理器标识: " + handlerKey);
         }
 
-        BillingStrategy strategy = strategyMap.get(handlerKey);
+        RuleStrategy strategy = strategyMap.get(handlerKey);
         if (strategy == null) {
             throw new BusinessException("未找到对应的计费策略: " + handlerKey);
         }
@@ -47,7 +47,7 @@ public class BillingStrategyFactory {
      * 
      * @param handlerKey 规则处理器枚举
      * @return 计费策略实例 */
-    public BillingStrategy getStrategy(RuleHandlerKey handlerKey) {
+    public RuleStrategy getStrategy(RuleHandlerKey handlerKey) {
         return getStrategy(handlerKey.getKey());
     }
 

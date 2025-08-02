@@ -3,15 +3,15 @@ package org.feynix.infrastructure.billing.strategy;
 import java.math.BigDecimal;
 import java.util.Map;
 
-/** 计费策略接口 定义计费算法的通用契约 */
-public interface BillingStrategy {
+/** 规则策略接口*/
+public interface RuleStrategy {
 
     /** 计算费用
      * 
      * @param usageData 用量数据 (如：{"input": 1000, "output": 500}、{"quantity": 1})
      * @param pricingConfig 价格配置 (如：{"input_cost_per_million": 5.0, "output_cost_per_million": 15.0})
      * @return 计算出的费用 */
-    BigDecimal calculate(Map<String, Object> usageData, Map<String, Object> pricingConfig);
+    BigDecimal process(Map<String, Object> usageData, Map<String, Object> pricingConfig);
 
     /** 获取策略名称
      * 

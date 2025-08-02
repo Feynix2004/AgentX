@@ -2,21 +2,22 @@ package org.feynix.application.billing.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.feynix.application.billing.dto.BillingContext;
+import org.feynix.application.billing.dto.RuleContext;
+import org.feynix.application.usage.service.UsageRecordBusinessInfoService;
 import org.feynix.domain.product.model.ProductEntity;
 import org.feynix.domain.product.service.ProductDomainService;
 import org.feynix.domain.rule.model.RuleEntity;
 import org.feynix.domain.rule.service.RuleDomainService;
-import org.feynix.domain.user.model.AccountEntity;
 import org.feynix.domain.user.model.UsageRecordEntity;
 import org.feynix.domain.user.service.AccountDomainService;
 import org.feynix.domain.user.service.UsageRecordDomainService;
-import org.feynix.infrastructure.billing.strategy.BillingStrategy;
+import org.feynix.infrastructure.billing.strategy.RuleStrategy;
 import org.feynix.infrastructure.billing.strategy.BillingStrategyFactory;
 import org.feynix.infrastructure.exception.BusinessException;
 
 import java.math.BigDecimal;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /** 计费服务 协调整个计费流程的核心服务 */
@@ -28,15 +29,17 @@ public class BillingService {
     private final AccountDomainService accountDomainService;
     private final UsageRecordDomainService usageRecordDomainService;
     private final BillingStrategyFactory billingStrategyFactory;
+    private final UsageRecordBusinessInfoService businessInfoService;
 
     public BillingService(ProductDomainService productDomainService, RuleDomainService ruleDomainService,
             AccountDomainService accountDomainService, UsageRecordDomainService usageRecordDomainService,
-            BillingStrategyFactory billingStrategyFactory) {
+            BillingStrategyFactory billingStrategyFactory, UsageRecordBusinessInfoService businessInfoService) {
         this.productDomainService = productDomainService;
         this.ruleDomainService = ruleDomainService;
         this.accountDomainService = accountDomainService;
         this.usageRecordDomainService = usageRecordDomainService;
         this.billingStrategyFactory = billingStrategyFactory;
+        this.businessInfoService = businessInfoService;
     }
 
     /** 执行计费
@@ -44,7 +47,7 @@ public class BillingService {
      * @param context 计费上下文
      * @throws BusinessException 余额不足或其他业务异常 */
     @Transactional
-    public void charge(BillingContext context) {
+    public void charge(RuleContext context) {
         // 1. 验证上下文
         if (!context.isValid()) {
             throw new BusinessException("无效的计费上下文");
@@ -75,13 +78,18 @@ public class BillingService {
             throw new BusinessException("关联的计费规则不存在");
         }
 
-        BillingStrategy strategy = billingStrategyFactory.getStrategy(rule.getHandlerKey());
+        RuleStrategy strategy = billingStrategyFactory.getStrategy(rule.getHandlerKey());
 
         // 5. 计算费用
-        BigDecimal cost = strategy.calculate(context.getUsageData(), product.getPricingConfig());
+        BigDecimal cost = strategy.process(context.getUsageData(), product.getPricingConfig());
 
         if (cost.compareTo(BigDecimal.ZERO) < 0) {
             throw new BusinessException("计算出的费用不能为负数");
+        }
+
+        // 实现最低计费0.01元逻辑：如果费用大于0但小于0.01，则按0.01计算
+        if (cost.compareTo(BigDecimal.ZERO) > 0 && cost.compareTo(new BigDecimal("0.01")) < 0) {
+            cost = new BigDecimal("0.01");
         }
 
         // 如果费用为0，也需要记录用量，但不扣费
@@ -101,7 +109,7 @@ public class BillingService {
      * 
      * @param context 计费上下文
      * @return 是否余额充足 */
-    public boolean checkBalance(BillingContext context) {
+    public boolean checkBalance(RuleContext context) {
         try {
             // 查找商品
             ProductEntity product = productDomainService.findProductByBusinessKey(context.getType(),
@@ -117,11 +125,17 @@ public class BillingService {
                 return false;
             }
 
-            BillingStrategy strategy = billingStrategyFactory.getStrategy(rule.getHandlerKey());
+            RuleStrategy strategy = billingStrategyFactory.getStrategy(rule.getHandlerKey());
 
             // 计算费用
-            BigDecimal cost = strategy.calculate(context.getUsageData(), product.getPricingConfig());
+            BigDecimal cost = strategy.process(context.getUsageData(), product.getPricingConfig());
 
+            // 实现最低计费0.01元逻辑
+            if (cost.compareTo(BigDecimal.ZERO) > 0 && cost.compareTo(new BigDecimal("0.01")) < 0) {
+                cost = new BigDecimal("0.01");
+            }
+
+            // 允许为负数
             if (cost.compareTo(BigDecimal.ZERO) <= 0) {
                 return true; // 无需扣费
             }
@@ -135,45 +149,33 @@ public class BillingService {
     }
 
     /** 记录用量 */
-    private void recordUsage(BillingContext context, ProductEntity product, BigDecimal cost) {
-        UsageRecordEntity usageRecord = new UsageRecordEntity();
+    private void recordUsage(RuleContext context, ProductEntity product, BigDecimal cost) {
+        // 获取业务信息
+        Map<String, UsageRecordBusinessInfoService.BusinessInfo> businessInfoMap = 
+            businessInfoService.getBatchBusinessInfo(Set.of(product.getId()));
+        UsageRecordBusinessInfoService.BusinessInfo businessInfo = businessInfoMap.get(product.getId());
+        
+        String serviceName = businessInfo != null ? businessInfo.getServiceName() : "未知服务";
+        String serviceType = businessInfo != null ? businessInfo.getServiceType() : "未知类型";
+        String serviceDescription = businessInfo != null ? businessInfo.getServiceDescription() : "";
+        String pricingRule = businessInfo != null ? businessInfo.getPricingRule() : "";
+        String relatedEntityName = businessInfo != null ? businessInfo.getRelatedEntityName() : "";
+
+        // 使用新的创建方法，包含业务信息
+        UsageRecordEntity usageRecord = UsageRecordEntity.createNewWithBusinessInfo(
+            context.getUserId(),
+            product.getId(),
+            context.getUsageData(),
+            cost,
+            context.getRequestId(),
+            serviceName,
+            serviceType,
+            serviceDescription,
+            pricingRule,
+            relatedEntityName
+        );
         usageRecord.setId(UUID.randomUUID().toString());
-        usageRecord.setUserId(context.getUserId());
-        usageRecord.setProductId(product.getId());
-        usageRecord.setQuantityData(context.getUsageData());
-        usageRecord.setCost(cost);
-        usageRecord.setRequestId(context.getRequestId());
 
         usageRecordDomainService.createUsageRecord(usageRecord);
-    }
-
-    /** 估算费用（不实际扣费）
-     * 
-     * @param context 计费上下文
-     * @return 估算费用，如果无需计费返回null */
-    public BigDecimal estimateCost(BillingContext context) {
-        try {
-            // 查找商品
-            ProductEntity product = productDomainService.findProductByBusinessKey(context.getType(),
-                    context.getServiceId());
-
-            if (product == null || !product.isActive()) {
-                return null; // 无需计费
-            }
-
-            // 获取规则和策略
-            RuleEntity rule = ruleDomainService.getRuleById(product.getRuleId());
-            if (rule == null) {
-                throw new BusinessException("关联的计费规则不存在");
-            }
-
-            BillingStrategy strategy = billingStrategyFactory.getStrategy(rule.getHandlerKey());
-
-            // 计算费用
-            return strategy.calculate(context.getUsageData(), product.getPricingConfig());
-
-        } catch (Exception e) {
-            throw new BusinessException("费用估算失败: " + e.getMessage());
-        }
     }
 }

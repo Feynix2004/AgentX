@@ -10,13 +10,13 @@ import java.util.Map;
 
 /** 模型Token计费策略 基于输入输出Token数量分别计费 */
 @Component
-public class ModelTokenStrategy implements BillingStrategy {
+public class ModelTokenStrategy implements RuleStrategy {
 
     // 使用统一的常量定义
     private static final BigDecimal MILLION = new BigDecimal("1000000");
 
     @Override
-    public BigDecimal calculate(Map<String, Object> usageData, Map<String, Object> pricingConfig) {
+    public BigDecimal process(Map<String, Object> usageData, Map<String, Object> pricingConfig) {
         if (!validateUsageData(usageData) || !validatePricingConfig(pricingConfig)) {
             throw new IllegalArgumentException("无效的用量数据或价格配置");
         }

@@ -1,12 +1,14 @@
 package org.feynix.domain.user.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.stereotype.Service;
 import org.feynix.domain.user.model.UsageRecordEntity;
 import org.feynix.domain.user.repository.UsageRecordRepository;
 import org.feynix.infrastructure.exception.BusinessException;
+import org.feynix.interfaces.dto.usage.request.QueryUsageRecordRequest;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -192,5 +194,19 @@ public class UsageRecordDomainService {
         for (UsageRecordEntity record : records) {
             usageRecordRepository.insert(record);
         }
+    }
+
+    public Page<UsageRecordEntity> queryUsageRecords(QueryUsageRecordRequest request) {
+        LambdaQueryWrapper<UsageRecordEntity> wrapper = Wrappers.<UsageRecordEntity>lambdaQuery()
+                .eq(StringUtils.isNotBlank(request.getUserId()), UsageRecordEntity::getUserId, request.getUserId())
+                .eq(StringUtils.isNotBlank(request.getProductId()), UsageRecordEntity::getProductId,
+                        request.getProductId())
+                .eq(StringUtils.isNotBlank(request.getRequestId()), UsageRecordEntity::getRequestId,
+                        request.getRequestId())
+                .ge(request.getStartTime() != null, UsageRecordEntity::getBilledAt, request.getStartTime())
+                .le(request.getEndTime() != null, UsageRecordEntity::getBilledAt, request.getEndTime())
+                .orderByDesc(UsageRecordEntity::getBilledAt);
+
+        return usageRecordRepository.selectPage(new Page<>(request.getPage(), request.getPageSize()), wrapper);
     }
 }

@@ -33,7 +33,7 @@ import org.feynix.infrastructure.exception.BusinessException;
 import org.feynix.infrastructure.llm.LLMServiceFactory;
 import org.feynix.infrastructure.transport.MessageTransport;
 import org.feynix.application.billing.service.BillingService;
-import org.feynix.application.billing.dto.BillingContext;
+import org.feynix.application.billing.dto.RuleContext;
 import org.feynix.infrastructure.exception.InsufficientBalanceException;
 import org.feynix.domain.product.constant.BillingType;
 import org.feynix.domain.product.constant.UsageDataKeys;
@@ -405,10 +405,10 @@ public abstract class AbstractMessageHandler {
      * @param inputTokens 输入Token数量
      * @param outputTokens 输出Token数量
      * @return 计费上下文 */
-    private BillingContext createBillingContext(ChatContext chatContext, Integer inputTokens, Integer outputTokens) {
+    private RuleContext createBillingContext(ChatContext chatContext, Integer inputTokens, Integer outputTokens) {
         String requestId = generateRequestId(chatContext.getSessionId(), chatContext.getUserId());
 
-        return BillingContext.builder().type(BillingType.MODEL_USAGE.getCode())
+        return RuleContext.builder().type(BillingType.MODEL_USAGE.getCode())
                 .serviceId(chatContext.getModel().getId().toString()) // 使用模型表主键ID
                 .usageData(Map.of(UsageDataKeys.INPUT_TOKENS, inputTokens != null ? inputTokens : 0,
                         UsageDataKeys.OUTPUT_TOKENS, outputTokens != null ? outputTokens : 0))
@@ -437,7 +437,7 @@ public abstract class AbstractMessageHandler {
             Integer outputTokens, MessageTransport<T> transport, T connection) {
         try {
             // 创建计费上下文
-            BillingContext billingContext = createBillingContext(chatContext, inputTokens, outputTokens);
+            RuleContext billingContext = createBillingContext(chatContext, inputTokens, outputTokens);
 
             // 执行计费
             billingService.charge(billingContext);

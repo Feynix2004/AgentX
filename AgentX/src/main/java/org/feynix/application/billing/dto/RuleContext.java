@@ -2,10 +2,10 @@ package org.feynix.application.billing.dto;
 
 import java.util.Map;
 
-/** 计费上下文 封装计费所需的所有信息 */
-public class BillingContext {
+/** 规则上下文 封装计费所需的所有信息 */
+public class RuleContext {
 
-    /** 计费类型 (如：MODEL_USAGE, AGENT_CREATION) */
+    /** 规则类型 (如：MODEL_USAGE, AGENT_CREATION) */
     private String type;
 
     /** 服务ID (业务标识，如模型ID、固定标识等) */
@@ -20,11 +20,11 @@ public class BillingContext {
     /** 用户ID */
     private String userId;
 
-    public BillingContext() {
+    public RuleContext() {
     }
 
-    public BillingContext(String type, String serviceId, Map<String, Object> usageData, String requestId,
-            String userId) {
+    public RuleContext(String type, String serviceId, Map<String, Object> usageData, String requestId,
+                       String userId) {
         this.type = type;
         this.serviceId = serviceId;
         this.usageData = usageData;
@@ -109,8 +109,8 @@ public class BillingContext {
             return this;
         }
 
-        public BillingContext build() {
-            return new BillingContext(type, serviceId, usageData, requestId, userId);
+        public RuleContext build() {
+            return new RuleContext(type, serviceId, usageData, requestId, userId);
         }
     }
 

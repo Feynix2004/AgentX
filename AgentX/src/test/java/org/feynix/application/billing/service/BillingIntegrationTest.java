@@ -5,7 +5,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
-import org.feynix.application.billing.dto.BillingContext;
+import org.feynix.application.billing.dto.RuleContext;
 import org.feynix.domain.product.constant.BillingType;
 import org.feynix.domain.product.model.ProductEntity;
 import org.feynix.domain.product.service.ProductDomainService;
@@ -14,7 +14,7 @@ import org.feynix.domain.rule.model.RuleEntity;
 import org.feynix.domain.rule.service.RuleDomainService;
 import org.feynix.domain.user.model.AccountEntity;
 import org.feynix.domain.user.service.AccountDomainService;
-import org.feynix.infrastructure.billing.strategy.BillingStrategy;
+import org.feynix.infrastructure.billing.strategy.RuleStrategy;
 import org.feynix.infrastructure.billing.strategy.BillingStrategyFactory;
 
 import java.math.BigDecimal;
@@ -81,7 +81,7 @@ public class BillingIntegrationTest {
         System.out.println("✓ 创建商品成功: " + createdProduct.getName());
 
         // 3. 测试策略工厂
-        BillingStrategy strategy = billingStrategyFactory.getStrategy(RuleHandlerKey.MODEL_TOKEN_STRATEGY);
+        RuleStrategy strategy = billingStrategyFactory.getStrategy(RuleHandlerKey.MODEL_TOKEN_STRATEGY);
         assertNotNull(strategy);
         assertEquals("MODEL_TOKEN_STRATEGY", strategy.getStrategyName());
         System.out.println("✓ 获取策略成功: " + strategy.getStrategyName());
@@ -91,7 +91,7 @@ public class BillingIntegrationTest {
         usageData.put("input", 1000); // 1000个输入token
         usageData.put("output", 500); // 500个输出token
 
-        BigDecimal cost = strategy.calculate(usageData, pricingConfig);
+        BigDecimal cost = strategy.process(usageData, pricingConfig);
         assertNotNull(cost);
         System.out.println("✓ 费用计算成功: " + cost + " 元");
 
@@ -112,7 +112,7 @@ public class BillingIntegrationTest {
         System.out.println("✓ 创建测试账户成功，余额: " + account.getBalance());
 
         // 执行计费
-        BillingContext context = BillingContext.builder().type(BillingType.MODEL_USAGE.getCode())
+        RuleContext context = RuleContext.builder().type(BillingType.MODEL_USAGE.getCode())
                 .serviceId("test-gpt-4").usageData(usageData).requestId("test-request-" + System.currentTimeMillis())
                 .userId(testUserId).build();
 
@@ -163,7 +163,7 @@ public class BillingIntegrationTest {
         System.out.println("✓ 创建商品成功: " + createdProduct.getName());
 
         // 3. 测试策略
-        BillingStrategy strategy = billingStrategyFactory.getStrategy(RuleHandlerKey.PER_UNIT_STRATEGY);
+        RuleStrategy strategy = billingStrategyFactory.getStrategy(RuleHandlerKey.PER_UNIT_STRATEGY);
         assertNotNull(strategy);
         assertEquals("PER_UNIT_STRATEGY", strategy.getStrategyName());
         System.out.println("✓ 获取策略成功: " + strategy.getStrategyName());
@@ -172,7 +172,7 @@ public class BillingIntegrationTest {
         Map<String, Object> usageData = new HashMap<>();
         usageData.put("quantity", 1); // 创建1个Agent
 
-        BigDecimal cost = strategy.calculate(usageData, pricingConfig);
+        BigDecimal cost = strategy.process(usageData, pricingConfig);
         assertNotNull(cost);
         System.out.println("✓ 费用计算成功: " + cost + " 元");
 
@@ -221,7 +221,7 @@ public class BillingIntegrationTest {
         accountDomainService.createAccount(account);
 
         // 尝试计费，应该抛出异常
-        BillingContext context = BillingContext.builder().type(BillingType.AGENT_CREATION.getCode())
+        RuleContext context = RuleContext.builder().type(BillingType.AGENT_CREATION.getCode())
                 .serviceId("expensive_service").usageData(Map.of("quantity", 1))
                 .requestId("insufficient-balance-test-" + System.currentTimeMillis()).userId(testUserId).build();
 
