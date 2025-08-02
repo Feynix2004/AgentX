@@ -1,5 +1,5 @@
 server:
-  port: 8088
+  port: ${SERVER_PORT:8080}
   servlet:
     context-path: /api
   # 添加Tomcat异步请求配置
@@ -16,10 +16,10 @@ spring:
   application:
     name: AgentX
   rabbitmq:
-    host: ${SPRING_RABBITMQ_HOST}
-    port: ${SPRING_RABBITMQ_PORT}
-    username: ${SPRING_RABBITMQ_USERNAME}
-    password: ${SPRING_RABBITMQ_PASSWORD}
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
     listener:
       simple: # 添加 simple 下的并发配置
         concurrency: 19
@@ -47,8 +47,8 @@ spring:
   datasource:
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:agentx}
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:postgres}
+    username: ${DB_USER:agentx_user}
+    password: ${DB_PASSWORD:agentx_pass}
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: GMT+8
@@ -166,3 +166,18 @@ dromara:
         bucket-name: ${S3_BUCKET_NAME}
         domain: ${S3_DOMAIN} # 访问域名，注意“/”结尾，例如：https://abc.hn-bkt.clouddn.com/
         base-path: s3/ # 基础路径
+
+# AgentX系统配置
+agentx:
+  # 管理员用户配置
+  admin:
+    email: ${AGENTX_ADMIN_EMAIL:admin@agentx.ai}
+    password: ${AGENTX_ADMIN_PASSWORD:admin123}
+    nickname: ${AGENTX_ADMIN_NICKNAME:AgentX管理员}
+  
+  # 测试用户配置
+  test:
+    enabled: ${AGENTX_TEST_ENABLED:true}
+    email: ${AGENTX_TEST_EMAIL:test@agentx.ai}
+    password: ${AGENTX_TEST_PASSWORD:test123}
+    nickname: ${AGENTX_TEST_NICKNAME:测试用户}
