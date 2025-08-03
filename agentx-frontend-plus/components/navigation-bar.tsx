@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Database, FileText, Home, Menu, Search, Settings, PenToolIcon as Tool, UploadCloud, LogOut, Wrench, BarChart3, Tag, Wallet } from "lucide-react"
+import { Database, FileText, Home, Menu, Search, Settings, PenToolIcon as Tool, UploadCloud, LogOut, Wrench, BarChart3, Tag, Wallet, Package } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 
 import { cn } from "@/lib/utils"
@@ -237,6 +237,12 @@ export function NavigationBar() {
                   <Link href="/settings/providers">
                     <Settings className="mr-2 h-4 w-4" />
                     服务提供商
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/settings/orders">
+                    <Package className="mr-2 h-4 w-4" />
+                    我的订单
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
