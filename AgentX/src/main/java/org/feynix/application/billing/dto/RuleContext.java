@@ -23,8 +23,7 @@ public class RuleContext {
     public RuleContext() {
     }
 
-    public RuleContext(String type, String serviceId, Map<String, Object> usageData, String requestId,
-                       String userId) {
+    public RuleContext(String type, String serviceId, Map<String, Object> usageData, String requestId, String userId) {
         this.type = type;
         this.serviceId = serviceId;
         this.usageData = usageData;

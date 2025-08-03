@@ -65,8 +65,8 @@ public class UsageRecordAppService {
         // 转换结果
         List<UsageRecordDTO> dtoList = UsageRecordAssembler.toDTOs(usageRecordEntityPage.getRecords());
 
-        Page<UsageRecordDTO> resultPage = new Page<>(usageRecordEntityPage.getCurrent(), usageRecordEntityPage.getSize(),
-                usageRecordEntityPage.getTotal());
+        Page<UsageRecordDTO> resultPage = new Page<>(usageRecordEntityPage.getCurrent(),
+                usageRecordEntityPage.getSize(), usageRecordEntityPage.getTotal());
         resultPage.setRecords(dtoList);
 
         return resultPage;

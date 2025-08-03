@@ -151,10 +151,10 @@ public class BillingService {
     /** 记录用量 */
     private void recordUsage(RuleContext context, ProductEntity product, BigDecimal cost) {
         // 获取业务信息
-        Map<String, UsageRecordBusinessInfoService.BusinessInfo> businessInfoMap = 
-            businessInfoService.getBatchBusinessInfo(Set.of(product.getId()));
+        Map<String, UsageRecordBusinessInfoService.BusinessInfo> businessInfoMap = businessInfoService
+                .getBatchBusinessInfo(Set.of(product.getId()));
         UsageRecordBusinessInfoService.BusinessInfo businessInfo = businessInfoMap.get(product.getId());
-        
+
         String serviceName = businessInfo != null ? businessInfo.getServiceName() : "未知服务";
         String serviceType = businessInfo != null ? businessInfo.getServiceType() : "未知类型";
         String serviceDescription = businessInfo != null ? businessInfo.getServiceDescription() : "";
@@ -162,18 +162,9 @@ public class BillingService {
         String relatedEntityName = businessInfo != null ? businessInfo.getRelatedEntityName() : "";
 
         // 使用新的创建方法，包含业务信息
-        UsageRecordEntity usageRecord = UsageRecordEntity.createNewWithBusinessInfo(
-            context.getUserId(),
-            product.getId(),
-            context.getUsageData(),
-            cost,
-            context.getRequestId(),
-            serviceName,
-            serviceType,
-            serviceDescription,
-            pricingRule,
-            relatedEntityName
-        );
+        UsageRecordEntity usageRecord = UsageRecordEntity.createNewWithBusinessInfo(context.getUserId(),
+                product.getId(), context.getUsageData(), cost, context.getRequestId(), serviceName, serviceType,
+                serviceDescription, pricingRule, relatedEntityName);
         usageRecord.setId(UUID.randomUUID().toString());
 
         usageRecordDomainService.createUsageRecord(usageRecord);

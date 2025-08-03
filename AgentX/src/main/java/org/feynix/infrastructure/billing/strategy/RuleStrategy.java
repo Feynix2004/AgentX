@@ -3,7 +3,7 @@ package org.feynix.infrastructure.billing.strategy;
 import java.math.BigDecimal;
 import java.util.Map;
 
-/** 规则策略接口*/
+/** 规则策略接口 */
 public interface RuleStrategy {
 
     /** 计算费用

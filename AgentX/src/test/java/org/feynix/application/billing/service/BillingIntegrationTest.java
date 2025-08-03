@@ -112,9 +112,9 @@ public class BillingIntegrationTest {
         System.out.println("✓ 创建测试账户成功，余额: " + account.getBalance());
 
         // 执行计费
-        RuleContext context = RuleContext.builder().type(BillingType.MODEL_USAGE.getCode())
-                .serviceId("test-gpt-4").usageData(usageData).requestId("test-request-" + System.currentTimeMillis())
-                .userId(testUserId).build();
+        RuleContext context = RuleContext.builder().type(BillingType.MODEL_USAGE.getCode()).serviceId("test-gpt-4")
+                .usageData(usageData).requestId("test-request-" + System.currentTimeMillis()).userId(testUserId)
+                .build();
 
         assertDoesNotThrow(() -> billingService.charge(context));
         System.out.println("✓ 计费执行成功");

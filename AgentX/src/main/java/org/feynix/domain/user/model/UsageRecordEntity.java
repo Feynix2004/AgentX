@@ -290,8 +290,8 @@ public class UsageRecordEntity extends BaseEntity {
      * @param pricingRule 定价规则
      * @param relatedEntityName 关联实体名称
      * @return 用量记录实体 */
-    public static UsageRecordEntity createNewWithBusinessInfo(String userId, String productId, Map<String, Object> quantityData,
-            BigDecimal cost, String requestId, String serviceName, String serviceType, 
+    public static UsageRecordEntity createNewWithBusinessInfo(String userId, String productId,
+            Map<String, Object> quantityData, BigDecimal cost, String requestId, String serviceName, String serviceType,
             String serviceDescription, String pricingRule, String relatedEntityName) {
         UsageRecordEntity record = new UsageRecordEntity();
         record.setUserId(userId);
