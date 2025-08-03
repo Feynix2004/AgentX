@@ -84,9 +84,10 @@ start_services() {
     echo -e "${BLUE}服务访问地址:${NC}"
     echo "  前端: http://localhost:3000"
     echo "  后端API: http://localhost:8080"
+    echo "  API网关: http://localhost:8081"
     
     if [ "$MODE" = "dev" ]; then
-        echo "  数据库管理: http://localhost:8081"
+        echo "  数据库管理: http://localhost:8082"
     fi
     
     echo

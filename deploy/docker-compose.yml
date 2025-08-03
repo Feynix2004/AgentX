@@ -12,6 +12,8 @@ volumes:
     driver: local
   storage-data:
     driver: local
+  gateway-logs:
+    driver: local
 
 services:
   # PostgreSQL数据库服务
@@ -102,6 +104,11 @@ services:
       # 安全配置
       JWT_SECRET: ${JWT_SECRET:-default_jwt_secret_please_change_in_production}
       
+      # 高可用网关配置
+      HIGH_AVAILABILITY_ENABLED: ${HIGH_AVAILABILITY_ENABLED:-false}
+      HIGH_AVAILABILITY_GATEWAY_URL: ${HIGH_AVAILABILITY_GATEWAY_URL:-http://api-gateway:8081}
+      HIGH_AVAILABILITY_API_KEY: ${HIGH_AVAILABILITY_API_KEY:-default-api-key}
+      
       # 其他配置
       FILE_STORAGE_PATH: ${FILE_STORAGE_PATH:-/app/storage}
     volumes:
@@ -162,9 +169,30 @@ services:
     profiles:
       - dev
     ports:
-      - "8081:8080"
+      - "8082:8080"
     networks:
       - agentx-network
     depends_on:
       - postgres
     restart: unless-stopped
+
+  # API Premium Gateway 高可用网关服务
+  api-gateway:
+    image: ghcr.io/feynix2004/api-premium-gateway:latest
+    container_name: agentx-api-gateway
+    profiles:
+      - local
+      - production
+    ports:
+      - "8081:8081"
+    volumes:
+      - gateway-logs:/app/logs
+    networks:
+      - agentx-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8081/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
