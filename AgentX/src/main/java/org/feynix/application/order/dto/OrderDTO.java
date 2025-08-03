@@ -13,6 +13,9 @@ public class OrderDTO {
     /** 用户ID */
     private String userId;
 
+    /** 用户昵称 */
+    private String userNickname;
+
     /** 订单号 */
     private String orderNo;
 
@@ -261,5 +264,13 @@ public class OrderDTO {
 
     public void setProviderOrderId(String providerOrderId) {
         this.providerOrderId = providerOrderId;
+    }
+
+    public String getUserNickname() {
+        return userNickname;
+    }
+
+    public void setUserNickname(String userNickname) {
+        this.userNickname = userNickname;
     }
 }
