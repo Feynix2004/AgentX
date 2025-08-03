@@ -91,7 +91,7 @@ public class DefaultDataInitializer implements ApplicationRunner {
     /** 初始化测试用户 */
     private void initializeTestUser() {
         AdminUserProperties.TestConfig testConfig = adminUserProperties.getTest();
-        
+
         // 检查是否启用测试用户
         if (!testConfig.getEnabled()) {
             log.info("测试用户功能已禁用，跳过初始化");
