@@ -1,5 +1,6 @@
 package org.feynix.infrastructure.payment.provider;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
@@ -21,7 +22,11 @@ import org.feynix.infrastructure.payment.model.PaymentCallback;
 import org.feynix.infrastructure.payment.model.PaymentRequest;
 import org.feynix.infrastructure.payment.model.PaymentResult;
 
+import jakarta.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,7 +42,7 @@ public class StripeProvider extends PaymentProvider {
     @Value("${payment.stripe.publishable-key:}")
     private String publishableKey;
 
-    @Value("${payment.stripe.webhook-secret:}")
+    @Value("${payment.stripe.webhook-secret:whsec_0B9dRT54GJBF1gldp6IgJsU1z9ccbg2y}")
     private String webhookSecret;
 
     private volatile boolean initialized = false;
@@ -190,15 +195,70 @@ public class StripeProvider extends PaymentProvider {
     }
 
     @Override
-    public PaymentCallback handleCallback(Map<String, Object> callbackData) {
+    public PaymentCallback handleCallback(HttpServletRequest request) {
         PaymentCallback callback = new PaymentCallback();
-        callback.setRawData(callbackData);
 
         try {
-            logger.info("处理Stripe支付回调: data={}", callbackData);
+            logger.info("处理Stripe支付回调");
+
+            // 读取原始JSON请求体
+            String payload = readRequestBody(request);
+            String signature = request.getHeader("Stripe-Signature");
+
+            logger.debug("Stripe回调原始数据长度: {}, 签名存在: {}", payload != null ? payload.length() : 0, signature != null);
+
+            if (payload == null || payload.trim().isEmpty()) {
+                logger.warn("Stripe回调请求体为空");
+                callback.setSignatureValid(false);
+                callback.setPaymentSuccess(false);
+                callback.setErrorMessage("请求体为空");
+                return callback;
+            }
+
+            // 解析JSON数据
+            ObjectMapper objectMapper = new ObjectMapper();
+            @SuppressWarnings("unchecked")
+            Map<String, Object> callbackData = objectMapper.readValue(payload, Map.class);
+
+            // 添加原始数据用于签名验证
+            callbackData.put("_raw_body", payload);
+            callbackData.put("_stripe_signature", signature);
+
+            callback.setRawData(callbackData);
+
+            // 直接处理Stripe事件数据，不调用旧方法
+            return processStripeEvent(callbackData, callback);
+
+        } catch (Exception e) {
+            logger.error("Stripe回调处理异常", e);
+            callback.setSignatureValid(false);
+            callback.setPaymentSuccess(false);
+            callback.setErrorMessage("回调处理异常: " + e.getMessage());
+            return callback;
+        }
+    }
+
+    /** 读取HTTP请求体
+     * 
+     * @param request HTTP请求对象
+     * @return 请求体内容 */
+    private String readRequestBody(HttpServletRequest request) throws IOException {
+        try (InputStream inputStream = request.getInputStream()) {
+            return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+        }
+    }
+
+    /** 处理Stripe事件数据
+     * 
+     * @param eventData 事件数据
+     * @param callback 回调对象
+     * @return 处理后的回调对象 */
+    private PaymentCallback processStripeEvent(Map<String, Object> eventData, PaymentCallback callback) {
+        try {
+            logger.info("解析Stripe事件数据: {}", eventData.keySet());
 
             // 验证签名
-            boolean isValid = verifyCallback(callbackData);
+            boolean isValid = verifyStripeSignature(eventData);
             callback.setSignatureValid(isValid);
 
             if (!isValid) {
@@ -206,22 +266,26 @@ public class StripeProvider extends PaymentProvider {
                 return callback;
             }
 
-            // 解析Stripe事件数据
-            String eventType = (String) callbackData.get("type");
+            // 解析事件类型和数据
+            String eventType = (String) eventData.get("type");
             @SuppressWarnings("unchecked")
-            Map<String, Object> eventData = (Map<String, Object>) callbackData.get("data");
+            Map<String, Object> data = (Map<String, Object>) eventData.get("data");
             @SuppressWarnings("unchecked")
-            Map<String, Object> sessionData = (Map<String, Object>) eventData.get("object");
+            Map<String, Object> sessionData = (Map<String, Object>) data.get("object");
 
             String sessionId = (String) sessionData.get("id");
             String status = (String) sessionData.get("status");
             String paymentStatus = (String) sessionData.get("payment_status");
             String paymentIntentId = (String) sessionData.get("payment_intent");
-            Long amountTotal = (Long) sessionData.get("amount_total");
+            Object amountTotal = sessionData.get("amount_total");
             String currency = (String) sessionData.get("currency");
             @SuppressWarnings("unchecked")
             Map<String, String> metadata = (Map<String, String>) sessionData.get("metadata");
 
+            logger.info("Stripe事件详情: type={}, sessionId={}, status={}, paymentStatus={}, amountTotal={}", eventType,
+                    sessionId, status, paymentStatus, amountTotal);
+
+            // 设置回调数据
             callback.setProviderOrderId(sessionId);
             callback.setProviderPaymentId(paymentIntentId != null ? paymentIntentId : sessionId);
             callback.setCurrency(currency != null ? currency.toUpperCase() : "USD");
@@ -229,10 +293,13 @@ public class StripeProvider extends PaymentProvider {
 
             if (metadata != null) {
                 callback.setOrderNo(metadata.get("order_no"));
+                logger.info("从metadata获取订单号: {}", metadata.get("order_no"));
             }
 
             if (amountTotal != null) {
-                callback.setAmount(new BigDecimal(parseAmount(amountTotal.toString())));
+                String amountStr = amountTotal.toString();
+                callback.setAmount(new BigDecimal(parseAmount(amountStr)));
+                logger.info("解析金额: {} -> {}", amountStr, callback.getAmount());
             }
 
             // 判断支付状态
@@ -241,7 +308,7 @@ public class StripeProvider extends PaymentProvider {
                 callback.setPaymentSuccess(true);
                 callback.setPaymentStatus("SUCCESS");
                 logger.info("Stripe支付成功回调: sessionId={}, paymentIntentId={}, amount={}", sessionId, paymentIntentId,
-                        amountTotal);
+                        callback.getAmount());
             } else {
                 callback.setPaymentSuccess(false);
                 callback.setPaymentStatus(status + "/" + paymentStatus);
@@ -250,13 +317,42 @@ public class StripeProvider extends PaymentProvider {
             }
 
         } catch (Exception e) {
-            logger.error("Stripe回调处理异常", e);
+            logger.error("Stripe事件处理异常", e);
             callback.setSignatureValid(false);
             callback.setPaymentSuccess(false);
-            callback.setErrorMessage("回调处理异常: " + e.getMessage());
+            callback.setErrorMessage("事件处理异常: " + e.getMessage());
         }
 
         return callback;
+    }
+
+    /** 验证Stripe签名
+     * 
+     * @param eventData 事件数据
+     * @return 是否验证通过 */
+    private boolean verifyStripeSignature(Map<String, Object> eventData) {
+        try {
+            if (!StringUtils.hasText(webhookSecret)) {
+                logger.warn("Stripe webhook secret未配置，跳过签名验证");
+                return true;
+            }
+
+            String payload = (String) eventData.get("_raw_body");
+            String signature = (String) eventData.get("_stripe_signature");
+
+            if (!StringUtils.hasText(payload) || !StringUtils.hasText(signature)) {
+                logger.warn("Stripe回调缺少必要的签名数据");
+                return false;
+            }
+
+            // 使用Stripe SDK验证webhook签名
+            Webhook.constructEvent(payload, signature, webhookSecret);
+            return true;
+
+        } catch (Exception e) {
+            logger.error("Stripe回调验签异常", e);
+            return false;
+        }
     }
 
     @Override
@@ -393,32 +489,6 @@ public class StripeProvider extends PaymentProvider {
             default :
                 logger.warn("未知的Stripe状态: {}，默认转换为PENDING", platformStatus);
                 return OrderStatus.PENDING;
-        }
-    }
-
-    @Override
-    protected boolean verifyCallback(Map<String, Object> callbackData) {
-        try {
-            if (!StringUtils.hasText(webhookSecret)) {
-                logger.warn("Stripe webhook secret未配置，跳过签名验证");
-                return true;
-            }
-
-            String payload = (String) callbackData.get("_raw_body");
-            String signature = (String) callbackData.get("_stripe_signature");
-
-            if (!StringUtils.hasText(payload) || !StringUtils.hasText(signature)) {
-                logger.warn("Stripe回调缺少必要的签名数据");
-                return false;
-            }
-
-            // 使用Stripe SDK验证webhook签名
-            Webhook.constructEvent(payload, signature, webhookSecret);
-            return true;
-
-        } catch (Exception e) {
-            logger.error("Stripe回调验签异常", e);
-            return false;
         }
     }
 

@@ -6,6 +6,7 @@ import org.feynix.infrastructure.payment.model.PaymentCallback;
 import org.feynix.infrastructure.payment.model.PaymentRequest;
 import org.feynix.infrastructure.payment.model.PaymentResult;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 
 /** 支付提供商抽象类 */
@@ -34,9 +35,9 @@ public abstract class PaymentProvider {
 
     /** 处理支付回调
      * 
-     * @param callbackData 回调数据
+     * @param request HTTP请求对象
      * @return 支付回调对象 */
-    public abstract PaymentCallback handleCallback(Map<String, Object> callbackData);
+    public abstract PaymentCallback handleCallback(HttpServletRequest request);
 
     /** 取消支付
      * 
@@ -57,12 +58,6 @@ public abstract class PaymentProvider {
      * @param platformStatus 支付平台状态
      * @return 系统订单状态 */
     public abstract OrderStatus convertToOrderStatus(String platformStatus);
-
-    /** 验证回调签名
-     * 
-     * @param callbackData 回调数据
-     * @return 是否验证通过 */
-    protected abstract boolean verifyCallback(Map<String, Object> callbackData);
 
     /** 检查是否支持该功能
      * 

@@ -110,14 +110,10 @@ public class PaymentController {
         logger.info("接收支付回调: platform={}", platform);
 
         try {
-            // 提取回调数据
-            Map<String, Object> callbackData = extractCallbackData(request);
-            logger.info("回调数据: platform={}, data={}", platform, callbackData);
-
             PaymentPlatform paymentPlatform = PaymentPlatform.fromCode(platform);
 
-            // 处理回调
-            String response = paymentAppService.handlePaymentCallback(paymentPlatform, callbackData);
+            // 使用新的处理方式：直接传递HttpServletRequest
+            String response = paymentAppService.handlePaymentCallback(paymentPlatform, request);
 
             logger.info("支付回调处理成功: platform={}", platform);
             return ResponseEntity.ok(response);
@@ -129,25 +125,4 @@ public class PaymentController {
         }
     }
 
-    /** 提取回调数据
-     * 
-     * @param request HTTP请求对象
-     * @return 回调数据Map */
-    private Map<String, Object> extractCallbackData(HttpServletRequest request) {
-        Map<String, Object> data = new HashMap<>();
-
-        // 提取所有请求参数（支持form-data和query参数）
-        request.getParameterMap().forEach((key, values) -> {
-            if (values != null && values.length > 0) {
-                // 如果只有一个值，直接存储，否则存储数组
-                if (values.length == 1) {
-                    data.put(key, values[0]);
-                } else {
-                    data.put(key, values);
-                }
-            }
-        });
-
-        return data;
-    }
 }

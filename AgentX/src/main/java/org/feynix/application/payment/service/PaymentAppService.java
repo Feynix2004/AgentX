@@ -6,6 +6,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import jakarta.servlet.http.HttpServletRequest;
 import org.feynix.application.payment.assembler.PaymentAssembler;
 import org.feynix.domain.order.constant.OrderStatus;
 import org.feynix.domain.order.constant.OrderType;
@@ -206,19 +207,19 @@ public class PaymentAppService {
         return "RCH" + System.currentTimeMillis() + String.format("%04d", (int) (Math.random() * 10000));
     }
 
-    /** 处理支付回调
+    /** 处理支付回调（新接口，直接处理HTTP请求）
      * 
      * @param paymentPlatform 支付平台代码
-     * @param callbackData 回调数据
+     * @param request HTTP请求对象
      * @return 回调响应字符串 */
     @Transactional
-    public String handlePaymentCallback(PaymentPlatform paymentPlatform, Map<String, Object> callbackData) {
+    public String handlePaymentCallback(PaymentPlatform paymentPlatform, HttpServletRequest request) {
         try {
             // 获取支付提供商
             PaymentProvider provider = paymentProviderFactory.getProvider(paymentPlatform);
 
-            // 处理回调
-            PaymentCallback callback = provider.handleCallback(callbackData);
+            // 使用新的处理方式：直接传递HttpServletRequest
+            PaymentCallback callback = provider.handleCallback(request);
 
             if (callback.isSignatureValid()) {
                 // 更新订单状态

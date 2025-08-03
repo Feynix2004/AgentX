@@ -19,6 +19,8 @@ import org.feynix.infrastructure.payment.model.PaymentCallback;
 import org.feynix.infrastructure.payment.model.PaymentRequest;
 import org.feynix.infrastructure.payment.model.PaymentResult;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
@@ -155,8 +157,9 @@ public class AlipayProvider extends PaymentProvider {
 
     /** 创建二维码支付 */
     private PaymentResult createQrCodePayment(PaymentRequest request) throws Exception {
-        AlipayTradePrecreateResponse response = Factory.Payment.FaceToFace().preCreate(request.getTitle(),
-                request.getOrderNo(), formatAmount(request.getAmount().toString()));
+        AlipayTradePrecreateResponse response = Factory.Payment.FaceToFace()
+                .asyncNotify("https://7dc9c0c9.r8.vip.cpolar.cn/api/payments/callback/alipay")
+                .preCreate(request.getTitle(), request.getOrderNo(), formatAmount(request.getAmount().toString()));
 
         if (ResponseChecker.success(response)) {
             PaymentResult result = PaymentResult.success();
@@ -229,7 +232,53 @@ public class AlipayProvider extends PaymentProvider {
     }
 
     @Override
-    public PaymentCallback handleCallback(Map<String, Object> callbackData) {
+    public PaymentCallback handleCallback(HttpServletRequest request) {
+        try {
+            logger.info("处理支付宝支付回调");
+
+            // 提取支付宝form参数数据
+            Map<String, Object> callbackData = extractAlipayCallbackData(request);
+
+            // 调用原有的处理逻辑
+            return handleCallbackData(callbackData);
+
+        } catch (Exception e) {
+            logger.error("支付宝回调处理异常", e);
+            PaymentCallback callback = new PaymentCallback();
+            callback.setSignatureValid(false);
+            callback.setPaymentSuccess(false);
+            callback.setErrorMessage("回调处理异常: " + e.getMessage());
+            return callback;
+        }
+    }
+
+    /** 提取支付宝回调数据（form参数格式）
+     * 
+     * @param request HTTP请求对象
+     * @return 回调数据Map */
+    private Map<String, Object> extractAlipayCallbackData(HttpServletRequest request) {
+        Map<String, Object> data = new HashMap<>();
+
+        // 提取所有请求参数（支持form-data和query参数）
+        request.getParameterMap().forEach((key, values) -> {
+            if (values != null && values.length > 0) {
+                // 如果只有一个值，直接存储，否则存储数组
+                if (values.length == 1) {
+                    data.put(key, values[0]);
+                } else {
+                    data.put(key, values);
+                }
+            }
+        });
+
+        return data;
+    }
+
+    /** 处理支付宝回调数据
+     * 
+     * @param callbackData 回调数据
+     * @return 支付回调对象 */
+    private PaymentCallback handleCallbackData(Map<String, Object> callbackData) {
         PaymentCallback callback = new PaymentCallback();
         callback.setRawData(callbackData);
 
@@ -237,7 +286,7 @@ public class AlipayProvider extends PaymentProvider {
             logger.info("处理支付宝支付回调: data={}", callbackData);
 
             // 验证签名
-            boolean isValid = verifyCallback(callbackData);
+            boolean isValid = verifyAlipayCallback(callbackData);
             callback.setSignatureValid(isValid);
 
             if (!isValid) {
@@ -331,8 +380,11 @@ public class AlipayProvider extends PaymentProvider {
         }
     }
 
-    @Override
-    protected boolean verifyCallback(Map<String, Object> callbackData) {
+    /** 验证支付宝回调签名
+     * 
+     * @param callbackData 回调数据
+     * @return 是否验证通过 */
+    private boolean verifyAlipayCallback(Map<String, Object> callbackData) {
         try {
             initializeConfig();
 
