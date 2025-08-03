@@ -24,8 +24,8 @@ WORKDIR /build
 # 复制前端package文件
 COPY agentx-frontend-plus/package*.json ./
 
-# 安装依赖
-RUN npm ci --legacy-peer-deps --only=production
+# 安装依赖（包含构建工具）
+RUN npm ci --legacy-peer-deps
 
 # 复制前端源代码并构建
 COPY agentx-frontend-plus/ .
