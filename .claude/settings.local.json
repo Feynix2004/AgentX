@@ -8,6 +8,7 @@
       "Bash(find:*)",
       "Bash(mvn clean:*)",
       "Bash(npm run build:*)",
+      "Bash(rm:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(mv:*)",
@@ -46,23 +47,9 @@
       "Bash(env)",
       "Bash(npx @modelcontextprotocol/server-postgres:*)",
       "mcp__postgres-server__query",
-      "Bash(docker rm:*)",
-      "WebFetch(domain:github.com)",
       "Bash(npm install:*)",
-      "mcp__postgres-server__query",
-      "Bash(docker compose:*)",
-      "Bash(npm --version)",
-      "Bash(node:*)",
-      "Bash(./start.sh:*)",
-      "Bash(timeout:*)",
-      "Bash(docker volume rm:*)",
-      "WebFetch(domain:github.com)",
-      "WebFetch(domain:raw.githubusercontent.com)",
-      "Bash(git clone:*)",
-      "Bash(docker build:*)",
-      "Bash(docker system:*)",
-      "Bash(cat:*)",
-      "Bash(docker run:*)"
+      "Bash(wc:*)",
+      "Bash(head:*)"
     ],
     "deny": []
   }

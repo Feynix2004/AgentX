@@ -43,6 +43,7 @@ import org.feynix.domain.token.model.TokenProcessResult;
 import org.feynix.domain.token.model.config.TokenOverflowConfig;
 import org.feynix.domain.token.service.TokenDomainService;
 import org.feynix.domain.tool.model.UserToolEntity;
+import org.feynix.domain.tool.service.ToolDomainService;
 import org.feynix.domain.tool.service.UserToolDomainService;
 import org.feynix.infrastructure.exception.BusinessException;
 import org.feynix.infrastructure.llm.config.ProviderConfig;
