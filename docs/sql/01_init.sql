@@ -1,3 +1,104 @@
+-- 创建 pgvector 扩展（向量数据库支持）
+CREATE EXTENSION IF NOT EXISTS vector;
+
+create table public.accounts (
+                                 id character varying(64) primary key not null,
+                                 user_id character varying(64) not null, -- 用户ID
+                                 balance numeric(20,8) default 0.00000000, -- 账户余额
+                                 credit numeric(20,8) default 0.00000000, -- 信用额度
+                                 total_consumed numeric(20,8) default 0.00000000, -- 总消费金额
+                                 last_transaction_at timestamp without time zone, -- 最后交易时间
+                                 deleted_at timestamp without time zone,
+                                 created_at timestamp without time zone default CURRENT_TIMESTAMP,
+                                 updated_at timestamp without time zone default CURRENT_TIMESTAMP
+);
+comment on table public.accounts is '用户账户表，存储用户余额和消费记录';
+comment on column public.accounts.user_id is '用户ID';
+comment on column public.accounts.balance is '账户余额';
+comment on column public.accounts.credit is '信用额度';
+comment on column public.accounts.total_consumed is '总消费金额';
+comment on column public.accounts.last_transaction_at is '最后交易时间';
+
+create table public.agent_execution_details (
+                                                id bigserial primary key not null,
+                                                trace_id character varying(64) not null, -- 关联汇总表的追踪ID
+                                                sequence_no integer not null, -- 执行序号，同一trace_id内递增
+                                                step_type character varying(32) not null, -- 步骤类型：USER_MESSAGE, AI_RESPONSE, TOOL_CALL
+                                                message_content text, -- 统一的消息内容（用户消息/AI响应/工具调用描述）
+                                                message_type character varying(32), -- 消息类型：USER_MESSAGE, AI_RESPONSE, TOOL_CALL
+                                                model_id character varying(128), -- 此次使用的模型ID
+                                                provider_name character varying(64),
+                                                message_tokens integer,
+                                                model_call_time integer,
+                                                tool_name character varying(128),
+                                                tool_request_args text, -- 工具调用入参(JSON格式)
+                                                tool_response_data text, -- 工具调用出参(JSON格式)
+                                                tool_execution_time integer,
+                                                tool_success boolean,
+                                                is_fallback_used boolean default false, -- 是否触发了平替/降级
+                                                fallback_reason text,
+                                                fallback_from_model character varying(128),
+                                                fallback_to_model character varying(128),
+                                                step_cost numeric(10,6),
+                                                step_success boolean not null,
+                                                step_error_message text,
+                                                created_at timestamp without time zone default CURRENT_TIMESTAMP,
+                                                updated_at timestamp without time zone default CURRENT_TIMESTAMP,
+                                                deleted_at timestamp without time zone
+);
+create index idx_agent_exec_details_trace_seq on agent_execution_details using btree (trace_id, sequence_no);
+create index idx_agent_exec_details_trace_type on agent_execution_details using btree (trace_id, step_type);
+create index idx_agent_exec_details_tool on agent_execution_details using btree (tool_name);
+create index idx_agent_exec_details_model on agent_execution_details using btree (model_id);
+comment on table public.agent_execution_details is 'Agent执行链路详细记录表，记录每次执行的详细过程';
+comment on column public.agent_execution_details.trace_id is '关联汇总表的追踪ID';
+comment on column public.agent_execution_details.sequence_no is '执行序号，同一trace_id内递增';
+comment on column public.agent_execution_details.step_type is '步骤类型：USER_MESSAGE, AI_RESPONSE, TOOL_CALL';
+comment on column public.agent_execution_details.message_content is '统一的消息内容（用户消息/AI响应/工具调用描述）';
+comment on column public.agent_execution_details.message_type is '消息类型：USER_MESSAGE, AI_RESPONSE, TOOL_CALL';
+comment on column public.agent_execution_details.model_id is '此次使用的模型ID';
+comment on column public.agent_execution_details.tool_request_args is '工具调用入参(JSON格式)';
+comment on column public.agent_execution_details.tool_response_data is '工具调用出参(JSON格式)';
+comment on column public.agent_execution_details.is_fallback_used is '是否触发了平替/降级';
+
+create table public.agent_execution_summary (
+                                                id bigserial primary key not null,
+                                                trace_id character varying(64) not null, -- 执行追踪ID，唯一标识一次完整执行
+                                                user_id character varying(64) not null, -- 用户ID (String类型UUID)
+                                                session_id character varying(64) not null, -- 会话ID
+                                                agent_id character varying(64) not null, -- Agent ID (String类型UUID)
+                                                execution_start_time timestamp without time zone not null,
+                                                execution_end_time timestamp without time zone,
+                                                total_execution_time integer, -- 总执行时间(毫秒)
+                                                total_input_tokens integer default 0,
+                                                total_output_tokens integer default 0,
+                                                total_tokens integer default 0, -- 总Token数
+                                                tool_call_count integer default 0, -- 工具调用总次数
+                                                total_tool_execution_time integer default 0,
+                                                total_cost numeric(10,6) default 0, -- 总成本费用
+                                                execution_success boolean not null, -- 执行是否成功
+                                                error_phase character varying(64),
+                                                error_message text,
+                                                created_at timestamp without time zone default CURRENT_TIMESTAMP,
+                                                updated_at timestamp without time zone default CURRENT_TIMESTAMP,
+                                                deleted_at timestamp without time zone
+);
+create unique index agent_execution_summary_trace_id_key on agent_execution_summary using btree (trace_id);
+create index idx_agent_exec_summary_user_time on agent_execution_summary using btree (user_id, execution_start_time);
+create index idx_agent_exec_summary_session on agent_execution_summary using btree (session_id);
+create index idx_agent_exec_summary_agent on agent_execution_summary using btree (agent_id);
+create index idx_agent_exec_summary_trace on agent_execution_summary using btree (trace_id);
+comment on table public.agent_execution_summary is 'Agent执行链路汇总表，记录每次Agent执行的汇总信息';
+comment on column public.agent_execution_summary.trace_id is '执行追踪ID，唯一标识一次完整执行';
+comment on column public.agent_execution_summary.user_id is '用户ID (String类型UUID)';
+comment on column public.agent_execution_summary.session_id is '会话ID';
+comment on column public.agent_execution_summary.agent_id is 'Agent ID (String类型UUID)';
+comment on column public.agent_execution_summary.total_execution_time is '总执行时间(毫秒)';
+comment on column public.agent_execution_summary.total_tokens is '总Token数';
+comment on column public.agent_execution_summary.tool_call_count is '工具调用总次数';
+comment on column public.agent_execution_summary.total_cost is '总成本费用';
+comment on column public.agent_execution_summary.execution_success is '执行是否成功';
+
 create table public.agent_tasks (
                                     id character varying(36) primary key not null, -- 任务ID
                                     session_id character varying(36) not null, -- 所属会话ID
@@ -443,6 +544,70 @@ comment on column public.models.created_at is '创建时间';
 comment on column public.models.updated_at is '更新时间';
 comment on column public.models.deleted_at is '逻辑删除时间';
 
+create table public.orders (
+                               id character varying(64) primary key not null, -- 订单唯一ID
+                               user_id character varying(64) not null, -- 用户ID
+                               order_no character varying(100) not null, -- 订单号（唯一）
+                               order_type character varying(50) not null, -- 订单类型：RECHARGE(充值)、PURCHASE(购买)、SUBSCRIPTION(订阅)
+                               title character varying(255) not null, -- 订单标题
+                               description text, -- 订单描述
+                               amount numeric(20,8) not null, -- 订单金额
+                               currency character varying(10) default 'CNY', -- 货币代码，默认CNY
+                               status integer not null default 1, -- 订单状态：1-待支付，2-已支付，3-已取消，4-已退款，5-已过期
+                               expired_at timestamp without time zone, -- 订单过期时间
+                               paid_at timestamp without time zone, -- 支付完成时间
+                               cancelled_at timestamp without time zone, -- 取消时间
+                               refunded_at timestamp without time zone, -- 退款时间
+                               refund_amount numeric(20,8) default 0.00000000, -- 退款金额
+                               payment_platform character varying(50), -- 支付平台：alipay(支付宝)、wechat(微信支付)、stripe(Stripe)
+                               payment_type character varying(50), -- 支付类型：web(网页支付)、qr_code(二维码支付)、mobile(移动端支付)、h5(H5支付)、mini_program(小程序支付)
+                               provider_order_id character varying(200), -- 第三方支付平台的订单ID，用于查询支付状态和对账
+                               metadata jsonb, -- 订单扩展信息（JSONB格式）
+                               deleted_at timestamp without time zone,
+                               created_at timestamp without time zone default CURRENT_TIMESTAMP,
+                               updated_at timestamp without time zone default CURRENT_TIMESTAMP
+);
+create unique index orders_order_no_key on orders using btree (order_no);
+comment on table public.orders is '订单表，存储各种类型的订单信息和支付方式';
+comment on column public.orders.id is '订单唯一ID';
+comment on column public.orders.user_id is '用户ID';
+comment on column public.orders.order_no is '订单号（唯一）';
+comment on column public.orders.order_type is '订单类型：RECHARGE(充值)、PURCHASE(购买)、SUBSCRIPTION(订阅)';
+comment on column public.orders.title is '订单标题';
+comment on column public.orders.description is '订单描述';
+comment on column public.orders.amount is '订单金额';
+comment on column public.orders.currency is '货币代码，默认CNY';
+comment on column public.orders.status is '订单状态：1-待支付，2-已支付，3-已取消，4-已退款，5-已过期';
+comment on column public.orders.expired_at is '订单过期时间';
+comment on column public.orders.paid_at is '支付完成时间';
+comment on column public.orders.cancelled_at is '取消时间';
+comment on column public.orders.refunded_at is '退款时间';
+comment on column public.orders.refund_amount is '退款金额';
+comment on column public.orders.payment_platform is '支付平台：alipay(支付宝)、wechat(微信支付)、stripe(Stripe)';
+comment on column public.orders.payment_type is '支付类型：web(网页支付)、qr_code(二维码支付)、mobile(移动端支付)、h5(H5支付)、mini_program(小程序支付)';
+comment on column public.orders.provider_order_id is '第三方支付平台的订单ID，用于查询支付状态和对账';
+comment on column public.orders.metadata is '订单扩展信息（JSONB格式）';
+
+create table public.products (
+                                 id character varying(64) primary key not null,
+                                 name character varying(255) not null, -- 商品名称
+                                 type character varying(50) not null, -- 计费类型：MODEL_USAGE, AGENT_CREATION, API_CALLS等
+                                 service_id character varying(100) not null, -- 业务服务标识
+                                 rule_id character varying(64) not null, -- 关联的规则ID
+                                 pricing_config jsonb, -- 价格配置（JSONB格式）
+                                 status integer default 1, -- 状态：1-激活，0-禁用
+                                 deleted_at timestamp without time zone,
+                                 created_at timestamp without time zone default CURRENT_TIMESTAMP,
+                                 updated_at timestamp without time zone default CURRENT_TIMESTAMP
+);
+comment on table public.products is '计费商品表，存储可计费的服务和产品信息';
+comment on column public.products.name is '商品名称';
+comment on column public.products.type is '计费类型：MODEL_USAGE, AGENT_CREATION, API_CALLS等';
+comment on column public.products.service_id is '业务服务标识';
+comment on column public.products.rule_id is '关联的规则ID';
+comment on column public.products.pricing_config is '价格配置（JSONB格式）';
+comment on column public.products.status is '状态：1-激活，0-禁用';
+
 create table public.providers (
                                   id character varying(36) primary key not null, -- 服务提供商ID
                                   user_id character varying(36), -- 用户ID
@@ -567,6 +732,20 @@ comment on column public.rag_versions.published_at is '发布时间';
 comment on column public.rag_versions.created_at is '创建时间';
 comment on column public.rag_versions.updated_at is '更新时间';
 comment on column public.rag_versions.deleted_at is '删除时间（软删除）';
+
+create table public.rules (
+                              id character varying(64) primary key not null,
+                              name character varying(255) not null, -- 规则名称
+                              handler_key character varying(100) not null, -- 处理器标识，对应策略枚举
+                              description text, -- 规则描述
+                              deleted_at timestamp without time zone,
+                              created_at timestamp without time zone default CURRENT_TIMESTAMP,
+                              updated_at timestamp without time zone default CURRENT_TIMESTAMP
+);
+comment on table public.rules is '计费规则表，存储不同的计费策略配置';
+comment on column public.rules.name is '规则名称';
+comment on column public.rules.handler_key is '处理器标识，对应策略枚举';
+comment on column public.rules.description is '规则描述';
 
 create table public.scheduled_tasks (
                                         id character varying(36) primary key not null, -- 定时任务唯一ID
@@ -710,6 +889,36 @@ comment on column public.tools.created_at is '创建时间';
 comment on column public.tools.updated_at is '更新时间';
 comment on column public.tools.deleted_at is '逻辑删除时间';
 comment on column public.tools.is_global is '是否为全局工具（true=全局工具，在系统级别部署；false=用户工具，需要在用户容器中部署）';
+
+create table public.usage_records (
+                                      id character varying(64) primary key not null,
+                                      user_id character varying(64) not null, -- 用户ID
+                                      product_id character varying(64) not null, -- 商品ID
+                                      quantity_data jsonb, -- 使用量数据（JSONB格式）
+                                      cost numeric(20,8) not null, -- 本次消费金额
+                                      request_id character varying(255) not null, -- 请求ID（幂等性保证）
+                                      billed_at timestamp without time zone default CURRENT_TIMESTAMP, -- 计费时间
+                                      deleted_at timestamp without time zone,
+                                      created_at timestamp without time zone default CURRENT_TIMESTAMP,
+                                      updated_at timestamp without time zone default CURRENT_TIMESTAMP,
+                                      service_name character varying(255), -- 服务名称（如：GPT-4 模型调用）
+                                      service_type character varying(100), -- 服务类型（如：模型服务）
+                                      service_description text, -- 服务描述
+                                      pricing_rule text, -- 定价规则说明（如：输入 ¥0.002/1K tokens，输出 ¥0.006/1K tokens）
+                                      related_entity_name character varying(255) -- 关联实体名称（如：具体的模型名称或Agent名称）
+);
+comment on table public.usage_records is '使用记录表，存储用户的具体消费记录';
+comment on column public.usage_records.user_id is '用户ID';
+comment on column public.usage_records.product_id is '商品ID';
+comment on column public.usage_records.quantity_data is '使用量数据（JSONB格式）';
+comment on column public.usage_records.cost is '本次消费金额';
+comment on column public.usage_records.request_id is '请求ID（幂等性保证）';
+comment on column public.usage_records.billed_at is '计费时间';
+comment on column public.usage_records.service_name is '服务名称（如：GPT-4 模型调用）';
+comment on column public.usage_records.service_type is '服务类型（如：模型服务）';
+comment on column public.usage_records.service_description is '服务描述';
+comment on column public.usage_records.pricing_rule is '定价规则说明（如：输入 ¥0.002/1K tokens，输出 ¥0.006/1K tokens）';
+comment on column public.usage_records.related_entity_name is '关联实体名称（如：具体的模型名称或Agent名称）';
 
 create table public.user_containers (
                                         id character varying(36) primary key not null, -- 容器ID
@@ -912,371 +1121,10 @@ comment on column public.users.updated_at is '更新时间';
 comment on column public.users.deleted_at is '逻辑删除时间';
 
 
--- 初始化认证配置数据
+
+        -- 初始化认证配置数据
 INSERT INTO auth_settings (id, feature_type, feature_key, feature_name, enabled, display_order, description) VALUES
                                                                                                                  ('auth-normal-login', 'LOGIN', 'NORMAL_LOGIN', '普通登录', TRUE, 1, '邮箱/手机号密码登录'),
                                                                                                                  ('auth-github-login', 'LOGIN', 'GITHUB_LOGIN', 'GitHub登录', TRUE, 2, 'GitHub OAuth登录'),
                                                                                                                  ('auth-community-login', 'LOGIN', 'COMMUNITY_LOGIN', '敲鸭登录', TRUE, 3, '敲鸭社区OAuth登录'),
                                                                                                                  ('auth-user-register', 'REGISTER', 'USER_REGISTER', '用户注册', TRUE, 1, '允许新用户注册账号');
-
-
--- 创建用户容器表
-CREATE TABLE user_containers (
-    id VARCHAR(36) PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    user_id VARCHAR(36) NOT NULL,
-    type INTEGER NOT NULL,
-    status INTEGER NOT NULL,
-    docker_container_id VARCHAR(100),
-    image VARCHAR(200) NOT NULL,
-    internal_port INTEGER NOT NULL,
-    external_port INTEGER,
-    ip_address VARCHAR(45),
-    cpu_usage DECIMAL(5,2),
-    memory_usage DECIMAL(5,2),
-    volume_path VARCHAR(500),
-    env_config TEXT,
-    container_config TEXT,
-    error_message TEXT,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    deleted_at TIMESTAMP NULL
-);
-
-
--- 添加表注释
-COMMENT ON TABLE user_containers IS '用户容器表';
-COMMENT ON COLUMN user_containers.id IS '容器ID';
-COMMENT ON COLUMN user_containers.name IS '容器名称';
-COMMENT ON COLUMN user_containers.user_id IS '用户ID';
-COMMENT ON COLUMN user_containers.type IS '容器类型: 1-用户容器, 2-审核容器';
-COMMENT ON COLUMN user_containers.status IS '容器状态: 1-创建中, 2-运行中, 3-已停止, 4-错误状态, 5-删除中, 6-已删除';
-COMMENT ON COLUMN user_containers.docker_container_id IS 'Docker容器ID';
-COMMENT ON COLUMN user_containers.image IS '容器镜像';
-COMMENT ON COLUMN user_containers.internal_port IS '内部端口';
-COMMENT ON COLUMN user_containers.external_port IS '外部映射端口';
-COMMENT ON COLUMN user_containers.ip_address IS '容器IP地址';
-COMMENT ON COLUMN user_containers.cpu_usage IS 'CPU使用率(%)';
-COMMENT ON COLUMN user_containers.memory_usage IS '内存使用率(%)';
-COMMENT ON COLUMN user_containers.volume_path IS '数据卷路径';
-COMMENT ON COLUMN user_containers.env_config IS '环境变量配置(JSON)';
-COMMENT ON COLUMN user_containers.container_config IS '容器配置(JSON)';
-COMMENT ON COLUMN user_containers.error_message IS '错误信息';
-COMMENT ON COLUMN user_containers.created_at IS '创建时间';
-COMMENT ON COLUMN user_containers.updated_at IS '更新时间';
-
--- 创建容器模板表
-CREATE TABLE container_templates (
-    id VARCHAR(36) PRIMARY KEY,
-    name VARCHAR(100) NOT NULL UNIQUE,
-    description TEXT,
-    type VARCHAR(50) NOT NULL,
-    image VARCHAR(200) NOT NULL,
-    image_tag VARCHAR(50),
-    internal_port INTEGER NOT NULL,
-    cpu_limit DECIMAL(4,2) NOT NULL,
-    memory_limit INTEGER NOT NULL,
-    environment TEXT,
-    volume_mount_path VARCHAR(500),
-    command TEXT,
-    network_mode VARCHAR(50),
-    restart_policy VARCHAR(50),
-    health_check TEXT,
-    resource_config TEXT,
-    enabled BOOLEAN NOT NULL DEFAULT true,
-    is_default BOOLEAN NOT NULL DEFAULT false,
-    created_by VARCHAR(36),
-    sort_order INTEGER NOT NULL DEFAULT 0,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    deleted_at TIMESTAMP NULL
-);
-
-
--- 添加表注释
-COMMENT ON TABLE container_templates IS '容器模板表';
-COMMENT ON COLUMN container_templates.id IS '模板ID';
-COMMENT ON COLUMN container_templates.name IS '模板名称';
-COMMENT ON COLUMN container_templates.description IS '模板描述';
-COMMENT ON COLUMN container_templates.type IS '模板类型(mcp-gateway等)';
-COMMENT ON COLUMN container_templates.image IS '容器镜像名称';
-COMMENT ON COLUMN container_templates.image_tag IS '镜像版本标签';
-COMMENT ON COLUMN container_templates.internal_port IS '容器内部端口';
-COMMENT ON COLUMN container_templates.cpu_limit IS 'CPU限制(核数)';
-COMMENT ON COLUMN container_templates.memory_limit IS '内存限制(MB)';
-COMMENT ON COLUMN container_templates.environment IS '环境变量配置(JSON格式)';
-COMMENT ON COLUMN container_templates.volume_mount_path IS '数据卷挂载路径';
-COMMENT ON COLUMN container_templates.command IS '启动命令(JSON数组格式)';
-COMMENT ON COLUMN container_templates.network_mode IS '网络模式';
-COMMENT ON COLUMN container_templates.restart_policy IS '重启策略';
-COMMENT ON COLUMN container_templates.health_check IS '健康检查配置(JSON格式)';
-COMMENT ON COLUMN container_templates.resource_config IS '资源配置(JSON格式)';
-COMMENT ON COLUMN container_templates.enabled IS '是否启用';
-COMMENT ON COLUMN container_templates.is_default IS '是否为默认模板';
-COMMENT ON COLUMN container_templates.created_by IS '创建者用户ID';
-COMMENT ON COLUMN container_templates.sort_order IS '排序权重';
-COMMENT ON COLUMN container_templates.created_at IS '创建时间';
-COMMENT ON COLUMN container_templates.updated_at IS '更新时间';
-COMMENT ON COLUMN container_templates.deleted_at IS '删除时间';
-
--- 插入默认的MCP网关模板
-INSERT INTO container_templates (
-    id, name, description, type, image, image_tag, internal_port, 
-    cpu_limit, memory_limit, volume_mount_path, network_mode, 
-    restart_policy, enabled, is_default, created_by, sort_order
-) VALUES (
-    'default-mcp-gateway-template',
-    'MCP网关默认模板',
-    '用于创建用户MCP网关容器的默认模板，提供工具部署和Agent对话功能',
-    'mcp-gateway',
-    'ghcr.io/feynix2004/mcp-gateway',
-    'latest',
-    8080,
-    1.0,
-    512,
-    '/app/data',
-    'bridge',
-    'unless-stopped',
-    true,
-    true,
-    'SYSTEM',
-    0
-);
-
-
--- 为工具表添加全局状态字段
-ALTER TABLE tools ADD COLUMN is_global BOOLEAN NOT NULL DEFAULT false;
-
--- 添加字段注释
-COMMENT ON COLUMN tools.is_global IS '是否为全局工具（true=全局工具，在系统级别部署；false=用户工具，需要在用户容器中部署）';
-
--- 为user_tools表也添加全局状态字段，用于跟踪用户安装的工具类型
-ALTER TABLE user_tools ADD COLUMN is_global BOOLEAN NOT NULL DEFAULT false;
-
--- 添加字段注释
-COMMENT ON COLUMN user_tools.is_global IS '是否为全局工具（继承自原始工具的全局状态）';
-
-
--- 添加容器最后访问时间字段，用于自动清理
-ALTER TABLE user_containers ADD COLUMN last_accessed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
-
--- 添加字段注释
-COMMENT ON COLUMN user_containers.last_accessed_at IS '最后访问时间，用于自动清理判断';
-
-
--- 订单和支付系统数据库表创建脚本 (PostgreSQL)
--- 作者: Claude Code
--- 创建时间: 2025-07-29
--- 描述: 为AgentX创建订单管理和支付系统相关表
-
--- 1. 创建订单表 (orders)
--- 存储订单基本信息，支持多种订单类型和支付方式
-CREATE TABLE orders (
-    id VARCHAR(64) NOT NULL PRIMARY KEY,
-    user_id VARCHAR(64) NOT NULL,
-    order_no VARCHAR(100) NOT NULL UNIQUE,
-    order_type VARCHAR(50) NOT NULL,
-    title VARCHAR(255) NOT NULL,
-    description TEXT,
-    amount DECIMAL(20,8) NOT NULL,
-    currency VARCHAR(10) DEFAULT 'CNY',
-    status INTEGER NOT NULL DEFAULT 1,
-    expired_at TIMESTAMP,
-    paid_at TIMESTAMP,
-    cancelled_at TIMESTAMP,
-    refunded_at TIMESTAMP,
-    refund_amount DECIMAL(20,8) DEFAULT 0.00000000,
-    payment_platform VARCHAR(50),
-    payment_type VARCHAR(50),
-    provider_order_id VARCHAR(200),
-    metadata JSONB,
-    deleted_at TIMESTAMP,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-
--- 添加索引
--- 订单表索引
-CREATE INDEX idx_orders_user_id ON orders(user_id);
-CREATE INDEX idx_orders_order_no ON orders(order_no);
-CREATE INDEX idx_orders_status ON orders(status);
-CREATE INDEX idx_orders_order_type ON orders(order_type);
-CREATE INDEX idx_orders_payment_platform ON orders(payment_platform);
-CREATE INDEX idx_orders_payment_type ON orders(payment_type);
-CREATE INDEX idx_orders_provider_order_id ON orders(provider_order_id);
-CREATE INDEX idx_orders_created_at ON orders(created_at);
-CREATE INDEX idx_orders_expired_at ON orders(expired_at);
-
-
--- 添加表注释
-COMMENT ON TABLE orders IS '订单表，存储各种类型的订单信息和支付方式';
-
-
--- 添加列注释
--- 订单表字段注释
-COMMENT ON COLUMN orders.id IS '订单唯一ID';
-COMMENT ON COLUMN orders.user_id IS '用户ID';
-COMMENT ON COLUMN orders.order_no IS '订单号（唯一）';
-COMMENT ON COLUMN orders.order_type IS '订单类型：RECHARGE(充值)、PURCHASE(购买)、SUBSCRIPTION(订阅)';
-COMMENT ON COLUMN orders.title IS '订单标题';
-COMMENT ON COLUMN orders.description IS '订单描述';
-COMMENT ON COLUMN orders.amount IS '订单金额';
-COMMENT ON COLUMN orders.currency IS '货币代码，默认CNY';
-COMMENT ON COLUMN orders.status IS '订单状态：1-待支付，2-已支付，3-已取消，4-已退款，5-已过期';
-COMMENT ON COLUMN orders.expired_at IS '订单过期时间';
-COMMENT ON COLUMN orders.paid_at IS '支付完成时间';
-COMMENT ON COLUMN orders.cancelled_at IS '取消时间';
-COMMENT ON COLUMN orders.refunded_at IS '退款时间';
-COMMENT ON COLUMN orders.refund_amount IS '退款金额';
-COMMENT ON COLUMN orders.payment_platform IS '支付平台：alipay(支付宝)、wechat(微信支付)、stripe(Stripe)';
-COMMENT ON COLUMN orders.payment_type IS '支付类型：web(网页支付)、qr_code(二维码支付)、mobile(移动端支付)、h5(H5支付)、mini_program(小程序支付)';
-COMMENT ON COLUMN orders.provider_order_id IS '第三方支付平台的订单ID，用于查询支付状态和对账';
-COMMENT ON COLUMN orders.metadata IS '订单扩展信息（JSONB格式）';
-
--- 注释说明：
--- 1. 订单状态枚举：1-待支付，2-已支付，3-已取消，4-已退款，5-已过期
--- 2. 支付状态枚举：1-创建，2-等待支付，3-支付成功，4-支付失败，5-已取消
--- 3. 订单类型支持：RECHARGE(充值)、PURCHASE(购买)、SUBSCRIPTION(订阅)等
--- 4. 支付平台支持：alipay(支付宝)、wechat(微信支付)、stripe(Stripe)等
--- 5. 支付类型支持：web(网页支付)、qr_code(二维码支付)、mobile(移动端支付)、h5(H5支付)、mini_program(小程序支付)等
--- 6. 所有金额字段使用DECIMAL(20,8)确保精度
--- 7. 使用JSONB存储扩展信息，便于灵活扩展和查询
--- 8. 建立了完善的索引以支持高效查询
--- 9. 支持软删除机制（deleted_at字段）
--- 10. provider_order_id用于与第三方支付平台进行状态同步和对账
-
-
--- 计费系统数据库表创建脚本 (PostgreSQL)
--- 作者: Claude Code
--- 创建时间: 2025-07-26
--- 描述: 为AgentX计费系统创建Products、Rules、Accounts、UsageRecords表
-
--- 如果表存在则删除（开发环境重建用）
-DROP TABLE IF EXISTS usage_records;
-DROP TABLE IF EXISTS products;
-DROP TABLE IF EXISTS accounts;
-DROP TABLE IF EXISTS rules;
-
--- 1. 创建规则表 (rules)
--- 存储计费规则信息，定义不同的计费策略
-CREATE TABLE rules (
-    id VARCHAR(64) NOT NULL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    handler_key VARCHAR(100) NOT NULL,
-    description TEXT,
-    deleted_at TIMESTAMP,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-
--- 2. 创建商品表 (products)
--- 存储计费商品信息，关联规则和价格配置
-CREATE TABLE products (
-    id VARCHAR(64) NOT NULL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    type VARCHAR(50) NOT NULL,
-    service_id VARCHAR(100) NOT NULL,
-    rule_id VARCHAR(64) NOT NULL,
-    pricing_config JSONB,
-    status INTEGER DEFAULT 1,
-    deleted_at TIMESTAMP,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- 3. 创建账户表 (accounts)
--- 存储用户账户余额和消费信息
-CREATE TABLE accounts (
-    id VARCHAR(64) NOT NULL PRIMARY KEY,
-    user_id VARCHAR(64) NOT NULL,
-    balance DECIMAL(20,8) DEFAULT 0.00000000,
-    credit DECIMAL(20,8) DEFAULT 0.00000000,
-    total_consumed DECIMAL(20,8) DEFAULT 0.00000000,
-    last_transaction_at TIMESTAMP,
-    deleted_at TIMESTAMP,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- 4. 创建使用记录表 (usage_records)
--- 存储用户的计费使用记录
-CREATE TABLE usage_records (
-    id VARCHAR(64) NOT NULL PRIMARY KEY,
-    user_id VARCHAR(64) NOT NULL,
-    product_id VARCHAR(64) NOT NULL,
-    quantity_data JSONB,
-    cost DECIMAL(20,8) NOT NULL,
-    request_id VARCHAR(255) NOT NULL,
-    billed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    deleted_at TIMESTAMP,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-
--- 添加表注释
-COMMENT ON TABLE rules IS '计费规则表，存储不同的计费策略配置';
-COMMENT ON TABLE products IS '计费商品表，存储可计费的服务和产品信息';
-COMMENT ON TABLE accounts IS '用户账户表，存储用户余额和消费记录';
-COMMENT ON TABLE usage_records IS '使用记录表，存储用户的具体消费记录';
-
--- 添加列注释
-COMMENT ON COLUMN rules.name IS '规则名称';
-COMMENT ON COLUMN rules.handler_key IS '处理器标识，对应策略枚举';
-COMMENT ON COLUMN rules.description IS '规则描述';
-
-COMMENT ON COLUMN products.name IS '商品名称';
-COMMENT ON COLUMN products.type IS '计费类型：MODEL_USAGE(模型调用), AGENT_CREATION(Agent创建), AGENT_USAGE(Agent使用), API_CALL(API调用), STORAGE_USAGE(存储使用)';
-COMMENT ON COLUMN products.service_id IS '业务服务标识';
-COMMENT ON COLUMN products.rule_id IS '关联的规则ID';
-COMMENT ON COLUMN products.pricing_config IS '价格配置（JSONB格式）';
-COMMENT ON COLUMN products.status IS '状态：1-激活，0-禁用';
-
-COMMENT ON COLUMN accounts.user_id IS '用户ID';
-COMMENT ON COLUMN accounts.balance IS '账户余额';
-COMMENT ON COLUMN accounts.credit IS '信用额度';
-COMMENT ON COLUMN accounts.total_consumed IS '总消费金额';
-COMMENT ON COLUMN accounts.last_transaction_at IS '最后交易时间';
-
-COMMENT ON COLUMN usage_records.user_id IS '用户ID';
-COMMENT ON COLUMN usage_records.product_id IS '商品ID';
-COMMENT ON COLUMN usage_records.quantity_data IS '使用量数据（JSONB格式）';
-COMMENT ON COLUMN usage_records.cost IS '本次消费金额';
-COMMENT ON COLUMN usage_records.request_id IS '请求ID（幂等性保证）';
-COMMENT ON COLUMN usage_records.billed_at IS '计费时间';
-
--- 插入初始数据：基础计费规则
-INSERT INTO rules (id, name, handler_key, description) VALUES
-('rule-model-token', '模型Token计费规则', 'MODEL_TOKEN_STRATEGY', '按输入输出Token数量计费，适用于大语言模型调用'),
-('rule-per-unit', '按次计费规则', 'PER_UNIT_STRATEGY', '按使用次数固定计费，适用于Agent创建、API调用等'),
-('rule-per-time', '按时长计费规则', 'PER_TIME_STRATEGY', '按使用时长计费，适用于资源占用类服务');
-
-
--- 注释说明：
--- MODEL_USAGE类型的service_id应该是models表中的主键ID（如1,2,3等）
--- AGENT_CREATION类型使用固定标识'agent_creation'，因为不对应具体业务记录（已预留配置）
--- 实际部署时，需要根据models表的真实ID更新这些配置
--- Agent创建计费已完整预留：type='AGENT_CREATION', service_id='agent_creation', cost_per_unit=10.0
-
-
--- 为usage_records表添加业务信息字段
--- 作者: Claude Code
--- 创建时间: 2025-08-03
--- 描述: 在用量记录创建时固化业务信息，避免历史记录受商品变更影响
-
--- 先添加字段
-ALTER TABLE usage_records
-    ADD COLUMN service_name VARCHAR(255),
-    ADD COLUMN service_type VARCHAR(100),
-    ADD COLUMN service_description TEXT,
-    ADD COLUMN pricing_rule TEXT,
-    ADD COLUMN related_entity_name VARCHAR(255);
-
--- 再单独添加注释
-COMMENT ON COLUMN usage_records.service_name IS '服务名称（如：GPT-4 模型调用）';
-COMMENT ON COLUMN usage_records.service_type IS '服务类型（如：模型服务）';
-COMMENT ON COLUMN usage_records.service_description IS '服务描述';
-COMMENT ON COLUMN usage_records.pricing_rule IS '定价规则说明（如：输入 ¥0.002/1K tokens，输出 ¥0.006/1K tokens）';
-COMMENT ON COLUMN usage_records.related_entity_name IS '关联实体名称（如：具体的模型名称或Agent名称）';

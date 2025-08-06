@@ -373,7 +373,10 @@ public abstract class AbstractMessageHandler {
             } else if (messageEntity.isSystemMessage()) {
                 memory.add(new SystemMessage(messageEntity.getContent()));
             }
+            // 获取摘要消息
         }
+
+        // 将摘要消息插入到 message 第一条
     }
 
     // 智能重命名会话

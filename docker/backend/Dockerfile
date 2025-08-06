@@ -1,5 +1,5 @@
 # AgentX后端生产环境Dockerfile
-FROM openjdk:17-jdk-slim as builder
+FROM eclipse-temurin:17-jdk-alpine as builder
 
 # 设置工作目录
 WORKDIR /app
@@ -19,15 +19,13 @@ COPY AgentX/src src
 RUN ./mvnw clean package -DskipTests -B
 
 # 运行时镜像
-FROM openjdk:17-jre-slim
+FROM eclipse-temurin:17-jre-alpine
 
 # 安装必要的系统工具
-RUN apt-get update && apt-get install -y \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache curl
 
 # 创建应用用户
-RUN groupadd -r agentx && useradd -r -g agentx agentx
+RUN addgroup -g 1000 agentx && adduser -D -s /bin/sh -u 1000 -G agentx agentx
 
 # 设置工作目录
 WORKDIR /app

@@ -74,6 +74,7 @@ start_services() {
     # 设置环境变量
     export COMPOSE_PROFILES="$PROFILE"
     export DOCKERFILE_SUFFIX="$DOCKERFILE_SUFFIX"
+    export COMPOSE_PROJECT_NAME="agentx"
 
     # 启动服务 (支持多个profile)
     docker compose --profile local --profile dev up -d --build
@@ -83,7 +84,7 @@ start_services() {
     echo
     echo -e "${BLUE}服务访问地址:${NC}"
     echo "  前端: http://localhost:3000"
-    echo "  后端API: http://localhost:8080"
+    echo "  后端API: http://localhost:8088"
     echo "  API网关: http://localhost:8081"
     
     if [ "$MODE" = "dev" ]; then
