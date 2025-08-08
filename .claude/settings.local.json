@@ -63,11 +63,7 @@
       "Bash(docker system:*)",
       "Bash(cat:*)",
       "Bash(docker run:*)",
-      "Bash(git rm:*)",
-      "Bash(osascript:*)",
-      "Bash(open:*)",
-      "Bash(docker:*)",
-      "Bash(killall:*)"
+      "Bash(rm:*)"
     ],
     "deny": []
   }
