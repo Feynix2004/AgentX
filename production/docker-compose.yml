@@ -70,7 +70,7 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:-agentx_pass}
       
       # 应用配置
-      SERVER_PORT: 8080
+      SERVER_PORT: 8088
       FRONTEND_PORT: 3000
       NEXT_PUBLIC_API_BASE_URL: /api
       
