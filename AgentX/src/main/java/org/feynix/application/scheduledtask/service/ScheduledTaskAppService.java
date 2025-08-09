@@ -65,7 +65,7 @@ public class ScheduledTaskAppService {
         updateEntity.setSessionId(task.getSessionId());
         updateEntity.setAgentId(task.getAgentId());
         updateEntity.setLastExecuteTime(task.getLastExecuteTime());
-        
+
         // 如果更新了重复配置，重新计算下次执行时间
         if (updateEntity.getRepeatConfig() != null) {
             LocalDateTime nextExecuteTime = taskScheduleService.calculateNextExecuteTime(updateEntity,
