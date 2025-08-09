@@ -79,11 +79,14 @@ services:
       JPA_DDL_AUTO: update
       SHOW_SQL: false
       
-      # 用户配置
+      # 用户配置 - 使用直接环境变量注入，确保配置能正确读取
       AGENTX_ADMIN_EMAIL: ${AGENTX_ADMIN_EMAIL:-admin@agentx.ai}
       AGENTX_ADMIN_PASSWORD: ${AGENTX_ADMIN_PASSWORD:-admin123}
       AGENTX_ADMIN_NICKNAME: ${AGENTX_ADMIN_NICKNAME:-AgentX管理员}
       AGENTX_TEST_ENABLED: ${AGENTX_TEST_ENABLED:-false}
+      AGENTX_TEST_EMAIL: ${AGENTX_TEST_EMAIL:-test@agentx.ai}
+      AGENTX_TEST_PASSWORD: ${AGENTX_TEST_PASSWORD:-test123}
+      AGENTX_TEST_NICKNAME: ${AGENTX_TEST_NICKNAME:-测试用户}
       
       # 消息队列配置
       RABBITMQ_HOST: rabbitmq
