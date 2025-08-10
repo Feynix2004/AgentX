@@ -17,6 +17,7 @@ import AgentToolsForm from "@/app/(main)/studio/edit/[id]/components/AgentToolsF
 import ToolDetailSidebar from "@/app/(main)/studio/edit/[id]/components/ToolDetailSidebar"
 import KnowledgeBaseDetailSidebar from "@/app/(main)/studio/edit/[id]/components/KnowledgeBaseDetailSidebar"
 import AgentPreviewChat from "@/components/agent-preview-chat"
+import { AgentEmbedTab } from "@/app/(main)/studio/edit/[id]/components/AgentEmbedTab"
 
 interface AgentFormModalProps {
   // 模式控制
@@ -243,7 +244,7 @@ export default function AgentFormModal({
 
           {/* 表单标签页 */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className={`grid w-full ${mode === "edit" ? "grid-cols-4" : "grid-cols-3"}`}>
               {getAvailableTabs().map((tab) => (
                 <TabsTrigger key={tab.id} value={tab.id}>
                   {tab.label}
@@ -277,6 +278,13 @@ export default function AgentFormModal({
                 updateToolPresetParameters={updateToolPresetParameters}
               />
             </TabsContent>
+
+            {/* 嵌入标签页 - 仅编辑模式 */}
+            {mode === "edit" && agentId && (
+              <TabsContent value="embed" className="space-y-6">
+                <AgentEmbedTab agentId={agentId} />
+              </TabsContent>
+            )}
           </Tabs>
 
           {/* 底部按钮 */}

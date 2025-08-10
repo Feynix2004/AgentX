@@ -296,6 +296,11 @@ export function useAgentForm({ initialData, isEditMode = false }: UseAgentFormPr
       { id: "tools", label: "工具 & 知识库" },
     ]
 
+    // 编辑模式下添加嵌入标签页
+    if (isEditMode) {
+      baseTabs.push({ id: "embed", label: "网站嵌入" })
+    }
+
     return baseTabs
   }
 

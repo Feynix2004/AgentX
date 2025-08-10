@@ -12,6 +12,8 @@ import org.feynix.application.conversation.dto.ChatRequest;
 import org.feynix.application.conversation.dto.ChatResponse;
 import org.feynix.application.conversation.dto.MessageDTO;
 import org.feynix.application.conversation.service.message.AbstractMessageHandler;
+import org.feynix.interfaces.dto.agent.request.EmbedChatRequest;
+import org.feynix.domain.agent.model.AgentEmbedEntity;
 import org.feynix.application.conversation.service.message.preview.PreviewMessageHandler;
 import org.feynix.domain.conversation.constant.MessageType;
 import org.feynix.domain.user.service.UserSettingsDomainService;
@@ -547,6 +549,146 @@ public class ConversationAppService {
             MessageEntity messageEntity = new MessageEntity();
             messageEntity.setRole(Role.USER);
             messageEntity.setSessionId("preview-session");
+            messageEntity.setFileUrls(fileUrls);
+            messageEntities.add(messageEntity);
+        }
+
+        environment.setContextEntity(contextEntity);
+        environment.setMessageHistory(messageEntities);
+    }
+
+    /** 嵌入聊天方法 - 流式响应
+     *
+     * @param publicId 公开访问ID
+     * @param embedChatRequest 嵌入聊天请求
+     * @param embedEntity 嵌入配置实体
+     * @return SSE发射器 */
+    public SseEmitter embedChat(String publicId, EmbedChatRequest embedChatRequest, AgentEmbedEntity embedEntity) {
+        // 1. 准备嵌入对话环境
+        ChatContext environment = prepareEmbedEnvironment(publicId, embedChatRequest, embedEntity);
+
+        // 2. 获取传输方式
+        MessageTransport<SseEmitter> transport = transportFactory
+                .getTransport(MessageTransportFactory.TRANSPORT_TYPE_SSE);
+
+        // 3. 获取适合的消息处理器
+        AbstractMessageHandler handler = messageHandlerFactory.getHandler(environment.getAgent());
+
+        // 4. 处理对话
+        return handler.chat(environment, transport);
+    }
+
+    /** 嵌入聊天方法 - 同步响应
+     *
+     * @param publicId 公开访问ID
+     * @param embedChatRequest 嵌入聊天请求
+     * @param embedEntity 嵌入配置实体
+     * @return 同步聊天响应 */
+    public ChatResponse embedChatSync(String publicId, EmbedChatRequest embedChatRequest, AgentEmbedEntity embedEntity) {
+        // 1. 准备嵌入对话环境（设置为非流式）
+        ChatContext environment = prepareEmbedEnvironment(publicId, embedChatRequest, embedEntity);
+        environment.setStreaming(false); // 设置为同步模式
+
+        // 2. 获取同步传输方式
+        MessageTransport<ChatResponse> transport = transportFactory
+                .getTransport(MessageTransportFactory.TRANSPORT_TYPE_SYNC);
+
+        // 3. 获取适合的消息处理器
+        AbstractMessageHandler handler = messageHandlerFactory.getHandler(environment.getAgent());
+
+        // 4. 处理对话
+        return handler.chat(environment, transport);
+    }
+
+    /** 准备嵌入对话环境
+     *
+     * @param publicId 公开访问ID
+     * @param embedChatRequest 嵌入聊天请求
+     * @param embedEntity 嵌入配置实体
+     * @return 对话环境 */
+    private ChatContext prepareEmbedEnvironment(String publicId, EmbedChatRequest embedChatRequest, AgentEmbedEntity embedEntity) {
+        // 1. 获取Agent和模型信息
+        String agentId = embedEntity.getAgentId();
+        String creatorUserId = embedEntity.getUserId();
+        String sessionId = embedChatRequest.getSessionId();
+
+        // 2. 获取Agent实体（使用创建者的权限）
+        AgentEntity agent = getAgentWithValidation(agentId, creatorUserId);
+
+        // 3. 获取嵌入配置指定的模型
+        ModelEntity model = llmDomainService.getModelById(embedEntity.getModelId());
+
+        // 4. 获取工具配置
+        List<String> mcpServerNames = getMcpServerNames(agent.getToolIds(), creatorUserId);
+
+        // 5. 获取高可用服务商信息（使用创建者的配置）
+        List<String> fallbackChain = userSettingsDomainService.getUserFallbackChain(creatorUserId);
+        HighAvailabilityResult result = highAvailabilityDomainService.selectBestProvider(model, creatorUserId,
+                sessionId, fallbackChain);
+        ProviderEntity provider = result.getProvider();
+        ModelEntity selectedModel = result.getModel();
+        String instanceId = result.getInstanceId();
+        provider.isActive();
+
+        // 6. 创建模型配置（使用默认配置）
+        LLMModelConfig llmModelConfig = createDefaultLLMModelConfig(selectedModel.getModelId());
+
+        // 7. 创建并配置环境对象
+        ChatContext chatContext = createEmbedChatContext(embedChatRequest, agent, selectedModel, provider,
+                llmModelConfig, mcpServerNames, instanceId, publicId);
+        setupEmbedContextAndHistory(chatContext, embedChatRequest);
+
+        return chatContext;
+    }
+
+    /** 创建嵌入ChatContext对象 */
+    private ChatContext createEmbedChatContext(EmbedChatRequest embedChatRequest, AgentEntity agent, ModelEntity model,
+                                             ProviderEntity provider, LLMModelConfig llmModelConfig,
+                                             List<String> mcpServerNames, String instanceId, String publicId) {
+        ChatContext chatContext = new ChatContext();
+        chatContext.setSessionId(embedChatRequest.getSessionId());
+        chatContext.setUserId(null); // 嵌入聊天无userId
+        chatContext.setUserMessage(embedChatRequest.getMessage());
+        chatContext.setAgent(agent);
+        chatContext.setModel(model);
+        chatContext.setProvider(provider);
+        chatContext.setLlmModelConfig(llmModelConfig);
+        chatContext.setMcpServerNames(mcpServerNames);
+        chatContext.setFileUrls(embedChatRequest.getFileUrls());
+        chatContext.setInstanceId(instanceId);
+        // 标记为公开访问嵌入模式
+        chatContext.setPublicAccess(true);
+        chatContext.setPublicId(publicId);
+        return chatContext;
+    }
+
+    /** 设置嵌入上下文和历史消息 */
+    private void setupEmbedContextAndHistory(ChatContext environment, EmbedChatRequest embedChatRequest) {
+        String sessionId = environment.getSessionId();
+
+        // 获取或创建匿名会话的上下文
+        ContextEntity contextEntity = contextDomainService.findBySessionId(sessionId);
+        List<MessageEntity> messageEntities = new ArrayList<>();
+
+        if (contextEntity != null) {
+            // 获取活跃消息
+            List<String> activeMessageIds = contextEntity.getActiveMessages();
+            messageEntities = messageDomainService.listByIds(activeMessageIds);
+
+            // 对于嵌入聊天，暂不应用复杂的Token溢出策略，使用简单的窗口限制
+            if (messageEntities.size() > 20) { // 限制历史消息数量
+                messageEntities = messageEntities.subList(Math.max(0, messageEntities.size() - 20), messageEntities.size());
+            }
+        } else {
+            contextEntity = new ContextEntity();
+            contextEntity.setSessionId(sessionId);
+        }
+
+        // 处理当前对话的文件
+        List<String> fileUrls = embedChatRequest.getFileUrls();
+        if (!fileUrls.isEmpty()) {
+            MessageEntity messageEntity = new MessageEntity();
+            messageEntity.setRole(Role.USER);
             messageEntity.setFileUrls(fileUrls);
             messageEntities.add(messageEntity);
         }
