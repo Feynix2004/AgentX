@@ -2,6 +2,8 @@ package org.feynix.application.trace.collector;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.feynix.domain.trace.constant.ExecutionPhase;
 import org.feynix.domain.trace.event.*;
 import org.feynix.domain.trace.model.ModelCallInfo;
@@ -13,6 +15,7 @@ import org.feynix.domain.trace.service.AgentExecutionTraceDomainService;
 @Component
 public class TraceCollector {
 
+    private static final Logger logger = LoggerFactory.getLogger(TraceCollector.class);
     private final AgentExecutionTraceDomainService traceDomainService;
     private final ApplicationEventPublisher eventPublisher;
 
