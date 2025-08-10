@@ -25,9 +25,8 @@ public class DefaultDataInitializer implements ApplicationRunner {
     private final AdminUserProperties adminUserProperties;
     private final AdminUserEnvironmentProperties envProperties;
 
-    public DefaultDataInitializer(UserDomainService userDomainService, 
-                                 AdminUserProperties adminUserProperties,
-                                 AdminUserEnvironmentProperties envProperties) {
+    public DefaultDataInitializer(UserDomainService userDomainService, AdminUserProperties adminUserProperties,
+            AdminUserEnvironmentProperties envProperties) {
         this.userDomainService = userDomainService;
         this.adminUserProperties = adminUserProperties;
         this.envProperties = envProperties;
@@ -99,7 +98,7 @@ public class DefaultDataInitializer implements ApplicationRunner {
     private void initializeTestUser() {
         // 使用环境变量配置
         Boolean testEnabled = envProperties.getTestEnabled();
-        
+
         // 检查是否启用测试用户
         if (!testEnabled) {
             log.info("测试用户功能已禁用，跳过初始化");
