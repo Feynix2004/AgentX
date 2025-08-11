@@ -5,7 +5,7 @@ import org.feynix.infrastructure.exception.BusinessException;
 
 public enum Role {
 
-    USER, SYSTEM, ASSISTANT;
+    USER, SYSTEM, ASSISTANT, SUMMARY;
 
     public static Role fromCode(String code) {
         for (Role role : values()) {
