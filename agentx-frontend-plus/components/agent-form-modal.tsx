@@ -17,7 +17,7 @@ import AgentToolsForm from "@/app/(main)/studio/edit/[id]/components/AgentToolsF
 import ToolDetailSidebar from "@/app/(main)/studio/edit/[id]/components/ToolDetailSidebar"
 import KnowledgeBaseDetailSidebar from "@/app/(main)/studio/edit/[id]/components/KnowledgeBaseDetailSidebar"
 import AgentPreviewChat from "@/components/agent-preview-chat"
-import { AgentEmbedTab } from "@/app/(main)/studio/edit/[id]/components/AgentEmbedTab"
+import { AgentWidgetTab } from "@/app/(main)/studio/edit/[id]/components/AgentWidgetTab"
 
 interface AgentFormModalProps {
   // 模式控制
@@ -279,10 +279,10 @@ export default function AgentFormModal({
               />
             </TabsContent>
 
-            {/* 嵌入标签页 - 仅编辑模式 */}
+            {/* 小组件标签页 - 仅编辑模式 */}
             {mode === "edit" && agentId && (
-              <TabsContent value="embed" className="space-y-6">
-                <AgentEmbedTab agentId={agentId} />
+              <TabsContent value="widget" className="space-y-6">
+                <AgentWidgetTab agentId={agentId} />
               </TabsContent>
             )}
           </Tabs>

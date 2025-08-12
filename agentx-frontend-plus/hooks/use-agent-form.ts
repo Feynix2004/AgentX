@@ -298,7 +298,7 @@ export function useAgentForm({ initialData, isEditMode = false }: UseAgentFormPr
 
     // 编辑模式下添加嵌入标签页
     if (isEditMode) {
-      baseTabs.push({ id: "embed", label: "网站嵌入" })
+      baseTabs.push({ id: "widget", label: "网站小组件" })
     }
 
     return baseTabs
