@@ -6,7 +6,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 /** 追踪上下文 用于在执行过程中传递追踪信息 */
 public class TraceContext {
 
-
     /** 用户ID */
     private final String userId;
 
@@ -115,8 +114,8 @@ public class TraceContext {
 
     @Override
     public String toString() {
-        return "TraceContext{" + "sessionId='" + sessionId + '\'' + ", userId=" + userId + ", agentId=" + agentId 
-                + ", startTime=" + startTime + ", currentSequence=" + sequenceGenerator.get() + ", traceEnabled=" 
+        return "TraceContext{" + "sessionId='" + sessionId + '\'' + ", userId=" + userId + ", agentId=" + agentId
+                + ", startTime=" + startTime + ", currentSequence=" + sequenceGenerator.get() + ", traceEnabled="
                 + traceEnabled + '}';
     }
 }

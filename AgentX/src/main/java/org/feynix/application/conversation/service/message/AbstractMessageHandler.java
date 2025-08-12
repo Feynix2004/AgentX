@@ -14,7 +14,6 @@ import dev.langchain4j.service.tool.ToolExecutor;
 import dev.langchain4j.service.tool.ToolProvider;
 import dev.langchain4j.store.memory.chat.InMemoryChatMemoryStore;
 import org.feynix.application.conversation.dto.AgentChatResponse;
-import org.feynix.application.conversation.service.handler.Agent;
 import org.feynix.application.conversation.service.handler.context.AgentPromptTemplates;
 import org.feynix.application.conversation.service.handler.context.ChatContext;
 import org.feynix.application.conversation.service.message.agent.tool.RagToolManager;
@@ -131,8 +130,7 @@ public abstract class AbstractMessageHandler {
         return connection;
     }
 
-    /** 追踪钩子方法 - 对话开始时调用
-     * 子类可以覆盖此方法实现追踪逻辑
+    /** 追踪钩子方法 - 对话开始时调用 子类可以覆盖此方法实现追踪逻辑
      * 
      * @param chatContext 对话上下文 */
     protected void onChatStart(ChatContext chatContext) {
@@ -152,7 +150,8 @@ public abstract class AbstractMessageHandler {
      * @param chatContext 对话上下文
      * @param chatResponse 模型响应
      * @param modelCallInfo 模型调用信息 */
-    protected void onModelCallCompleted(ChatContext chatContext, ChatResponse chatResponse, ModelCallInfo modelCallInfo) {
+    protected void onModelCallCompleted(ChatContext chatContext, ChatResponse chatResponse,
+            ModelCallInfo modelCallInfo) {
         // 默认空实现，子类可选择性覆盖
     }
 
@@ -216,7 +215,7 @@ public abstract class AbstractMessageHandler {
 
         // 3. 记录调用开始时间
         long startTime = System.currentTimeMillis();
-        
+
         try {
 
             List<ChatMessage> messages = memory.messages();
@@ -227,9 +226,10 @@ public abstract class AbstractMessageHandler {
 
             // 5. 处理响应 - 设置消息token
             this.setMessageTokenCount(chatContext.getMessageHistory(), userEntity, llmEntity, chatResponse);
-            
+
             // 6. 调用模型调用完成钩子
-            ModelCallInfo modelCallInfo = buildModelCallInfo(chatContext, chatResponse, System.currentTimeMillis() - startTime, true);
+            ModelCallInfo modelCallInfo = buildModelCallInfo(chatContext, chatResponse,
+                    System.currentTimeMillis() - startTime, true);
             onModelCallCompleted(chatContext, chatResponse, modelCallInfo);
 
             // 7. 保存消息
@@ -250,7 +250,7 @@ public abstract class AbstractMessageHandler {
             // 10. 执行模型调用计费
             performBillingWithErrorHandling(chatContext, chatResponse.tokenUsage().inputTokenCount(),
                     chatResponse.tokenUsage().outputTokenCount(), transport, connection);
-                    
+
             // 11. 调用对话完成钩子
             onChatCompleted(chatContext, true, null);
 
@@ -262,7 +262,7 @@ public abstract class AbstractMessageHandler {
             long latency = System.currentTimeMillis() - startTime;
             highAvailabilityDomainService.reportCallResult(chatContext.getInstanceId(), chatContext.getModel().getId(),
                     false, latency, e.getMessage());
-                    
+
             // 调用错误处理钩子
             onChatError(chatContext, ExecutionPhase.MODEL_CALL, e);
             onChatCompleted(chatContext, false, e.getMessage());
@@ -308,7 +308,7 @@ public abstract class AbstractMessageHandler {
             long latency = System.currentTimeMillis() - startTime;
             highAvailabilityDomainService.reportCallResult(chatContext.getInstanceId(), chatContext.getModel().getId(),
                     false, latency, throwable.getMessage());
-                    
+
             // 调用错误处理钩子
             onChatError(chatContext, ExecutionPhase.MODEL_CALL, throwable);
             onChatCompleted(chatContext, false, throwable.getMessage());
@@ -349,7 +349,7 @@ public abstract class AbstractMessageHandler {
             // 执行模型调用计费
             performBillingWithErrorHandling(chatContext, chatResponse.tokenUsage().inputTokenCount(),
                     chatResponse.tokenUsage().outputTokenCount(), transport, connection);
-                    
+
             // 调用对话完成钩子
             onChatCompleted(chatContext, true, null);
 
@@ -378,7 +378,7 @@ public abstract class AbstractMessageHandler {
                     chatContext.getContextEntity());
 
             transport.sendMessage(connection, AgentChatResponse.buildEndMessage(message, MessageType.TOOL_CALL));
-            
+
             // 调用工具调用完成钩子
             ToolCallInfo toolCallInfo = buildToolCallInfo(toolExecution);
             onToolCallCompleted(chatContext, toolCallInfo);
@@ -629,7 +629,7 @@ public abstract class AbstractMessageHandler {
             logger.warn("余额检查服务异常，允许用户继续对话 - 用户: {}", userId);
         }
     }
-    
+
     /** 构建模型调用信息
      * 
      * @param chatContext 对话上下文
@@ -637,27 +637,23 @@ public abstract class AbstractMessageHandler {
      * @param callTime 调用耗时（毫秒）
      * @param success 是否成功
      * @return 模型调用信息 */
-    protected ModelCallInfo buildModelCallInfo(ChatContext chatContext, ChatResponse chatResponse, long callTime, boolean success) {
-        return ModelCallInfo.builder()
-                .modelId(chatContext.getModel().getModelId())
-                .providerName(chatContext.getProvider().getName()+(chatContext.getProvider().getIsOfficial()?"(官方)":""))
+    protected ModelCallInfo buildModelCallInfo(ChatContext chatContext, ChatResponse chatResponse, long callTime,
+            boolean success) {
+        return ModelCallInfo.builder().modelId(chatContext.getModel().getModelId())
+                .providerName(
+                        chatContext.getProvider().getName() + (chatContext.getProvider().getIsOfficial() ? "(官方)" : ""))
                 .inputTokens(chatResponse.tokenUsage().inputTokenCount())
-                .outputTokens(chatResponse.tokenUsage().outputTokenCount())
-                .callTime((int) callTime)
-                .success(success)
+                .outputTokens(chatResponse.tokenUsage().outputTokenCount()).callTime((int) callTime).success(success)
                 .build();
     }
-    
+
     /** 构建工具调用信息
      * 
      * @param toolExecution 工具执行信息
      * @return 工具调用信息 */
     protected ToolCallInfo buildToolCallInfo(ToolExecution toolExecution) {
-        return ToolCallInfo.builder()
-                .toolName(toolExecution.request().name())
-                .requestArgs(toolExecution.request().arguments())
-                .responseData(toolExecution.result())
-                .success(true) // 此时表示工具执行成功
+        return ToolCallInfo.builder().toolName(toolExecution.request().name())
+                .requestArgs(toolExecution.request().arguments()).responseData(toolExecution.result()).success(true) // 此时表示工具执行成功
                 .build();
     }
 }

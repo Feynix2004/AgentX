@@ -14,7 +14,6 @@ public class AgentExecutionSummaryEntity extends BaseEntity {
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
-
     /** 用户ID */
     @TableField("user_id")
     private String userId;
@@ -58,7 +57,6 @@ public class AgentExecutionSummaryEntity extends BaseEntity {
     /** 工具执行总耗时(毫秒) */
     @TableField("total_tool_execution_time")
     private Integer totalToolExecutionTime;
-
 
     /** 执行是否成功 */
     @TableField("execution_success")
@@ -124,7 +122,6 @@ public class AgentExecutionSummaryEntity extends BaseEntity {
         }
     }
 
-
     /** 检查是否需要检查用户ID权限 */
     public boolean needCheckUserId() {
         return true; // Agent执行追踪需要用户权限检查
@@ -138,7 +135,6 @@ public class AgentExecutionSummaryEntity extends BaseEntity {
     public void setId(Long id) {
         this.id = id;
     }
-
 
     public String getUserId() {
         return userId;
@@ -227,7 +223,6 @@ public class AgentExecutionSummaryEntity extends BaseEntity {
     public void setTotalToolExecutionTime(Integer totalToolExecutionTime) {
         this.totalToolExecutionTime = totalToolExecutionTime;
     }
-
 
     public Boolean getExecutionSuccess() {
         return executionSuccess;

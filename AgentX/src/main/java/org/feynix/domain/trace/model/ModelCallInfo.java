@@ -20,7 +20,6 @@ public class ModelCallInfo {
     /** 调用耗时(毫秒) */
     private final Integer callTime;
 
-
     /** 是否成功 */
     private final Boolean success;
 
@@ -90,7 +89,6 @@ public class ModelCallInfo {
             return this;
         }
 
-
         public Builder success(Boolean success) {
             this.success = success;
             return this;
@@ -141,7 +139,6 @@ public class ModelCallInfo {
     public Integer getCallTime() {
         return callTime;
     }
-
 
     public Boolean getSuccess() {
         return success;

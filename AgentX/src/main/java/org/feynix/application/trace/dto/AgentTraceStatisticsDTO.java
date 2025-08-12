@@ -36,7 +36,6 @@ public class AgentTraceStatisticsDTO {
     /** 工具调用总次数 */
     private Integer totalToolCalls;
 
-
     /** 会话总数 */
     private Integer totalSessions;
 
@@ -129,7 +128,6 @@ public class AgentTraceStatisticsDTO {
     public void setTotalToolCalls(Integer totalToolCalls) {
         this.totalToolCalls = totalToolCalls;
     }
-
 
     public Integer getTotalSessions() {
         return totalSessions;

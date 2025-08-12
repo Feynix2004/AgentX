@@ -45,7 +45,6 @@ public class SessionTraceStatisticsDTO {
     /** 总执行时间(毫秒) */
     private Integer totalExecutionTime;
 
-
     /** 会话创建时间 */
     private LocalDateTime sessionCreatedTime;
 
@@ -165,7 +164,6 @@ public class SessionTraceStatisticsDTO {
     public void setTotalExecutionTime(Integer totalExecutionTime) {
         this.totalExecutionTime = totalExecutionTime;
     }
-
 
     public LocalDateTime getSessionCreatedTime() {
         return sessionCreatedTime;

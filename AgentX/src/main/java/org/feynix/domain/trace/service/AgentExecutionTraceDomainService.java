@@ -38,9 +38,9 @@ public class AgentExecutionTraceDomainService {
         LambdaQueryWrapper<AgentExecutionSummaryEntity> wrapper = Wrappers.<AgentExecutionSummaryEntity>lambdaQuery()
                 .eq(AgentExecutionSummaryEntity::getSessionId, sessionId)
                 .eq(AgentExecutionSummaryEntity::getUserId, userId);
-        
+
         AgentExecutionSummaryEntity existing = summaryRepository.selectOne(wrapper);
-        
+
         if (existing == null) {
             // 创建新的汇总记录
             AgentExecutionSummaryEntity summary = AgentExecutionSummaryEntity.create(userId, sessionId, agentId);
@@ -50,13 +50,12 @@ public class AgentExecutionTraceDomainService {
         return TraceContext.create(userId, sessionId, agentId);
     }
 
-
     /** 记录用户消息（带时间戳）
      * 
      * @param traceContext 追踪上下文
      * @param userMessage 用户消息内容
      * @param messageType 消息类型
-     * @param eventTime 事件发生时间 
+     * @param eventTime 事件发生时间
      * @return 插入记录的ID */
     public Long recordUserMessage(TraceContext traceContext, String userMessage, String messageType,
             LocalDateTime eventTime) {
@@ -64,8 +63,8 @@ public class AgentExecutionTraceDomainService {
             return null;
         }
 
-        AgentExecutionDetailEntity detail = AgentExecutionDetailEntity.createUserMessageStep(traceContext.getSessionId(),
-                traceContext.nextSequence(), userMessage, messageType, eventTime);
+        AgentExecutionDetailEntity detail = AgentExecutionDetailEntity.createUserMessageStep(
+                traceContext.getSessionId(), traceContext.nextSequence(), userMessage, messageType, eventTime);
 
         detailRepository.insert(detail);
         return detail.getId();
@@ -90,7 +89,6 @@ public class AgentExecutionTraceDomainService {
 
         detailRepository.insert(detail);
     }
-
 
     /** 记录AI响应（带时间戳）
      * 
@@ -123,7 +121,8 @@ public class AgentExecutionTraceDomainService {
         detailRepository.insert(detail);
 
         // 更新汇总统计
-        updateSummaryTokens(traceContext.getSessionId(), modelCallInfo.getInputTokens(), modelCallInfo.getOutputTokens());
+        updateSummaryTokens(traceContext.getSessionId(), modelCallInfo.getInputTokens(),
+                modelCallInfo.getOutputTokens());
     }
 
     /** 记录工具调用（带时间戳）
@@ -370,7 +369,6 @@ public class AgentExecutionTraceDomainService {
                     int totalToolCalls = agentExecutions.stream()
                             .mapToInt(e -> e.getToolCallCount() != null ? e.getToolCallCount() : 0).sum();
 
-
                     // 会话数统计（去重）
                     int totalSessions = (int) agentExecutions.stream().map(AgentExecutionSummaryEntity::getSessionId)
                             .distinct().count();
@@ -433,7 +431,6 @@ public class AgentExecutionTraceDomainService {
                     int totalExecutionTime = sessionExecutions.stream()
                             .mapToInt(e -> e.getTotalExecutionTime() != null ? e.getTotalExecutionTime() : 0).sum();
 
-
                     // 最后执行时间和状态
                     LocalDateTime lastExecutionTime = sessionExecutions.stream()
                             .map(AgentExecutionSummaryEntity::getExecutionStartTime).max(LocalDateTime::compareTo)
@@ -462,7 +459,6 @@ public class AgentExecutionTraceDomainService {
         }
     }
 
-
     /** 更新汇总的工具执行统计 */
     private void updateSummaryToolExecution(String sessionId, Integer executionTime) {
         LambdaQueryWrapper<AgentExecutionSummaryEntity> wrapper = Wrappers.<AgentExecutionSummaryEntity>lambdaQuery()
@@ -490,7 +486,6 @@ public class AgentExecutionTraceDomainService {
             detailRepository.updateById(detail);
         }
     }
-
 
     /** 执行统计信息 */
     public static class ExecutionStatistics {
@@ -542,8 +537,7 @@ public class AgentExecutionTraceDomainService {
 
         public AgentStatistics(String agentId, int totalExecutions, int successfulExecutions, int failedExecutions,
                 double successRate, int totalTokens, int totalInputTokens, int totalOutputTokens, int totalToolCalls,
-                int totalSessions, LocalDateTime lastExecutionTime,
-                Boolean lastExecutionSuccess) {
+                int totalSessions, LocalDateTime lastExecutionTime, Boolean lastExecutionSuccess) {
             this.agentId = agentId;
             this.totalExecutions = totalExecutions;
             this.successfulExecutions = successfulExecutions;

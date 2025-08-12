@@ -78,7 +78,6 @@ public class AgentExecutionDetailEntity extends BaseEntity {
     @TableField("fallback_to_model")
     private String fallbackToModel;
 
-
     /** 步骤执行是否成功 */
     @TableField("step_success")
     private Boolean stepSuccess;
@@ -137,8 +136,8 @@ public class AgentExecutionDetailEntity extends BaseEntity {
     }
 
     /** 创建AI响应步骤 */
-    public static AgentExecutionDetailEntity createAiResponseStep(String sessionId, Integer sequenceNo, String aiResponse,
-            String modelId, String providerName, Integer messageTokens, Integer modelCallTime) {
+    public static AgentExecutionDetailEntity createAiResponseStep(String sessionId, Integer sequenceNo,
+            String aiResponse, String modelId, String providerName, Integer messageTokens, Integer modelCallTime) {
         AgentExecutionDetailEntity entity = new AgentExecutionDetailEntity();
         entity.setSessionId(sessionId);
         entity.setMessageContent(aiResponse);
@@ -151,8 +150,8 @@ public class AgentExecutionDetailEntity extends BaseEntity {
     }
 
     /** 创建AI响应步骤（带时间戳） */
-    public static AgentExecutionDetailEntity createAiResponseStep(String sessionId, Integer sequenceNo, String aiResponse,
-            String modelId, String providerName, Integer messageTokens, Integer modelCallTime,
+    public static AgentExecutionDetailEntity createAiResponseStep(String sessionId, Integer sequenceNo,
+            String aiResponse, String modelId, String providerName, Integer messageTokens, Integer modelCallTime,
             LocalDateTime eventTime) {
         AgentExecutionDetailEntity entity = new AgentExecutionDetailEntity();
         entity.setSessionId(sessionId);
@@ -349,7 +348,6 @@ public class AgentExecutionDetailEntity extends BaseEntity {
     public void setFallbackToModel(String fallbackToModel) {
         this.fallbackToModel = fallbackToModel;
     }
-
 
     public Boolean getStepSuccess() {
         return stepSuccess;

@@ -45,7 +45,6 @@ public class AgentExecutionSummaryDTO {
     /** 工具执行总耗时(毫秒) */
     private Integer totalToolExecutionTime;
 
-
     /** 执行是否成功 */
     private Boolean executionSuccess;
 
@@ -165,7 +164,6 @@ public class AgentExecutionSummaryDTO {
     public void setTotalToolExecutionTime(Integer totalToolExecutionTime) {
         this.totalToolExecutionTime = totalToolExecutionTime;
     }
-
 
     public Boolean getExecutionSuccess() {
         return executionSuccess;

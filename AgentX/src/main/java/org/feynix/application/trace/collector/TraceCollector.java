@@ -40,7 +40,7 @@ public class TraceCollector {
             TraceContext traceContext = traceDomainService.getOrCreateTrace(userId, sessionId, agentId);
 
             // 立即记录用户消息，并保存记录ID到上下文中
-            Long messageId = traceDomainService.recordUserMessage(traceContext, userMessage, messageType, 
+            Long messageId = traceDomainService.recordUserMessage(traceContext, userMessage, messageType,
                     java.time.LocalDateTime.now());
             if (messageId != null) {
                 traceContext.setCurrentUserMessageId(messageId);
@@ -152,11 +152,10 @@ public class TraceCollector {
 
         try {
             traceDomainService.updateUserMessageTokens(traceContext.getCurrentUserMessageId(), inputTokens);
-            logger.debug("更新用户消息Token数: recordId={}, tokens={}", 
-                    traceContext.getCurrentUserMessageId(), inputTokens);
+            logger.debug("更新用户消息Token数: recordId={}, tokens={}", traceContext.getCurrentUserMessageId(), inputTokens);
         } catch (Exception e) {
-            logger.warn("更新用户消息Token数失败: recordId={}, tokens={}, error={}", 
-                    traceContext.getCurrentUserMessageId(), inputTokens, e.getMessage());
+            logger.warn("更新用户消息Token数失败: recordId={}, tokens={}, error={}", traceContext.getCurrentUserMessageId(),
+                    inputTokens, e.getMessage());
         }
     }
 }

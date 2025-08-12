@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Database, FileText, Home, Menu, Search, Settings, PenToolIcon as Tool, UploadCloud, LogOut, Wrench, Activity } from "lucide-react"
+import { Database, FileText, Home, Menu, Search, Settings, PenToolIcon as Tool, UploadCloud, LogOut, Wrench, Activity,Package,Tag } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 
 import { cn } from "@/lib/utils"
@@ -208,7 +208,13 @@ export function NavigationBar() {
                 <DropdownMenuItem asChild>
                   <Link href="/settings/billing">
                     <Settings className="mr-2 h-4 w-4" />
-                    账单与用量
+                    账户与计费
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/settings/pricing">
+                    <Tag className="mr-2 h-4 w-4" />
+                    价格说明
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
@@ -224,6 +230,12 @@ export function NavigationBar() {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/settings/orders">
+                    <Package className="mr-2 h-4 w-4" />
+                    我的订单
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/traces">
                     <Activity className="mr-2 h-4 w-4" />
