@@ -158,4 +158,28 @@ public class TraceCollector {
                     inputTokens, e.getMessage());
         }
     }
+
+    /** 记录异常详情信息
+     * 
+     * @param traceContext 追踪上下文
+     * @param errorPhase 错误阶段
+     * @param throwable 异常信息 */
+    public void recordErrorDetail(TraceContext traceContext, ExecutionPhase errorPhase, Throwable throwable) {
+        if (!traceContext.isTraceEnabled()) {
+            return;
+        }
+
+        try {
+            String errorMessage = throwable != null ? throwable.getMessage() : "未知错误";
+            
+            // 记录异常详情到详细记录表
+            traceDomainService.recordErrorMessage(traceContext, errorMessage, java.time.LocalDateTime.now());
+            
+            logger.debug("记录异常详情: TraceId={}, Phase={}, Message={}", 
+                    traceContext.getTraceId(), errorPhase != null ? errorPhase.getCode() : "UNKNOWN", errorMessage);
+        } catch (Exception e) {
+            // 静默处理异常，不影响主流程
+            logger.warn("记录异常详情失败: TraceId={}, error={}", traceContext.getTraceId(), e.getMessage());
+        }
+    }
 }

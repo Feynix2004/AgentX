@@ -3,6 +3,8 @@ package org.feynix.domain.trace.service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.feynix.domain.trace.constant.ExecutionPhase;
 import org.feynix.domain.trace.model.*;
@@ -17,6 +19,8 @@ import java.util.List;
 /** Agent执行链路追踪领域服务 负责处理追踪数据的核心业务逻辑 */
 @Service
 public class AgentExecutionTraceDomainService {
+
+    private static final Logger logger = LoggerFactory.getLogger(AgentExecutionTraceDomainService.class);
 
     private final AgentExecutionSummaryRepository summaryRepository;
     private final AgentExecutionDetailRepository detailRepository;
@@ -103,14 +107,14 @@ public class AgentExecutionTraceDomainService {
         }
 
         AgentExecutionDetailEntity detail = AgentExecutionDetailEntity.createAiResponseStep(traceContext.getSessionId(),
-                traceContext.nextSequence(), aiResponse, modelCallInfo.getModelId(), modelCallInfo.getProviderName(),
+                traceContext.nextSequence(), aiResponse, modelCallInfo.getModelEndpoint(), modelCallInfo.getProviderName(),
                 modelCallInfo.getOutputTokens(), // AI响应使用输出Token数
                 modelCallInfo.getCallTime(), eventTime);
 
         // 设置降级信息
         if (Boolean.TRUE.equals(modelCallInfo.getFallbackUsed())) {
-            detail.setFallbackInfo(modelCallInfo.getFallbackReason(), modelCallInfo.getOriginalModel(),
-                    modelCallInfo.getModelId());
+            detail.setFallbackInfo(modelCallInfo.getFallbackReason(), modelCallInfo.getOriginalEndpoint(),
+                    modelCallInfo.getModelEndpoint(), modelCallInfo.getOriginalProviderName(), modelCallInfo.getProviderName());
         }
 
         // 设置错误信息
@@ -588,6 +592,31 @@ public class AgentExecutionTraceDomainService {
         }
         public Boolean getLastExecutionSuccess() {
             return lastExecutionSuccess;
+        }
+    }
+
+    /** 记录异常消息到详细记录表
+     * 
+     * @param traceContext 追踪上下文
+     * @param errorMessage 错误信息
+     * @param eventTime 事件发生时间 */
+    public void recordErrorMessage(TraceContext traceContext, String errorMessage, LocalDateTime eventTime) {
+        if (!traceContext.isTraceEnabled()) {
+            return;
+        }
+
+        try {
+            // 创建异常记录
+            AgentExecutionDetailEntity errorEntity = AgentExecutionDetailEntity.createErrorMessageStep(
+                    traceContext.getSessionId(), errorMessage, eventTime);
+            
+            detailRepository.insert(errorEntity);
+            
+            logger.debug("记录异常消息成功: SessionId={}, ErrorMessage={}", 
+                    traceContext.getSessionId(), errorMessage);
+        } catch (Exception e) {
+            logger.warn("记录异常消息失败: SessionId={}, error={}", 
+                    traceContext.getSessionId(), e.getMessage());
         }
     }
 

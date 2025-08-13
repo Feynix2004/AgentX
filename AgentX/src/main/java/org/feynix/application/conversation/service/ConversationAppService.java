@@ -218,13 +218,14 @@ public class ConversationAppService {
         List<String> fallbackChain = userSettingsDomainService.getUserFallbackChain(userId);
         HighAvailabilityResult result = highAvailabilityDomainService.selectBestProvider(model, userId, sessionId,
                 fallbackChain);
+        ProviderEntity originalProvider = llmDomainService.getProvider(model.getProviderId());
         ProviderEntity provider = result.getProvider();
         ModelEntity selectedModel = result.getModel();
         String instanceId = result.getInstanceId();
         provider.isActive();
 
         // 5. 创建并配置环境对象
-        ChatContext chatContext = createChatContext(chatRequest, userId, agent, selectedModel, provider, llmModelConfig,
+        ChatContext chatContext = createChatContext(chatRequest, userId, agent, model, selectedModel, originalProvider, provider, llmModelConfig,
                 mcpServerNames, instanceId);
         setupContextAndHistory(chatContext, chatRequest);
 
@@ -277,14 +278,16 @@ public class ConversationAppService {
     }
 
     /** 创建ChatContext对象 */
-    private ChatContext createChatContext(ChatRequest chatRequest, String userId, AgentEntity agent, ModelEntity model,
-            ProviderEntity provider, LLMModelConfig llmModelConfig, List<String> mcpServerNames, String instanceId) {
+    private ChatContext createChatContext(ChatRequest chatRequest, String userId, AgentEntity agent, ModelEntity originalModel, 
+            ModelEntity selectedModel, ProviderEntity originalProvider, ProviderEntity provider, LLMModelConfig llmModelConfig, List<String> mcpServerNames, String instanceId) {
         ChatContext chatContext = new ChatContext();
         chatContext.setSessionId(chatRequest.getSessionId());
         chatContext.setUserId(userId);
         chatContext.setUserMessage(chatRequest.getMessage());
         chatContext.setAgent(agent);
-        chatContext.setModel(model);
+        chatContext.setOriginalModel(originalModel);
+        chatContext.setModel(selectedModel);
+        chatContext.setOriginalProvider(originalProvider);
         chatContext.setProvider(provider);
         chatContext.setLlmModelConfig(llmModelConfig);
         chatContext.setMcpServerNames(mcpServerNames);

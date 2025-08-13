@@ -20,6 +20,9 @@ public class ExecutionTraceDTO {
     /** 工具调用步骤 */
     private List<AgentExecutionDetailDTO> toolCalls;
 
+    /** 异常消息步骤 */
+    private List<AgentExecutionDetailDTO> errorMessages;
+
     /** 降级调用步骤 */
     private List<AgentExecutionDetailDTO> fallbackCalls;
 
@@ -73,6 +76,14 @@ public class ExecutionTraceDTO {
 
     public void setToolCalls(List<AgentExecutionDetailDTO> toolCalls) {
         this.toolCalls = toolCalls;
+    }
+
+    public List<AgentExecutionDetailDTO> getErrorMessages() {
+        return errorMessages;
+    }
+
+    public void setErrorMessages(List<AgentExecutionDetailDTO> errorMessages) {
+        this.errorMessages = errorMessages;
     }
 
     public List<AgentExecutionDetailDTO> getFallbackCalls() {

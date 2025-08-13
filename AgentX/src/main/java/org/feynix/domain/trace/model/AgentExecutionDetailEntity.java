@@ -26,9 +26,9 @@ public class AgentExecutionDetailEntity extends BaseEntity {
     @TableField("message_type")
     private String messageType;
 
-    /** 此次使用的模型ID */
-    @TableField("model_id")
-    private String modelId;
+    /** 此次使用的模型部署名称 */
+    @TableField("model_endpoint")
+    private String modelEndpoint;
 
     /** 提供商名称 */
     @TableField("provider_name")
@@ -70,13 +70,21 @@ public class AgentExecutionDetailEntity extends BaseEntity {
     @TableField("fallback_reason")
     private String fallbackReason;
 
-    /** 降级前的模型 */
-    @TableField("fallback_from_model")
-    private String fallbackFromModel;
+    /** 降级前的模型部署名称 */
+    @TableField("fallback_from_endpoint")
+    private String fallbackFromEndpoint;
 
-    /** 降级后的模型 */
-    @TableField("fallback_to_model")
-    private String fallbackToModel;
+    /** 降级后的模型部署名称 */
+    @TableField("fallback_to_endpoint")
+    private String fallbackToEndpoint;
+
+    /** 降级前的服务商名称 */
+    @TableField("fallback_from_provider")
+    private String fallbackFromProvider;
+
+    /** 降级后的服务商名称 */
+    @TableField("fallback_to_provider")
+    private String fallbackToProvider;
 
     /** 步骤执行是否成功 */
     @TableField("step_success")
@@ -137,12 +145,12 @@ public class AgentExecutionDetailEntity extends BaseEntity {
 
     /** 创建AI响应步骤 */
     public static AgentExecutionDetailEntity createAiResponseStep(String sessionId, Integer sequenceNo,
-            String aiResponse, String modelId, String providerName, Integer messageTokens, Integer modelCallTime) {
+            String aiResponse, String modelEndpoint, String providerName, Integer messageTokens, Integer modelCallTime) {
         AgentExecutionDetailEntity entity = new AgentExecutionDetailEntity();
         entity.setSessionId(sessionId);
         entity.setMessageContent(aiResponse);
         entity.setMessageType("AI_RESPONSE");
-        entity.setModelId(modelId);
+        entity.setModelEndpoint(modelEndpoint);
         entity.setProviderName(providerName);
         entity.setMessageTokens(messageTokens);
         entity.setModelCallTime(modelCallTime);
@@ -151,13 +159,13 @@ public class AgentExecutionDetailEntity extends BaseEntity {
 
     /** 创建AI响应步骤（带时间戳） */
     public static AgentExecutionDetailEntity createAiResponseStep(String sessionId, Integer sequenceNo,
-            String aiResponse, String modelId, String providerName, Integer messageTokens, Integer modelCallTime,
+            String aiResponse, String modelEndpoint, String providerName, Integer messageTokens, Integer modelCallTime,
             LocalDateTime eventTime) {
         AgentExecutionDetailEntity entity = new AgentExecutionDetailEntity();
         entity.setSessionId(sessionId);
         entity.setMessageContent(aiResponse);
         entity.setMessageType("AI_RESPONSE");
-        entity.setModelId(modelId);
+        entity.setModelEndpoint(modelEndpoint);
         entity.setProviderName(providerName);
         entity.setMessageTokens(messageTokens);
         entity.setModelCallTime(modelCallTime);
@@ -199,17 +207,31 @@ public class AgentExecutionDetailEntity extends BaseEntity {
     }
 
     /** 设置模型降级信息 */
-    public void setFallbackInfo(String reason, String fromModel, String toModel) {
+    public void setFallbackInfo(String reason, String fromEndpoint, String toEndpoint, String fromProvider, String toProvider) {
         this.isFallbackUsed = true;
         this.fallbackReason = reason;
-        this.fallbackFromModel = fromModel;
-        this.fallbackToModel = toModel;
+        this.fallbackFromEndpoint = fromEndpoint;
+        this.fallbackToEndpoint = toEndpoint;
+        this.fallbackFromProvider = fromProvider;
+        this.fallbackToProvider = toProvider;
     }
 
     /** 标记步骤失败 */
     public void markStepFailed(String errorMessage) {
         this.stepSuccess = false;
         this.stepErrorMessage = errorMessage;
+    }
+
+    /** 创建异常消息步骤 */
+    public static AgentExecutionDetailEntity createErrorMessageStep(String sessionId, String errorMessage, LocalDateTime eventTime) {
+        AgentExecutionDetailEntity entity = new AgentExecutionDetailEntity();
+        entity.setSessionId(sessionId);
+        entity.setMessageContent(errorMessage != null ? errorMessage : "未知错误");
+        entity.setMessageType("ERROR_MESSAGE");
+        entity.setStepSuccess(false);
+        entity.setStepErrorMessage(errorMessage);
+        entity.setCreatedAt(eventTime); // 设置异常发生时间
+        return entity;
     }
 
     // Getter和Setter方法
@@ -245,12 +267,12 @@ public class AgentExecutionDetailEntity extends BaseEntity {
         this.messageType = messageType;
     }
 
-    public String getModelId() {
-        return modelId;
+    public String getModelEndpoint() {
+        return modelEndpoint;
     }
 
-    public void setModelId(String modelId) {
-        this.modelId = modelId;
+    public void setModelEndpoint(String modelEndpoint) {
+        this.modelEndpoint = modelEndpoint;
     }
 
     public String getProviderName() {
@@ -333,20 +355,36 @@ public class AgentExecutionDetailEntity extends BaseEntity {
         this.fallbackReason = fallbackReason;
     }
 
-    public String getFallbackFromModel() {
-        return fallbackFromModel;
+    public String getFallbackFromEndpoint() {
+        return fallbackFromEndpoint;
     }
 
-    public void setFallbackFromModel(String fallbackFromModel) {
-        this.fallbackFromModel = fallbackFromModel;
+    public void setFallbackFromEndpoint(String fallbackFromEndpoint) {
+        this.fallbackFromEndpoint = fallbackFromEndpoint;
     }
 
-    public String getFallbackToModel() {
-        return fallbackToModel;
+    public String getFallbackToEndpoint() {
+        return fallbackToEndpoint;
     }
 
-    public void setFallbackToModel(String fallbackToModel) {
-        this.fallbackToModel = fallbackToModel;
+    public void setFallbackToEndpoint(String fallbackToEndpoint) {
+        this.fallbackToEndpoint = fallbackToEndpoint;
+    }
+
+    public String getFallbackFromProvider() {
+        return fallbackFromProvider;
+    }
+
+    public void setFallbackFromProvider(String fallbackFromProvider) {
+        this.fallbackFromProvider = fallbackFromProvider;
+    }
+
+    public String getFallbackToProvider() {
+        return fallbackToProvider;
+    }
+
+    public void setFallbackToProvider(String fallbackToProvider) {
+        this.fallbackToProvider = fallbackToProvider;
     }
 
     public Boolean getStepSuccess() {

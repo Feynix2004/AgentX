@@ -102,6 +102,12 @@ export interface SessionExecutionDetail {
   toolRequestArgs?: string  // 工具调用入参
   toolResponseData?: string // 工具调用出参
   createdAt: string
+  // 模型切换相关字段
+  isFallbackUsed?: boolean    // 是否触发了降级
+  fallbackFromEndpoint?: string // 降级前的模型部署名称
+  fallbackToEndpoint?: string   // 降级后的模型部署名称
+  fallbackFromProvider?: string // 降级前的服务商名称
+  fallbackToProvider?: string   // 降级后的服务商名称
   // 会话相关信息
   sessionId: string
   agentId: string
@@ -259,7 +265,7 @@ export async function getSessionExecutionDetails(sessionId: string): Promise<Api
       stepType: getStepTypeFromMessageType(detail.messageType),
       messageType: detail.messageType,
       content: detail.messageContent || '无内容',
-      modelId: detail.modelId,
+      modelId: detail.modelEndpoint || detail.modelId, // 使用 modelEndpoint 字段
       providerName: detail.providerName,
       tokenCount: detail.messageTokens,
       executionTime: detail.modelCallTime || detail.toolExecutionTime,
@@ -270,6 +276,12 @@ export async function getSessionExecutionDetails(sessionId: string): Promise<Api
       toolRequestArgs: detail.toolRequestArgs,  // 工具调用入参
       toolResponseData: detail.toolResponseData, // 工具调用出参
       createdAt: detail.createdTime,
+      // 模型切换相关字段映射
+      isFallbackUsed: detail.isFallbackUsed,
+      fallbackFromEndpoint: detail.fallbackFromEndpoint,
+      fallbackToEndpoint: detail.fallbackToEndpoint,
+      fallbackFromProvider: detail.fallbackFromProvider,
+      fallbackToProvider: detail.fallbackToProvider,
       // 会话相关信息
       sessionId: sessionId,
       agentId: detail.agentId,

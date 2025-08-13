@@ -14,8 +14,8 @@ public class AgentExecutionDetailDTO {
     /** 消息类型 */
     private String messageType;
 
-    /** 此次使用的模型ID */
-    private String modelId;
+    /** 此次使用的模型部署名称 */
+    private String modelEndpoint;
 
     /** 提供商名称 */
     private String providerName;
@@ -47,11 +47,17 @@ public class AgentExecutionDetailDTO {
     /** 降级原因 */
     private String fallbackReason;
 
-    /** 降级前的模型 */
-    private String fallbackFromModel;
+    /** 降级前的模型部署名称 */
+    private String fallbackFromEndpoint;
 
-    /** 降级后的模型 */
-    private String fallbackToModel;
+    /** 降级后的模型部署名称 */
+    private String fallbackToEndpoint;
+
+    /** 降级前的服务商名称 */
+    private String fallbackFromProvider;
+
+    /** 降级后的服务商名称 */
+    private String fallbackToProvider;
 
     /** 步骤执行是否成功 */
     private Boolean stepSuccess;
@@ -90,12 +96,12 @@ public class AgentExecutionDetailDTO {
         this.messageType = messageType;
     }
 
-    public String getModelId() {
-        return modelId;
+    public String getModelEndpoint() {
+        return modelEndpoint;
     }
 
-    public void setModelId(String modelId) {
-        this.modelId = modelId;
+    public void setModelEndpoint(String modelEndpoint) {
+        this.modelEndpoint = modelEndpoint;
     }
 
     public String getProviderName() {
@@ -178,20 +184,36 @@ public class AgentExecutionDetailDTO {
         this.fallbackReason = fallbackReason;
     }
 
-    public String getFallbackFromModel() {
-        return fallbackFromModel;
+    public String getFallbackFromEndpoint() {
+        return fallbackFromEndpoint;
     }
 
-    public void setFallbackFromModel(String fallbackFromModel) {
-        this.fallbackFromModel = fallbackFromModel;
+    public void setFallbackFromEndpoint(String fallbackFromEndpoint) {
+        this.fallbackFromEndpoint = fallbackFromEndpoint;
     }
 
-    public String getFallbackToModel() {
-        return fallbackToModel;
+    public String getFallbackToEndpoint() {
+        return fallbackToEndpoint;
     }
 
-    public void setFallbackToModel(String fallbackToModel) {
-        this.fallbackToModel = fallbackToModel;
+    public void setFallbackToEndpoint(String fallbackToEndpoint) {
+        this.fallbackToEndpoint = fallbackToEndpoint;
+    }
+
+    public String getFallbackFromProvider() {
+        return fallbackFromProvider;
+    }
+
+    public void setFallbackFromProvider(String fallbackFromProvider) {
+        this.fallbackFromProvider = fallbackFromProvider;
+    }
+
+    public String getFallbackToProvider() {
+        return fallbackToProvider;
+    }
+
+    public void setFallbackToProvider(String fallbackToProvider) {
+        this.fallbackToProvider = fallbackToProvider;
     }
 
     public Boolean getStepSuccess() {

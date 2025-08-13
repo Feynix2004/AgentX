@@ -36,8 +36,14 @@ public class ChatContext {
     /** 模型实体 */
     private ModelEntity model;
 
+    /** 原始模型实体（用于追踪模型切换） */
+    private ModelEntity originalModel;
+
     /** 服务商实体 */
     private ProviderEntity provider;
+
+    /** 原始服务商实体（用于追踪服务商切换） */
+    private ProviderEntity originalProvider;
 
     /** 大模型配置 */
     private LLMModelConfig llmModelConfig;
@@ -103,12 +109,28 @@ public class ChatContext {
         this.model = model;
     }
 
+    public ModelEntity getOriginalModel() {
+        return originalModel;
+    }
+
+    public void setOriginalModel(ModelEntity originalModel) {
+        this.originalModel = originalModel;
+    }
+
     public ProviderEntity getProvider() {
         return provider;
     }
 
     public void setProvider(ProviderEntity provider) {
         this.provider = provider;
+    }
+
+    public ProviderEntity getOriginalProvider() {
+        return originalProvider;
+    }
+
+    public void setOriginalProvider(ProviderEntity originalProvider) {
+        this.originalProvider = originalProvider;
     }
 
     public LLMModelConfig getLlmModelConfig() {

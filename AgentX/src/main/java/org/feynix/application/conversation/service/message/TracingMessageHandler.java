@@ -65,8 +65,6 @@ public abstract class TracingMessageHandler extends AbstractMessageHandler {
 
     @Override
     protected void onChatStart(ChatContext chatContext) {
-        logger.info("🚀 [TRACE-DEBUG] onChatStart 被调用 - 线程: {}, 用户: {}, 会话: {}", Thread.currentThread().getName(),
-                chatContext.getUserId(), chatContext.getSessionId());
 
         try {
             // 获取或开始会话级别的执行追踪
@@ -74,31 +72,13 @@ public abstract class TracingMessageHandler extends AbstractMessageHandler {
                     chatContext.getSessionId(), chatContext.getAgent().getId(), chatContext.getUserMessage(),
                     MessageType.TEXT.name());
 
-            logger.info("🎯 [TRACE-DEBUG] TraceContext 创建结果: {}, TraceId: {}, isEnabled: {}",
-                    (traceContext != null ? "成功" : "NULL"), (traceContext != null ? traceContext.getTraceId() : "N/A"),
-                    (traceContext != null ? traceContext.isTraceEnabled() : "N/A"));
-
             // 将追踪上下文保存到InheritableThreadLocal中
             currentTraceContext.set(traceContext);
-            logger.info("📝 [TRACE-DEBUG] TraceContext 已设置到 InheritableThreadLocal");
-
-            // 验证设置是否成功
-            TraceContext verifyContext = currentTraceContext.get();
-            logger.info("✅ [TRACE-DEBUG] 验证 InheritableThreadLocal 设置: {}",
-                    (verifyContext != null ? "成功 - TraceId: " + verifyContext.getTraceId() : "失败 - NULL"));
 
             // 如果chatContext是TracingChatContext，设置追踪上下文
             if (chatContext instanceof TracingChatContext) {
-                ((TracingChatContext) chatContext).setTraceContext(traceContext);
-                logger.info("🔄 [TRACE-DEBUG] TraceContext 已设置到 TracingChatContext");
-            } else {
-                logger.info("ℹ️ [TRACE-DEBUG] ChatContext 不是 TracingChatContext 类型: {}",
-                        chatContext.getClass().getSimpleName());
+                chatContext.setTraceContext(traceContext);
             }
-
-            logger.info("✨ [TRACE-DEBUG] 追踪初始化完成 - TraceId: {}",
-                    (traceContext != null ? traceContext.getTraceId() : "NULL"));
-
         } catch (Exception e) {
             logger.error("❌ [TRACE-DEBUG] 启动对话追踪失败: {}", e.getMessage(), e);
         }
@@ -181,7 +161,12 @@ public abstract class TracingMessageHandler extends AbstractMessageHandler {
         TraceContext traceContext = getCurrentTraceContext();
         if (traceContext != null && traceContext.isTraceEnabled()) {
             try {
+                // 记录汇总表的失败状态（现有逻辑）
                 traceCollector.recordFailure(traceContext, errorPhase, throwable);
+                
+                // 记录异常详情到详细记录表（新增逻辑）
+                traceCollector.recordErrorDetail(traceContext, errorPhase, throwable);
+                
                 logger.debug("对话异常 - TraceId: {}, 阶段: {}, 异常: {}", traceContext.getTraceId(),
                         errorPhase.getDescription(), throwable.getMessage());
             } catch (Exception e) {

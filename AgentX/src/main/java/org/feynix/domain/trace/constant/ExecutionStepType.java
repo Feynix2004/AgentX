@@ -10,7 +10,10 @@ public enum ExecutionStepType {
     AI_RESPONSE("AI_RESPONSE", "AI响应"),
 
     /** 工具调用 */
-    TOOL_CALL("TOOL_CALL", "工具调用");
+    TOOL_CALL("TOOL_CALL", "工具调用"),
+
+    /** 异常信息 */
+    ERROR_MESSAGE("ERROR_MESSAGE", "异常信息");
 
     private final String code;
     private final String description;

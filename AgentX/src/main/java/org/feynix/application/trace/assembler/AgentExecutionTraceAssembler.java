@@ -83,6 +83,7 @@ public class AgentExecutionTraceAssembler {
             traceDTO.setUserMessages(filterByMessageType(allDetails, "USER_MESSAGE"));
             traceDTO.setAiResponses(filterByMessageType(allDetails, "AI_RESPONSE"));
             traceDTO.setToolCalls(filterByMessageType(allDetails, "TOOL_CALL"));
+            traceDTO.setErrorMessages(filterByMessageType(allDetails, "ERROR_MESSAGE"));
 
             // 降级调用
             List<AgentExecutionDetailDTO> fallbackCalls = allDetails.stream()

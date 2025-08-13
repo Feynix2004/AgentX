@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { ArrowLeft, Clock, Zap, AlertCircle, CheckCircle, XCircle, Wrench, MessageSquare, Activity } from "lucide-react"
+import { ArrowLeft, Clock, Zap, AlertCircle, CheckCircle, XCircle, Wrench, MessageSquare, Activity, RefreshCw } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -93,6 +93,8 @@ export default function TraceDetailPage() {
         return <Activity className={iconClass} />
       case 'TOOL_CALL':
         return <Wrench className={iconClass} />
+      case 'ERROR_MESSAGE':
+        return <AlertCircle className="h-4 w-4 text-red-600" />
       default:
         return success ? <CheckCircle className={iconClass} /> : <XCircle className={iconClass} />
     }
@@ -107,6 +109,8 @@ export default function TraceDetailPage() {
         return 'AI 响应'
       case 'TOOL_CALL':
         return '工具调用'
+      case 'ERROR_MESSAGE':
+        return '异常信息'
       default:
         return stepType
     }
@@ -114,6 +118,11 @@ export default function TraceDetailPage() {
 
   // 获取步骤样式
   const getStepStyle = (stepType: string, success: boolean) => {
+    // ERROR_MESSAGE 类型始终使用红色错误样式
+    if (stepType === 'ERROR_MESSAGE') {
+      return 'border-red-500 bg-red-50'
+    }
+    
     if (!success) {
       return 'border-red-500 bg-red-50'
     }
@@ -132,6 +141,11 @@ export default function TraceDetailPage() {
 
   // 获取卡片样式
   const getCardStyle = (stepType: string, success: boolean) => {
+    // ERROR_MESSAGE 类型始终使用红色错误样式
+    if (stepType === 'ERROR_MESSAGE') {
+      return 'border-red-200 bg-red-50'
+    }
+    
     if (!success) {
       return 'border-red-200 bg-red-50'
     }
@@ -280,8 +294,8 @@ export default function TraceDetailPage() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
                         <span className="font-medium text-sm">{getStepTypeName(detail.stepType)}</span>
-                        <Badge variant={detail.success ? "default" : "destructive"} className="text-xs">
-                          {detail.success ? "成功" : "失败"}
+                        <Badge variant={detail.stepType === 'ERROR_MESSAGE' ? "destructive" : (detail.success ? "default" : "destructive")} className="text-xs">
+                          {detail.stepType === 'ERROR_MESSAGE' ? "失败" : (detail.success ? "成功" : "失败")}
                         </Badge>
                       </div>
                       <div className="text-xs text-muted-foreground">
@@ -311,6 +325,9 @@ export default function TraceDetailPage() {
                           <div className="flex items-center space-x-1">
                             <span className="font-medium">模型:</span>
                             <span>{detail.modelId}</span>
+                            {detail.isFallbackUsed && (
+                              <RefreshCw className="h-3 w-3 text-orange-600" title="模型已切换" />
+                            )}
                           </div>
                         )}
                         {detail.providerName && (
@@ -385,8 +402,33 @@ export default function TraceDetailPage() {
                         </div>
                       )}
                       
-                      {/* 错误信息 */}
-                      {detail.errorMessage && (
+                      {/* 模型切换信息 */}
+                      {detail.isFallbackUsed && (detail.fallbackFromProvider || detail.fallbackFromEndpoint) && (
+                        <div className="mt-3">
+                          <Separator />
+                          <div className="mt-2 p-2 bg-orange-50 border border-orange-200 rounded text-xs text-orange-700">
+                            <div className="flex items-center space-x-1 mb-1">
+                              <RefreshCw className="h-3 w-3" />
+                              <span className="font-medium">模型已切换</span>
+                            </div>
+                            <div className="text-xs">
+                              {detail.fallbackFromProvider && detail.fallbackToProvider && (
+                                <div>
+                                  从 <span className="font-medium">{detail.fallbackFromProvider}</span> 切换到 <span className="font-medium">{detail.fallbackToProvider}</span>
+                                </div>
+                              )}
+                              {detail.fallbackFromEndpoint && detail.fallbackToEndpoint && (
+                                <div className="mt-1">
+                                  模型: <span className="font-medium">{detail.fallbackFromEndpoint}</span> → <span className="font-medium">{detail.fallbackToEndpoint}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 错误信息 - 只有在非 ERROR_MESSAGE 类型时才显示，避免重复 */}
+                      {detail.errorMessage && detail.stepType !== 'ERROR_MESSAGE' && (
                         <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-600">
                           <div className="flex items-center space-x-1">
                             <AlertCircle className="h-3 w-3" />

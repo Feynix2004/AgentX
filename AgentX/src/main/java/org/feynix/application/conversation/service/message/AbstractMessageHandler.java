@@ -639,11 +639,21 @@ public abstract class AbstractMessageHandler {
      * @return 模型调用信息 */
     protected ModelCallInfo buildModelCallInfo(ChatContext chatContext, ChatResponse chatResponse, long callTime,
             boolean success) {
-        return ModelCallInfo.builder().modelId(chatContext.getModel().getModelId())
+        // 检查是否发生了模型切换
+        boolean modelSwitched = chatContext.getOriginalModel() != null 
+                && !chatContext.getOriginalModel().getId().equals(chatContext.getModel().getId());
+        
+        return ModelCallInfo.builder()
+                .modelEndpoint(chatContext.getModel().getModelEndpoint())
                 .providerName(
                         chatContext.getProvider().getName() + (chatContext.getProvider().getIsOfficial() ? "(官方)" : ""))
                 .inputTokens(chatResponse.tokenUsage().inputTokenCount())
-                .outputTokens(chatResponse.tokenUsage().outputTokenCount()).callTime((int) callTime).success(success)
+                .outputTokens(chatResponse.tokenUsage().outputTokenCount())
+                .callTime((int) callTime)
+                .success(success)
+                .fallbackUsed(modelSwitched)
+                .originalEndpoint(modelSwitched ? chatContext.getOriginalModel().getModelEndpoint() : null)
+                .originalProviderName(modelSwitched ? chatContext.getOriginalProvider().getName() + (chatContext.getOriginalProvider().getIsOfficial() ? "(官方)" : "") : null)
                 .build();
     }
 

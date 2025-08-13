@@ -5,8 +5,8 @@ import java.math.BigDecimal;
 /** 模型调用信息值对象 封装单次模型调用的详细信息 */
 public class ModelCallInfo {
 
-    /** 模型ID */
-    private final String modelId;
+    /** 模型部署名称 */
+    private final String modelEndpoint;
 
     /** 提供商名称 */
     private final String providerName;
@@ -32,11 +32,14 @@ public class ModelCallInfo {
     /** 降级原因 */
     private final String fallbackReason;
 
-    /** 原始模型 */
-    private final String originalModel;
+    /** 原始模型部署名称 */
+    private final String originalEndpoint;
+
+    /** 原始服务商名称 */
+    private final String originalProviderName;
 
     private ModelCallInfo(Builder builder) {
-        this.modelId = builder.modelId;
+        this.modelEndpoint = builder.modelEndpoint;
         this.providerName = builder.providerName;
         this.inputTokens = builder.inputTokens;
         this.outputTokens = builder.outputTokens;
@@ -45,7 +48,8 @@ public class ModelCallInfo {
         this.errorMessage = builder.errorMessage;
         this.fallbackUsed = builder.fallbackUsed;
         this.fallbackReason = builder.fallbackReason;
-        this.originalModel = builder.originalModel;
+        this.originalEndpoint = builder.originalEndpoint;
+        this.originalProviderName = builder.originalProviderName;
     }
 
     public static Builder builder() {
@@ -53,7 +57,7 @@ public class ModelCallInfo {
     }
 
     public static class Builder {
-        private String modelId;
+        private String modelEndpoint;
         private String providerName;
         private Integer inputTokens;
         private Integer outputTokens;
@@ -62,10 +66,11 @@ public class ModelCallInfo {
         private String errorMessage;
         private Boolean fallbackUsed = false;
         private String fallbackReason;
-        private String originalModel;
+        private String originalEndpoint;
+        private String originalProviderName;
 
-        public Builder modelId(String modelId) {
-            this.modelId = modelId;
+        public Builder modelEndpoint(String modelEndpoint) {
+            this.modelEndpoint = modelEndpoint;
             return this;
         }
 
@@ -109,8 +114,13 @@ public class ModelCallInfo {
             return this;
         }
 
-        public Builder originalModel(String originalModel) {
-            this.originalModel = originalModel;
+        public Builder originalEndpoint(String originalEndpoint) {
+            this.originalEndpoint = originalEndpoint;
+            return this;
+        }
+
+        public Builder originalProviderName(String originalProviderName) {
+            this.originalProviderName = originalProviderName;
             return this;
         }
 
@@ -120,8 +130,8 @@ public class ModelCallInfo {
     }
 
     // Getter方法
-    public String getModelId() {
-        return modelId;
+    public String getModelEndpoint() {
+        return modelEndpoint;
     }
 
     public String getProviderName() {
@@ -156,8 +166,12 @@ public class ModelCallInfo {
         return fallbackReason;
     }
 
-    public String getOriginalModel() {
-        return originalModel;
+    public String getOriginalEndpoint() {
+        return originalEndpoint;
+    }
+
+    public String getOriginalProviderName() {
+        return originalProviderName;
     }
 
     /** 获取总Token数 */
@@ -170,7 +184,7 @@ public class ModelCallInfo {
 
     @Override
     public String toString() {
-        return "ModelCallInfo{" + "modelId='" + modelId + '\'' + ", providerName='" + providerName + '\''
+        return "ModelCallInfo{" + "modelEndpoint='" + modelEndpoint + '\'' + ", providerName='" + providerName + '\''
                 + ", inputTokens=" + inputTokens + ", outputTokens=" + outputTokens + ", callTime=" + callTime
                 + ", success=" + success + ", fallbackUsed=" + fallbackUsed + '}';
     }
