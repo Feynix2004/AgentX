@@ -107,14 +107,15 @@ public class AgentExecutionTraceDomainService {
         }
 
         AgentExecutionDetailEntity detail = AgentExecutionDetailEntity.createAiResponseStep(traceContext.getSessionId(),
-                traceContext.nextSequence(), aiResponse, modelCallInfo.getModelEndpoint(), modelCallInfo.getProviderName(),
-                modelCallInfo.getOutputTokens(), // AI响应使用输出Token数
+                traceContext.nextSequence(), aiResponse, modelCallInfo.getModelEndpoint(),
+                modelCallInfo.getProviderName(), modelCallInfo.getOutputTokens(), // AI响应使用输出Token数
                 modelCallInfo.getCallTime(), eventTime);
 
         // 设置降级信息
         if (Boolean.TRUE.equals(modelCallInfo.getFallbackUsed())) {
             detail.setFallbackInfo(modelCallInfo.getFallbackReason(), modelCallInfo.getOriginalEndpoint(),
-                    modelCallInfo.getModelEndpoint(), modelCallInfo.getOriginalProviderName(), modelCallInfo.getProviderName());
+                    modelCallInfo.getModelEndpoint(), modelCallInfo.getOriginalProviderName(),
+                    modelCallInfo.getProviderName());
         }
 
         // 设置错误信息
@@ -607,16 +608,14 @@ public class AgentExecutionTraceDomainService {
 
         try {
             // 创建异常记录
-            AgentExecutionDetailEntity errorEntity = AgentExecutionDetailEntity.createErrorMessageStep(
-                    traceContext.getSessionId(), errorMessage, eventTime);
-            
+            AgentExecutionDetailEntity errorEntity = AgentExecutionDetailEntity
+                    .createErrorMessageStep(traceContext.getSessionId(), errorMessage, eventTime);
+
             detailRepository.insert(errorEntity);
-            
-            logger.debug("记录异常消息成功: SessionId={}, ErrorMessage={}", 
-                    traceContext.getSessionId(), errorMessage);
+
+            logger.debug("记录异常消息成功: SessionId={}, ErrorMessage={}", traceContext.getSessionId(), errorMessage);
         } catch (Exception e) {
-            logger.warn("记录异常消息失败: SessionId={}, error={}", 
-                    traceContext.getSessionId(), e.getMessage());
+            logger.warn("记录异常消息失败: SessionId={}, error={}", traceContext.getSessionId(), e.getMessage());
         }
     }
 

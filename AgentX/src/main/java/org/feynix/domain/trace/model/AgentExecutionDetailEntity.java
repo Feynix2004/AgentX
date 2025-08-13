@@ -145,7 +145,8 @@ public class AgentExecutionDetailEntity extends BaseEntity {
 
     /** 创建AI响应步骤 */
     public static AgentExecutionDetailEntity createAiResponseStep(String sessionId, Integer sequenceNo,
-            String aiResponse, String modelEndpoint, String providerName, Integer messageTokens, Integer modelCallTime) {
+            String aiResponse, String modelEndpoint, String providerName, Integer messageTokens,
+            Integer modelCallTime) {
         AgentExecutionDetailEntity entity = new AgentExecutionDetailEntity();
         entity.setSessionId(sessionId);
         entity.setMessageContent(aiResponse);
@@ -207,7 +208,8 @@ public class AgentExecutionDetailEntity extends BaseEntity {
     }
 
     /** 设置模型降级信息 */
-    public void setFallbackInfo(String reason, String fromEndpoint, String toEndpoint, String fromProvider, String toProvider) {
+    public void setFallbackInfo(String reason, String fromEndpoint, String toEndpoint, String fromProvider,
+            String toProvider) {
         this.isFallbackUsed = true;
         this.fallbackReason = reason;
         this.fallbackFromEndpoint = fromEndpoint;
@@ -223,7 +225,8 @@ public class AgentExecutionDetailEntity extends BaseEntity {
     }
 
     /** 创建异常消息步骤 */
-    public static AgentExecutionDetailEntity createErrorMessageStep(String sessionId, String errorMessage, LocalDateTime eventTime) {
+    public static AgentExecutionDetailEntity createErrorMessageStep(String sessionId, String errorMessage,
+            LocalDateTime eventTime) {
         AgentExecutionDetailEntity entity = new AgentExecutionDetailEntity();
         entity.setSessionId(sessionId);
         entity.setMessageContent(errorMessage != null ? errorMessage : "未知错误");

@@ -163,10 +163,10 @@ public abstract class TracingMessageHandler extends AbstractMessageHandler {
             try {
                 // 记录汇总表的失败状态（现有逻辑）
                 traceCollector.recordFailure(traceContext, errorPhase, throwable);
-                
+
                 // 记录异常详情到详细记录表（新增逻辑）
                 traceCollector.recordErrorDetail(traceContext, errorPhase, throwable);
-                
+
                 logger.debug("对话异常 - TraceId: {}, 阶段: {}, 异常: {}", traceContext.getTraceId(),
                         errorPhase.getDescription(), throwable.getMessage());
             } catch (Exception e) {

@@ -46,7 +46,8 @@ public class TraceEventListener {
     @EventListener
     public void handleModelCalled(ModelCalledEvent event) {
         try {
-            logger.debug("模型调用完成 - TraceId: {}, ModelEndpoint: {}, InputTokens: {}, OutputTokens: {}, ResponseStartTime: {}",
+            logger.debug(
+                    "模型调用完成 - TraceId: {}, ModelEndpoint: {}, InputTokens: {}, OutputTokens: {}, ResponseStartTime: {}",
                     event.getTraceContext().getTraceId(), event.getModelCallInfo().getModelEndpoint(),
                     event.getModelCallInfo().getInputTokens(), event.getModelCallInfo().getOutputTokens(),
                     event.getAiResponseStartTime());

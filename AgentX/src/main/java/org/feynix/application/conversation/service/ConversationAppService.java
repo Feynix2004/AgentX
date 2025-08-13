@@ -225,8 +225,8 @@ public class ConversationAppService {
         provider.isActive();
 
         // 5. 创建并配置环境对象
-        ChatContext chatContext = createChatContext(chatRequest, userId, agent, model, selectedModel, originalProvider, provider, llmModelConfig,
-                mcpServerNames, instanceId);
+        ChatContext chatContext = createChatContext(chatRequest, userId, agent, model, selectedModel, originalProvider,
+                provider, llmModelConfig, mcpServerNames, instanceId);
         setupContextAndHistory(chatContext, chatRequest);
 
         return chatContext;
@@ -278,8 +278,9 @@ public class ConversationAppService {
     }
 
     /** 创建ChatContext对象 */
-    private ChatContext createChatContext(ChatRequest chatRequest, String userId, AgentEntity agent, ModelEntity originalModel, 
-            ModelEntity selectedModel, ProviderEntity originalProvider, ProviderEntity provider, LLMModelConfig llmModelConfig, List<String> mcpServerNames, String instanceId) {
+    private ChatContext createChatContext(ChatRequest chatRequest, String userId, AgentEntity agent,
+            ModelEntity originalModel, ModelEntity selectedModel, ProviderEntity originalProvider,
+            ProviderEntity provider, LLMModelConfig llmModelConfig, List<String> mcpServerNames, String instanceId) {
         ChatContext chatContext = new ChatContext();
         chatContext.setSessionId(chatRequest.getSessionId());
         chatContext.setUserId(userId);
