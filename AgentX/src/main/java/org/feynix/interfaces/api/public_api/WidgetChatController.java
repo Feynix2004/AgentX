@@ -47,12 +47,27 @@ public class WidgetChatController {
             // 2. 获取小组件配置
             AgentWidgetEntity widget = agentWidgetAppService.getWidgetForPublicAccess(publicId);
             
-            // 3. 构建响应信息
+            // 3. 获取完整的widget信息（包括agent配置）
+            var fullWidgetInfo = agentWidgetAppService.getWidgetInfoForPublicAccess(publicId);
+            
+            // 4. 构建响应信息
             WidgetInfoResponse response = new WidgetInfoResponse();
             response.setPublicId(widget.getPublicId());
             response.setEmbedName(widget.getEmbedName());
             response.setEmbedDescription(widget.getEmbedDescription());
             response.setDailyLimit(widget.getDailyLimit());
+            response.setEnabled(widget.getEnabled());
+            
+            // 5. 设置agent相关信息（用于无会话聊天）
+            if (fullWidgetInfo != null) {
+                response.setAgentName(fullWidgetInfo.getAgentName());
+                response.setAgentAvatar(fullWidgetInfo.getAgentAvatar());
+                response.setWelcomeMessage(fullWidgetInfo.getWelcomeMessage());
+                response.setSystemPrompt(fullWidgetInfo.getSystemPrompt());
+                response.setToolIds(fullWidgetInfo.getToolIds());
+                response.setKnowledgeBaseIds(fullWidgetInfo.getKnowledgeBaseIds());
+                response.setDailyCalls(fullWidgetInfo.getDailyCalls());
+            }
             
             return Result.success(response);
             
@@ -63,12 +78,15 @@ public class WidgetChatController {
         }
     }
 
-    /** 小组件聊天接口（流式）
+    // TODO: 以下聊天端点已被前端直接调用预览聊天API替代，暂时注释以避免编译错误
+    /*
+    /** 小组件聊天接口（流式） - 已废弃，前端直接使用预览聊天API
      *
      * @param publicId 公开访问ID
      * @param request 聊天请求
      * @param httpRequest HTTP请求
      * @return SSE流 */
+    /*
     @PostMapping("/{publicId}/chat")
     public SseEmitter widgetChat(@PathVariable String publicId,
                               @RequestBody @Validated WidgetChatRequest request,
@@ -83,7 +101,7 @@ public class WidgetChatController {
             // 2. 获取小组件配置
             AgentWidgetEntity widget = agentWidgetAppService.getWidgetForPublicAccess(publicId);
 
-            // 3. 处理小组件聊天
+            // 3. 处理小组件聊天 - 现在由前端直接调用预览聊天API
             return conversationAppService.widgetChat(publicId, request, widget);
             
         } catch (BusinessException e) {
@@ -92,13 +110,16 @@ public class WidgetChatController {
             throw new BusinessException("聊天服务异常：" + e.getMessage());
         }
     }
+    */
 
-    /** 小组件聊天接口（同步）
+    /*
+    /** 小组件聊天接口（同步） - 已废弃，前端直接使用预览聊天API
      *
      * @param publicId 公开访问ID
      * @param request 聊天请求
      * @param httpRequest HTTP请求
      * @return 同步聊天响应 */
+    /*
     @PostMapping("/{publicId}/chat/sync")
     public Result<ChatResponse> widgetChatSync(@PathVariable String publicId,
                                             @RequestBody @Validated WidgetChatRequest request,
@@ -113,7 +134,7 @@ public class WidgetChatController {
             // 2. 获取小组件配置
             AgentWidgetEntity widget = agentWidgetAppService.getWidgetForPublicAccess(publicId);
 
-            // 3. 处理同步聊天
+            // 3. 处理同步聊天 - 现在由前端直接调用预览聊天API
             ChatResponse response = conversationAppService.widgetChatSync(publicId, request, widget);
             return Result.success(response);
             
@@ -123,6 +144,7 @@ public class WidgetChatController {
             return Result.error(500, "聊天服务异常：" + e.getMessage());
         }
     }
+    */
 
     /** 验证域名访问权限
      *
@@ -159,6 +181,16 @@ public class WidgetChatController {
         private String embedName;
         private String embedDescription;
         private Integer dailyLimit;
+        private Integer dailyCalls;
+        private Boolean enabled;
+        
+        // Agent相关信息（用于无会话聊天）
+        private String agentName;
+        private String agentAvatar;
+        private String welcomeMessage;
+        private String systemPrompt;
+        private java.util.List<String> toolIds;
+        private java.util.List<String> knowledgeBaseIds;
 
         // Getter和Setter方法
         public String getPublicId() {
@@ -191,6 +223,70 @@ public class WidgetChatController {
 
         public void setDailyLimit(Integer dailyLimit) {
             this.dailyLimit = dailyLimit;
+        }
+
+        public Integer getDailyCalls() {
+            return dailyCalls;
+        }
+
+        public void setDailyCalls(Integer dailyCalls) {
+            this.dailyCalls = dailyCalls;
+        }
+
+        public Boolean getEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(Boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public String getAgentName() {
+            return agentName;
+        }
+
+        public void setAgentName(String agentName) {
+            this.agentName = agentName;
+        }
+
+        public String getAgentAvatar() {
+            return agentAvatar;
+        }
+
+        public void setAgentAvatar(String agentAvatar) {
+            this.agentAvatar = agentAvatar;
+        }
+
+        public String getWelcomeMessage() {
+            return welcomeMessage;
+        }
+
+        public void setWelcomeMessage(String welcomeMessage) {
+            this.welcomeMessage = welcomeMessage;
+        }
+
+        public String getSystemPrompt() {
+            return systemPrompt;
+        }
+
+        public void setSystemPrompt(String systemPrompt) {
+            this.systemPrompt = systemPrompt;
+        }
+
+        public java.util.List<String> getToolIds() {
+            return toolIds;
+        }
+
+        public void setToolIds(java.util.List<String> toolIds) {
+            this.toolIds = toolIds;
+        }
+
+        public java.util.List<String> getKnowledgeBaseIds() {
+            return knowledgeBaseIds;
+        }
+
+        public void setKnowledgeBaseIds(java.util.List<String> knowledgeBaseIds) {
+            this.knowledgeBaseIds = knowledgeBaseIds;
         }
     }
 }

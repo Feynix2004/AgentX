@@ -1,19 +1,26 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Send, MessageCircle, User, Loader2 } from "lucide-react";
+import { Send, MessageCircle, User, Loader2, Bot, Wrench } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { previewAgentStream, handlePreviewStream, type AgentPreviewRequest, type MessageHistoryItem, type AgentChatResponse } from '@/lib/agent-preview-service';
+import { MessageType } from '@/types/conversation';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { Highlight, themes } from 'prism-react-renderer';
 
 interface Message {
   id: string;
-  type: 'user' | 'assistant';
+  role: 'USER' | 'ASSISTANT' | 'SYSTEM';
   content: string;
-  timestamp: Date;
+  timestamp: number;
+  isStreaming?: boolean;
+  type?: MessageType;
 }
 
 interface WidgetChatInterfaceProps {
@@ -21,157 +28,463 @@ interface WidgetChatInterfaceProps {
   agentName: string;
   agentAvatar?: string;
   welcomeMessage?: string;
+  systemPrompt?: string;
+  toolIds?: string[];
+  knowledgeBaseIds?: string[];
 }
 
 export function WidgetChatInterface({ 
   publicId, 
   agentName, 
   agentAvatar,
-  welcomeMessage 
+  welcomeMessage,
+  systemPrompt,
+  toolIds,
+  knowledgeBaseIds
 }: WidgetChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [isThinking, setIsThinking] = useState(false);
+  const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  
+  // 消息处理状态管理（复用预览聊天逻辑）
+  const hasReceivedFirstResponse = useRef(false);
+  const messageContentAccumulator = useRef({
+    content: "",
+    type: MessageType.TEXT as MessageType
+  });
+  const messageSequenceNumber = useRef(0);
+  const [completedTextMessages, setCompletedTextMessages] = useState<Set<string>>(new Set());
+  const [currentAssistantMessage, setCurrentAssistantMessage] = useState<{ id: string; hasContent: boolean } | null>(null);
+  const [autoScroll, setAutoScroll] = useState(true);
 
-  // 自动滚动到底部
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
+  // 智能滚动到底部 - 只在自动滚动开启时滚动
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    if (autoScroll && messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, isThinking, autoScroll]);
 
-  // 初始化时添加欢迎消息
+  // 处理用户主动发送消息时强制滚动到底部
+  const scrollToBottom = useCallback(() => {
+    setAutoScroll(true);
+    // 使用setTimeout确保在下一个渲染周期执行
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 100);
+  }, []);
+
+  // 初始化时添加欢迎消息和状态重置
   useEffect(() => {
+    // 重置消息处理状态
+    hasReceivedFirstResponse.current = false;
+    messageContentAccumulator.current = {
+      content: "",
+      type: MessageType.TEXT
+    };
+    setCompletedTextMessages(new Set());
+    messageSequenceNumber.current = 0;
+    setCurrentAssistantMessage(null);
+    
     if (welcomeMessage && messages.length === 0) {
       const welcomeMsg: Message = {
         id: 'welcome',
-        type: 'assistant',
+        role: 'ASSISTANT',
         content: welcomeMessage,
-        timestamp: new Date(),
+        timestamp: Date.now(),
+        type: MessageType.TEXT
       };
       setMessages([welcomeMsg]);
     }
   }, [welcomeMessage]);
 
-  // 发送消息
+  // 发送消息 - 使用无会话模式，复用预览聊天逻辑
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
-      type: 'user',
+      role: 'USER',
       content: inputValue.trim(),
-      timestamp: new Date(),
+      timestamp: Date.now(),
+      type: MessageType.TEXT
     };
 
+    // 添加用户消息
     setMessages(prev => [...prev, userMessage]);
     setInputValue('');
     setIsLoading(true);
+    setIsThinking(true); // 设置思考状态
+    setCurrentAssistantMessage(null); // 重置助手消息状态
+    scrollToBottom(); // 用户发送新消息时强制滚动到底部
+    
+    // 重置所有状态
+    setCompletedTextMessages(new Set());
+    resetMessageAccumulator();
+    hasReceivedFirstResponse.current = false;
+    messageSequenceNumber.current = 0;
 
     try {
-      // 构建请求体
-      const requestBody = {
-        message: userMessage.content,
-        sessionId: sessionId || undefined,
+      // 构建消息历史 - 包含完整的对话历史
+      const messageHistory: MessageHistoryItem[] = messages
+        .filter(msg => msg.id !== 'welcome') // 排除欢迎消息
+        .map(msg => ({
+          id: msg.id,
+          role: msg.role,
+          content: msg.content,
+          createdAt: new Date(msg.timestamp).toISOString(),
+        }));
+
+      // 构建预览请求 - 使用无会话模式
+      const previewRequest: AgentPreviewRequest = {
+        userMessage: userMessage.content,
+        systemPrompt,
+        toolIds,
+        messageHistory,
+        knowledgeBaseIds: knowledgeBaseIds && knowledgeBaseIds.length > 0 ? knowledgeBaseIds : undefined
       };
 
-      const response = await fetch(`/api/widget/${publicId}/chat`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Referer': window.location.origin,
-        },
-        body: JSON.stringify(requestBody),
-      });
+      console.log('Widget 无会话聊天请求数据:', previewRequest);
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      // 使用预览聊天的流式处理方式
+      const stream = await previewAgentStream(previewRequest);
+      if (!stream) {
+        throw new Error('Failed to get preview stream');
       }
 
-      // 处理SSE流式响应
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-
-      if (!reader) {
-        throw new Error('无法读取响应流');
-      }
-
-      let assistantMessageId = Date.now().toString();
-      let assistantContent = '';
-
-      // 添加空的助手消息
-      const assistantMessage: Message = {
-        id: assistantMessageId,
-        type: 'assistant',
-        content: '',
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, assistantMessage]);
-
-      // 读取流式数据
-      while (true) {
-        const { done, value } = await reader.read();
-        
-        if (done) break;
-
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n');
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            
-            if (data === '[DONE]') {
-              break;
-            }
-
-            try {
-              const parsed = JSON.parse(data);
-              
-              // 保存sessionId
-              if (parsed.sessionId && !sessionId) {
-                setSessionId(parsed.sessionId);
-              }
-
-              // 累积消息内容
-              if (parsed.content) {
-                assistantContent += parsed.content;
-                
-                // 更新消息内容
-                setMessages(prev => prev.map(msg => 
-                  msg.id === assistantMessageId 
-                    ? { ...msg, content: assistantContent }
-                    : msg
-                ));
-              }
-            } catch (error) {
-              console.error('解析SSE数据错误:', error);
-            }
-          }
-        }
-      }
-
-    } catch (error) {
-      console.error('发送消息错误:', error);
+      // 生成基础消息ID，作为所有消息序列的前缀
+      const baseMessageId = Date.now().toString();
       
-      // 添加错误消息
-      const errorMessage: Message = {
-        id: Date.now().toString(),
-        type: 'assistant',
-        content: '抱歉，发生了一些错误，请稍后再试。',
-        timestamp: new Date(),
+      // 重置状态
+      hasReceivedFirstResponse.current = false;
+      messageContentAccumulator.current = {
+        content: "",
+        type: MessageType.TEXT
       };
-      setMessages(prev => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
-      // 重新聚焦输入框
-      inputRef.current?.focus();
+
+      await handlePreviewStream(
+        stream,
+        (response: AgentChatResponse) => {
+          console.log('收到Widget流式响应:', response);
+          // 处理消息 - 传递baseMessageId作为前缀
+          handleStreamDataMessage(response, baseMessageId);
+        },
+        (error: Error) => {
+          console.error('Widget stream error:', error);
+          handleStreamError(error);
+        },
+        () => {
+          console.log('Widget stream completed');
+          setIsLoading(false);
+          setIsThinking(false);
+        }
+      );
+    } catch (error) {
+      console.error('Widget 无会话聊天请求失败:', error);
+      handleStreamError(error instanceof Error ? error : new Error('未知错误'));
     }
+  };
+
+  // 消息处理主函数 - 与预览聊天保持一致
+  const handleStreamDataMessage = (data: AgentChatResponse, baseMessageId: string) => {
+    // 首次响应处理
+    if (!hasReceivedFirstResponse.current) {
+      hasReceivedFirstResponse.current = true;
+      setIsThinking(false);
+    }
+    
+    // 处理错误消息
+    if (isErrorMessage(data)) {
+      handleErrorMessage(data);
+      return;
+    }
+    
+    // 获取消息类型，默认为TEXT
+    const messageType = (data.messageType as MessageType) || MessageType.TEXT;
+    
+    // 生成当前消息序列的唯一ID
+    const currentMessageId = `assistant-${messageType}-${baseMessageId}-seq${messageSequenceNumber.current}`;
+    
+    console.log(`处理消息: 类型=${messageType}, 序列=${messageSequenceNumber.current}, ID=${currentMessageId}, done=${data.done}`);
+    
+    // 处理消息内容（用于UI显示）
+    const displayableTypes = [undefined, "TEXT", "TOOL_CALL"];
+    const isDisplayableType = displayableTypes.includes(data.messageType);
+    
+    if (isDisplayableType && data.content) {
+      // 累积消息内容
+      messageContentAccumulator.current.content += data.content;
+      messageContentAccumulator.current.type = messageType;
+      
+      // 更新UI显示
+      updateOrCreateMessageInUI(currentMessageId, messageContentAccumulator.current);
+    }
+    
+    // 消息结束信号处理
+    if (data.done) {
+      console.log(`消息完成 (done=true), 类型: ${messageType}, 序列: ${messageSequenceNumber.current}`);
+      
+      // 如果是可显示类型且有内容，完成该消息
+      if (isDisplayableType && messageContentAccumulator.current.content) {
+        finalizeMessage(currentMessageId, messageContentAccumulator.current);
+      }
+      
+      // 无论如何，都重置消息累积器，准备接收下一条消息
+      resetMessageAccumulator();
+      
+      // 增加消息序列计数
+      messageSequenceNumber.current += 1;
+      
+      console.log(`消息序列增加到: ${messageSequenceNumber.current}`);
+    }
+  };
+  
+  // 更新或创建UI消息
+  const updateOrCreateMessageInUI = (messageId: string, messageData: {
+    content: string;
+    type: MessageType;
+  }) => {
+    // 使用函数式更新，在一次原子操作中检查并更新/创建消息
+    setMessages(prev => {
+      // 检查消息是否已存在
+      const messageIndex = prev.findIndex(msg => msg.id === messageId);
+      
+      if (messageIndex >= 0) {
+        // 消息已存在，只需更新内容
+        console.log(`更新现有消息: ${messageId}, 内容长度: ${messageData.content.length}`);
+        const newMessages = [...prev];
+        newMessages[messageIndex] = {
+          ...newMessages[messageIndex],
+          content: messageData.content
+        };
+        return newMessages;
+      } else {
+        // 消息不存在，创建新消息
+        console.log(`创建新消息: ${messageId}, 类型: ${messageData.type}`);
+        return [
+          ...prev,
+          {
+            id: messageId,
+            role: "ASSISTANT" as const,
+            content: messageData.content,
+            type: messageData.type,
+            timestamp: Date.now(),
+            isStreaming: true
+          }
+        ];
+      }
+    });
+    
+    // 更新当前助手消息状态
+    setCurrentAssistantMessage({ id: messageId, hasContent: true });
+    setStreamingMessageId(messageId);
+  };
+  
+  // 完成消息处理
+  const finalizeMessage = (messageId: string, messageData: {
+    content: string;
+    type: MessageType;
+  }) => {
+    console.log(`完成消息: ${messageId}, 类型: ${messageData.type}, 内容长度: ${messageData.content.length}`);
+    
+    // 如果消息内容为空，不处理
+    if (!messageData.content || messageData.content.trim() === "") {
+      console.log("消息内容为空，不处理");
+      return;
+    }
+    
+    // 确保UI已更新到最终状态，使用相同的原子操作模式
+    setMessages(prev => {
+      // 检查消息是否已存在
+      const messageIndex = prev.findIndex(msg => msg.id === messageId);
+      
+      if (messageIndex >= 0) {
+        // 消息已存在，更新内容
+        console.log(`完成现有消息: ${messageId}`);
+        const newMessages = [...prev];
+        newMessages[messageIndex] = {
+          ...newMessages[messageIndex],
+          content: messageData.content,
+          isStreaming: false
+        };
+        return newMessages;
+      } else {
+        // 消息不存在，创建新消息
+        console.log(`创建并完成新消息: ${messageId}`);
+        return [
+          ...prev,
+          {
+            id: messageId,
+            role: "ASSISTANT" as const,
+            content: messageData.content,
+            type: messageData.type,
+            timestamp: Date.now(),
+            isStreaming: false
+          }
+        ];
+      }
+    });
+    
+    // 标记消息为已完成
+    setCompletedTextMessages(prev => {
+      const newSet = new Set(prev);
+      newSet.add(messageId);
+      return newSet;
+    });
+    
+    setStreamingMessageId(null);
+  };
+
+  // 重置消息累积器
+  const resetMessageAccumulator = () => {
+    console.log("重置消息累积器");
+    messageContentAccumulator.current = {
+      content: "",
+      type: MessageType.TEXT
+    };
+  };
+
+  // 判断是否为错误消息
+  const isErrorMessage = (data: AgentChatResponse): boolean => {
+    return !!data.content && (
+      data.content.includes("Error updating database") || 
+      data.content.includes("PSQLException") || 
+      data.content.includes("任务执行过程中发生错误")
+    );
+  };
+
+  // 处理错误消息
+  const handleErrorMessage = (data: AgentChatResponse) => {
+    console.error("检测到后端错误:", data.content);
+    // 这里可以添加 toast 通知，但先保持简单
+  };
+
+  // 处理流处理错误
+  const handleStreamError = (error: Error) => {
+    setIsThinking(false);
+    setIsLoading(false);
+    setStreamingMessageId(null);
+    
+    // 添加错误消息到聊天
+    const errorMessage: Message = {
+      id: Date.now().toString(),
+      role: 'ASSISTANT',
+      content: '抱歉，发生了一些错误，请稍后再试。',
+      timestamp: Date.now(),
+      type: MessageType.TEXT
+    };
+    setMessages(prev => [...prev, errorMessage]);
+    
+    // 重新聚焦输入框
+    inputRef.current?.focus();
+  };
+
+  // 根据消息类型获取图标和文本
+  const getMessageTypeInfo = (type?: MessageType) => {
+    switch (type) {
+      case MessageType.TOOL_CALL:
+        return {
+          icon: <Wrench className="h-4 w-4 text-blue-500" />,
+          text: '工具调用'
+        };
+      case MessageType.TEXT:
+      default:
+        return {
+          icon: <Bot className="h-4 w-4" />,
+          text: agentName
+        };
+    }
+  };
+
+  // 格式化消息时间
+  const formatMessageTime = (timestamp?: number | string) => {
+    if (!timestamp) return '刚刚';
+    try {
+      const date = typeof timestamp === 'number' ? new Date(timestamp) : new Date(timestamp);
+      return date.toLocaleString('zh-CN', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (e) {
+      return '刚刚';
+    }
+  };
+
+  // 渲染Markdown内容
+  const renderMessageContent = (content: string) => {
+    return (
+      <div className="react-markdown">
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          components={{
+            // 代码块渲染
+            code({ inline, className, children, ...props }: any) {
+              const match = /language-(\w+)/.exec(className || "");
+              return !inline && match ? (
+                <Highlight
+                  theme={themes.vsDark}
+                  code={String(children).replace(/\n$/, "")}
+                  language={match[1]}
+                >
+                  {({ className, style, tokens, getLineProps, getTokenProps }) => (
+                    <div className="code-block-container">
+                      <pre
+                        className={`${className} rounded p-2 my-2 overflow-x-auto max-w-full text-sm`}
+                        style={{...style, wordBreak: 'break-all', overflowWrap: 'break-word'}}
+                      >
+                        {tokens.map((line, i) => {
+                          // 获取line props但不通过展开操作符传递key
+                          const lineProps = getLineProps({ line, key: i });
+                          return (
+                            <div 
+                              key={i} 
+                              className={lineProps.className}
+                              style={{
+                                ...lineProps.style,
+                                whiteSpace: 'pre-wrap', 
+                                wordBreak: 'break-all'
+                              }}
+                            >
+                              <span className="text-gray-500 mr-2 text-right w-6 inline-block select-none">
+                                {i + 1}
+                              </span>
+                              {line.map((token, tokenIndex) => {
+                                // 获取token props但不包含key
+                                const tokenProps = getTokenProps({ token, key: tokenIndex });
+                                // 删除key属性，使用单独的key属性
+                                return <span 
+                                  key={tokenIndex} 
+                                  className={tokenProps.className}
+                                  style={{
+                                    ...tokenProps.style,
+                                    wordBreak: 'break-all',
+                                    overflowWrap: 'break-word'
+                                  }}
+                                  children={tokenProps.children}
+                                />
+                              })}
+                            </div>
+                          )
+                        })}
+                      </pre>
+                    </div>
+                  )}
+                </Highlight>
+              ) : (
+                <code className={`${className} bg-gray-100 px-1 py-0.5 rounded break-all`} {...props}>
+                  {children}
+                </code>
+              );
+            },
+          }}
+        >
+          {content}
+        </ReactMarkdown>
+      </div>
+    );
   };
 
   // 处理回车发送
@@ -188,71 +501,117 @@ export function WidgetChatInterface({
       <ScrollArea className="flex-1 p-4">
         <div className="space-y-4">
           {messages.map((message) => (
-            <div
-              key={message.id}
-              className={cn(
-                "flex gap-3",
-                message.type === 'user' ? "justify-end" : "justify-start"
-              )}
-            >
-              {message.type === 'assistant' && (
-                <Avatar className="h-8 w-8 mt-1">
-                  {agentAvatar ? (
-                    <AvatarImage src={agentAvatar} alt={agentName} />
-                  ) : (
-                    <AvatarFallback>
-                      <MessageCircle className="h-4 w-4" />
-                    </AvatarFallback>
-                  )}
-                </Avatar>
-              )}
-              
-              <div
-                className={cn(
-                  "max-w-[80%] rounded-lg px-3 py-2 text-sm",
-                  message.type === 'user'
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground"
-                )}
-              >
-                <div className="whitespace-pre-wrap">{message.content}</div>
-                <div className="text-xs mt-1 opacity-70">
-                  {message.timestamp.toLocaleTimeString('zh-CN', { 
-                    hour: '2-digit', 
-                    minute: '2-digit' 
-                  })}
+            <div key={message.id} className="w-full">
+              {/* 用户消息 */}
+              {message.role === 'USER' ? (
+                <div className="flex justify-end">
+                  <div className="max-w-[80%]">
+                    {/* 消息内容 */}
+                    {message.content && (
+                      <div className="bg-blue-50 text-gray-800 p-3 rounded-lg shadow-sm">
+                        <div className="text-sm whitespace-pre-wrap">
+                          {message.content}
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="text-xs text-gray-500 mt-1 text-right">
+                      {formatMessageTime(message.timestamp)}
+                    </div>
+                  </div>
                 </div>
-              </div>
-
-              {message.type === 'user' && (
-                <Avatar className="h-8 w-8 mt-1">
-                  <AvatarFallback>
-                    <User className="h-4 w-4" />
-                  </AvatarFallback>
-                </Avatar>
+              ) : (
+                /* AI消息 */
+                <div className="flex items-start">
+                  <div className="h-8 w-8 mr-2 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    {message.type && message.type !== MessageType.TEXT 
+                      ? getMessageTypeInfo(message.type).icon 
+                      : (agentAvatar ? (
+                          <img src={agentAvatar} alt={agentName} className="h-8 w-8 rounded-full object-cover" />
+                        ) : (
+                          <div className="text-lg">🤖</div>
+                        ))
+                    }
+                  </div>
+                  <div className="max-w-[80%]">
+                    {/* 消息类型指示 */}
+                    <div className="flex items-center mb-1 text-xs text-gray-500">
+                      <span className="font-medium">
+                        {message.type ? getMessageTypeInfo(message.type).text : agentName}
+                      </span>
+                      <span className="mx-1 text-gray-400">·</span>
+                      <span>{formatMessageTime(message.timestamp)}</span>
+                    </div>
+                    
+                    {/* 消息内容 */}
+                    {message.content && (
+                      <div className={`p-3 rounded-lg ${
+                        message.content.startsWith('抱歉，发生了一些错误')
+                          ? 'bg-red-50 text-red-700 border border-red-200'
+                          : ''
+                      }`}>
+                        {message.content.startsWith('抱歉，发生了一些错误') ? (
+                          // 错误消息使用简单文本显示
+                          <div className="text-sm whitespace-pre-wrap">
+                            {message.content}
+                            {message.isStreaming && (
+                              <span className="inline-block w-2 h-4 bg-current opacity-75 animate-pulse ml-1" />
+                            )}
+                          </div>
+                        ) : (
+                          // 正常消息使用Markdown渲染
+                          <div className="markdown-content">
+                            {renderMessageContent(
+                              message.content + (message.isStreaming ? ' ▌' : '')
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
               )}
             </div>
           ))}
 
-          {/* 加载状态 */}
-          {isLoading && (
-            <div className="flex gap-3 justify-start">
-              <Avatar className="h-8 w-8 mt-1">
+          {/* 思考中提示 - 和预览聊天保持一致 */}
+          {isThinking && (!currentAssistantMessage || !currentAssistantMessage.hasContent) && (
+            <div className="flex items-start">
+              <div className="h-8 w-8 mr-2 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
                 {agentAvatar ? (
-                  <AvatarImage src={agentAvatar} alt={agentName} />
+                  <img src={agentAvatar} alt={agentName} className="h-8 w-8 rounded-full object-cover" />
                 ) : (
-                  <AvatarFallback>
-                    <MessageCircle className="h-4 w-4" />
-                  </AvatarFallback>
+                  <div className="text-lg">🤖</div>
                 )}
-              </Avatar>
-              <div className="bg-muted text-muted-foreground rounded-lg px-3 py-2 text-sm">
-                <div className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  正在思考...
+              </div>
+              <div className="max-w-[80%]">
+                <div className="flex items-center mb-1 text-xs text-gray-500">
+                  <span className="font-medium">{agentName}</span>
+                  <span className="mx-1 text-gray-400">·</span>
+                  <span>刚刚</span>
+                </div>
+                <div className="space-y-2 p-3 rounded-lg">
+                  <div className="flex space-x-2 items-center">
+                    <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
+                    <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse delay-75"></div>
+                    <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse delay-150"></div>
+                    <div className="text-sm text-gray-500 animate-pulse">思考中...</div>
+                  </div>
                 </div>
               </div>
             </div>
+          )}
+
+          {/* 滚动到底部按钮 - 当用户手动滚动离开底部时显示 */}
+          {!autoScroll && (isLoading || isThinking) && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="fixed bottom-32 right-6 rounded-full shadow-md bg-white z-10 hover:bg-gray-50"
+              onClick={scrollToBottom}
+            >
+              <span className="text-sm">↓ 回到底部</span>
+            </Button>
           )}
         </div>
         <div ref={messagesEndRef} />

@@ -47,16 +47,23 @@ export function WidgetCodeDialog({ open, onClose, widget, onCopy }: WidgetCodeDi
   (function() {
     const agentButton = document.createElement('div');
     agentButton.innerHTML = '💬 智能助手';
-    agentButton.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999;background:#007bff;color:white;padding:12px 20px;border-radius:25px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.15);font-family:sans-serif;';
+    agentButton.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999;' +
+      'background:#007bff;color:white;padding:12px 20px;border-radius:25px;' +
+      'cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.15);font-family:sans-serif;';
     
     agentButton.onclick = function() {
       const iframe = document.createElement('iframe');
       iframe.src = '${widgetUrl}';
-      iframe.style.cssText = 'position:fixed;bottom:80px;right:20px;width:400px;height:600px;border:none;border-radius:8px;z-index:10000;box-shadow:0 8px 32px rgba(0,0,0,0.1);';
+      iframe.style.cssText = 'position:fixed;bottom:80px;right:20px;width:400px;' +
+        'height:600px;border:none;border-radius:8px;z-index:10000;' +
+        'box-shadow:0 8px 32px rgba(0,0,0,0.1);';
       
       const closeBtn = document.createElement('div');
       closeBtn.innerHTML = '×';
-      closeBtn.style.cssText = 'position:fixed;bottom:685px;right:25px;width:20px;height:20px;background:#ff4757;color:white;border-radius:50%;text-align:center;line-height:20px;cursor:pointer;z-index:10001;font-family:sans-serif;';
+      closeBtn.style.cssText = 'position:fixed;bottom:685px;right:25px;width:20px;' +
+        'height:20px;background:#ff4757;color:white;border-radius:50%;' +
+        'text-align:center;line-height:20px;cursor:pointer;z-index:10001;' +
+        'font-family:sans-serif;';
       closeBtn.onclick = function() {
         document.body.removeChild(iframe);
         document.body.removeChild(closeBtn);
@@ -147,8 +154,8 @@ export function WidgetCodeDialog({ open, onClose, widget, onCopy }: WidgetCodeDi
             <TabsContent value="iframe" className="space-y-2">
               <Label>固定大小的iframe嵌入</Label>
               <div className="relative">
-                <pre className="bg-gray-100 p-4 rounded-lg text-xs overflow-auto max-h-48 border">
-                  <code>{embedCodes.iframe}</code>
+                <pre className="bg-gray-100 p-4 rounded-lg text-xs overflow-auto max-h-48 border whitespace-pre-wrap break-words">
+                  <code className="block overflow-x-auto">{embedCodes.iframe}</code>
                 </pre>
                 <Button
                   size="sm"
@@ -167,8 +174,8 @@ export function WidgetCodeDialog({ open, onClose, widget, onCopy }: WidgetCodeDi
             <TabsContent value="floating" className="space-y-2">
               <Label>悬浮窗口模式</Label>
               <div className="relative">
-                <pre className="bg-gray-100 p-4 rounded-lg text-xs overflow-auto max-h-48 border">
-                  <code>{embedCodes.floating}</code>
+                <pre className="bg-gray-100 p-4 rounded-lg text-xs overflow-auto max-h-48 border whitespace-pre-wrap break-words">
+                  <code className="block overflow-x-auto">{embedCodes.floating}</code>
                 </pre>
                 <Button
                   size="sm"
@@ -187,8 +194,8 @@ export function WidgetCodeDialog({ open, onClose, widget, onCopy }: WidgetCodeDi
             <TabsContent value="responsive" className="space-y-2">
               <Label>响应式嵌入</Label>
               <div className="relative">
-                <pre className="bg-gray-100 p-4 rounded-lg text-xs overflow-auto max-h-48 border">
-                  <code>{embedCodes.responsive}</code>
+                <pre className="bg-gray-100 p-4 rounded-lg text-xs overflow-auto max-h-48 border whitespace-pre-wrap break-words">
+                  <code className="block overflow-x-auto">{embedCodes.responsive}</code>
                 </pre>
                 <Button
                   size="sm"

@@ -53,6 +53,17 @@ export const API_ENDPOINTS = {
   AGENT_MODEL_CONFIG: (agentId: string) => `/agents/workspaces/${agentId}/model-config`,
   SET_AGENT_MODEL_CONFIG: (agentId: string) => `/agents/workspaces/${agentId}/model/config`,
   
+  // Widget组件相关
+  AGENT_WIDGETS: (agentId: string) => `/agents/${agentId}/widgets`, // 获取Agent的Widget列表
+  CREATE_WIDGET: (agentId: string) => `/agents/${agentId}/widgets`, // 创建Widget
+  WIDGET_DETAIL: (agentId: string, widgetId: string) => `/agents/${agentId}/widgets/${widgetId}`, // Widget详情
+  UPDATE_WIDGET: (agentId: string, widgetId: string) => `/agents/${agentId}/widgets/${widgetId}`, // 更新Widget
+  DELETE_WIDGET: (agentId: string, widgetId: string) => `/agents/${agentId}/widgets/${widgetId}`, // 删除Widget
+  TOGGLE_WIDGET_STATUS: (agentId: string, widgetId: string) => `/agents/${agentId}/widgets/${widgetId}/toggle-status`, // 切换Widget状态
+  USER_WIDGETS: "/widgets/user", // 获取用户的所有Widget
+  WIDGET_INFO: (publicId: string) => `/widget/${publicId}/info`, // 获取Widget公开信息
+  WIDGET_CHAT: (publicId: string) => `/widget/${publicId}/chat`, // Widget聊天接口
+  
   // LLM相关
   PROVIDERS: "/llms/providers",
   PROVIDER_DETAIL: (id: string) => `/llms/providers/${id}`,

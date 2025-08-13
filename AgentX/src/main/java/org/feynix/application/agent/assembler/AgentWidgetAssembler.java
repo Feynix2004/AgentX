@@ -159,16 +159,53 @@ public class AgentWidgetAssembler {
               (function() {
                 const agentButton = document.createElement('div');
                 agentButton.innerHTML = '💬 智能助手';
-                agentButton.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999;background:#007bff;color:white;padding:12px 20px;border-radius:25px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.15);font-family:sans-serif;';
+                
+                // 按钮样式（格式化为多行）
+                agentButton.style.position = 'fixed';
+                agentButton.style.bottom = '20px';
+                agentButton.style.right = '20px';
+                agentButton.style.zIndex = '9999';
+                agentButton.style.background = '#007bff';
+                agentButton.style.color = 'white';
+                agentButton.style.padding = '12px 20px';
+                agentButton.style.borderRadius = '25px';
+                agentButton.style.cursor = 'pointer';
+                agentButton.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+                agentButton.style.fontFamily = 'sans-serif';
                 
                 agentButton.onclick = function() {
                   const iframe = document.createElement('iframe');
                   iframe.src = '%s/widget/%s';
-                  iframe.style.cssText = 'position:fixed;bottom:80px;right:20px;width:400px;height:600px;border:none;border-radius:8px;z-index:10000;box-shadow:0 8px 32px rgba(0,0,0,0.1);';
+                  
+                  // iframe样式（格式化为多行）
+                  iframe.style.position = 'fixed';
+                  iframe.style.bottom = '80px';
+                  iframe.style.right = '20px';
+                  iframe.style.width = '400px';
+                  iframe.style.height = '600px';
+                  iframe.style.border = 'none';
+                  iframe.style.borderRadius = '8px';
+                  iframe.style.zIndex = '10000';
+                  iframe.style.boxShadow = '0 8px 32px rgba(0,0,0,0.1)';
                   
                   const closeBtn = document.createElement('div');
                   closeBtn.innerHTML = '×';
-                  closeBtn.style.cssText = 'position:fixed;bottom:685px;right:25px;width:20px;height:20px;background:#ff4757;color:white;border-radius:50%%;text-align:center;line-height:20px;cursor:pointer;z-index:10001;font-family:sans-serif;';
+                  
+                  // 关闭按钮样式（格式化为多行）
+                  closeBtn.style.position = 'fixed';
+                  closeBtn.style.bottom = '685px';
+                  closeBtn.style.right = '25px';
+                  closeBtn.style.width = '20px';
+                  closeBtn.style.height = '20px';
+                  closeBtn.style.background = '#ff4757';
+                  closeBtn.style.color = 'white';
+                  closeBtn.style.borderRadius = '50%%';
+                  closeBtn.style.textAlign = 'center';
+                  closeBtn.style.lineHeight = '20px';
+                  closeBtn.style.cursor = 'pointer';
+                  closeBtn.style.zIndex = '10001';
+                  closeBtn.style.fontFamily = 'sans-serif';
+                  
                   closeBtn.onclick = function() {
                     document.body.removeChild(iframe);
                     document.body.removeChild(closeBtn);

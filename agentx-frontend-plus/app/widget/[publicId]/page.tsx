@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle, MessageCircle } from "lucide-react";
 import { WidgetChatInterface } from './components/WidgetChatInterface';
+import { getWidgetInfoWithToast } from '@/lib/widget-service';
 
 interface WidgetInfo {
   embedName: string;
@@ -17,6 +18,10 @@ interface WidgetInfo {
   enabled: boolean;
   dailyLimit: number;
   dailyCalls: number;
+  // 新增：Agent配置信息，用于无会话聊天
+  systemPrompt?: string;
+  toolIds?: string[];
+  knowledgeBaseIds?: string[];
 }
 
 export default function WidgetChatPage() {
@@ -34,23 +39,13 @@ export default function WidgetChatPage() {
         setLoading(true);
         setError(null);
 
-        const response = await fetch(`/api/widget/${publicId}/info`, {
-          headers: {
-            'Referer': window.location.origin
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        const data = await response.json();
+        const response = await getWidgetInfoWithToast(publicId);
         
-        if (data.code !== 200) {
-          throw new Error(data.message || '获取小组件信息失败');
+        if (response.code === 200) {
+          setWidgetInfo(response.data);
+        } else {
+          setError(response.message || '获取小组件信息失败');
         }
-
-        setWidgetInfo(data.data);
       } catch (error) {
         console.error('获取小组件信息失败:', error);
         setError(error instanceof Error ? error.message : '获取小组件信息失败');
@@ -212,6 +207,9 @@ export default function WidgetChatPage() {
               agentName={widgetInfo.agentName}
               agentAvatar={widgetInfo.agentAvatar}
               welcomeMessage={widgetInfo.welcomeMessage}
+              systemPrompt={widgetInfo.systemPrompt}
+              toolIds={widgetInfo.toolIds}
+              knowledgeBaseIds={widgetInfo.knowledgeBaseIds}
             />
           </CardContent>
         </Card>

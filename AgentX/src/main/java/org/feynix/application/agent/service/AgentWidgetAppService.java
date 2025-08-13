@@ -188,6 +188,164 @@ public class AgentWidgetAppService {
         return agentWidgetDomainService.validateDomainAccess(publicId, domain);
     }
 
+    /** 获取完整的小组件信息（包含Agent配置信息，用于公开访问）
+     *
+     * @param publicId 公开访问ID
+     * @return 包含Agent配置信息的WidgetInfo */
+    public WidgetInfoForPublicAccess getWidgetInfoForPublicAccess(String publicId) {
+        // 1. 获取小组件配置
+        AgentWidgetEntity widget = agentWidgetDomainService.getEnabledWidgetByPublicId(publicId);
+        
+        // 2. 获取关联的Agent信息
+        AgentEntity agent = agentRepository.selectById(widget.getAgentId());
+        if (agent == null || agent.getDeletedAt() != null) {
+            throw new BusinessException("关联的Agent不存在");
+        }
+
+        // 3. 构建完整的信息对象
+        WidgetInfoForPublicAccess info = new WidgetInfoForPublicAccess();
+        
+        // Widget基本信息
+        info.setPublicId(widget.getPublicId());
+        info.setEmbedName(widget.getEmbedName());
+        info.setEmbedDescription(widget.getEmbedDescription());
+        info.setDailyLimit(widget.getDailyLimit());
+        info.setEnabled(widget.getEnabled());
+        // TODO: 实现每日调用次数统计，目前暂时设置为0
+        info.setDailyCalls(0);
+        
+        // Agent配置信息（用于无会话聊天）
+        info.setAgentName(agent.getName());
+        info.setAgentAvatar(agent.getAvatar());
+        info.setWelcomeMessage(agent.getWelcomeMessage());
+        info.setSystemPrompt(agent.getSystemPrompt());
+        
+        // 工具和知识库ID（需要转换为List<String>）
+        if (agent.getToolIds() != null) {
+            info.setToolIds(agent.getToolIds());
+        }
+        if (agent.getKnowledgeBaseIds() != null) {
+            info.setKnowledgeBaseIds(agent.getKnowledgeBaseIds());
+        }
+
+        return info;
+    }
+
+    /** 完整的小组件信息类（用于公开访问） */
+    public static class WidgetInfoForPublicAccess {
+        private String publicId;
+        private String embedName;
+        private String embedDescription;
+        private Integer dailyLimit;
+        private Integer dailyCalls;
+        private Boolean enabled;
+        
+        // Agent相关信息（用于无会话聊天）
+        private String agentName;
+        private String agentAvatar;
+        private String welcomeMessage;
+        private String systemPrompt;
+        private List<String> toolIds;
+        private List<String> knowledgeBaseIds;
+
+        // Getter和Setter方法
+        public String getPublicId() {
+            return publicId;
+        }
+
+        public void setPublicId(String publicId) {
+            this.publicId = publicId;
+        }
+
+        public String getEmbedName() {
+            return embedName;
+        }
+
+        public void setEmbedName(String embedName) {
+            this.embedName = embedName;
+        }
+
+        public String getEmbedDescription() {
+            return embedDescription;
+        }
+
+        public void setEmbedDescription(String embedDescription) {
+            this.embedDescription = embedDescription;
+        }
+
+        public Integer getDailyLimit() {
+            return dailyLimit;
+        }
+
+        public void setDailyLimit(Integer dailyLimit) {
+            this.dailyLimit = dailyLimit;
+        }
+
+        public Integer getDailyCalls() {
+            return dailyCalls;
+        }
+
+        public void setDailyCalls(Integer dailyCalls) {
+            this.dailyCalls = dailyCalls;
+        }
+
+        public Boolean getEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(Boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public String getAgentName() {
+            return agentName;
+        }
+
+        public void setAgentName(String agentName) {
+            this.agentName = agentName;
+        }
+
+        public String getAgentAvatar() {
+            return agentAvatar;
+        }
+
+        public void setAgentAvatar(String agentAvatar) {
+            this.agentAvatar = agentAvatar;
+        }
+
+        public String getWelcomeMessage() {
+            return welcomeMessage;
+        }
+
+        public void setWelcomeMessage(String welcomeMessage) {
+            this.welcomeMessage = welcomeMessage;
+        }
+
+        public String getSystemPrompt() {
+            return systemPrompt;
+        }
+
+        public void setSystemPrompt(String systemPrompt) {
+            this.systemPrompt = systemPrompt;
+        }
+
+        public List<String> getToolIds() {
+            return toolIds;
+        }
+
+        public void setToolIds(List<String> toolIds) {
+            this.toolIds = toolIds;
+        }
+
+        public List<String> getKnowledgeBaseIds() {
+            return knowledgeBaseIds;
+        }
+
+        public void setKnowledgeBaseIds(List<String> knowledgeBaseIds) {
+            this.knowledgeBaseIds = knowledgeBaseIds;
+        }
+    }
+
     // 私有辅助方法
 
     /** 验证Agent所有权 */
