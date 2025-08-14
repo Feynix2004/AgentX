@@ -8,7 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Send, MessageCircle, User, Loader2, Bot, Wrench } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { previewAgentStream, handlePreviewStream, type AgentPreviewRequest, type MessageHistoryItem, type AgentChatResponse } from '@/lib/agent-preview-service';
+import { widgetChatStream, handleWidgetStream, type WidgetChatRequest, type WidgetChatResponse } from '@/lib/widget-chat-service';
 import { MessageType } from '@/types/conversation';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -33,6 +33,15 @@ interface WidgetChatInterfaceProps {
   knowledgeBaseIds?: string[];
 }
 
+// 生成UUID的简单函数
+const generateUUID = (): string => {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+};
+
 export function WidgetChatInterface({ 
   publicId, 
   agentName, 
@@ -47,6 +56,7 @@ export function WidgetChatInterface({
   const [isLoading, setIsLoading] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
   const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
+  const [sessionId] = useState<string>(generateUUID()); // 生成并保持会话ID
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   
@@ -101,7 +111,7 @@ export function WidgetChatInterface({
     }
   }, [welcomeMessage]);
 
-  // 发送消息 - 使用无会话模式，复用预览聊天逻辑
+  // 发送消息 - 使用Widget专用聊天API，无需认证
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) return;
 
@@ -128,31 +138,19 @@ export function WidgetChatInterface({
     messageSequenceNumber.current = 0;
 
     try {
-      // 构建消息历史 - 包含完整的对话历史
-      const messageHistory: MessageHistoryItem[] = messages
-        .filter(msg => msg.id !== 'welcome') // 排除欢迎消息
-        .map(msg => ({
-          id: msg.id,
-          role: msg.role,
-          content: msg.content,
-          createdAt: new Date(msg.timestamp).toISOString(),
-        }));
-
-      // 构建预览请求 - 使用无会话模式
-      const previewRequest: AgentPreviewRequest = {
-        userMessage: userMessage.content,
-        systemPrompt,
-        toolIds,
-        messageHistory,
-        knowledgeBaseIds: knowledgeBaseIds && knowledgeBaseIds.length > 0 ? knowledgeBaseIds : undefined
+      // 构建Widget聊天请求
+      const chatRequest: WidgetChatRequest = {
+        message: userMessage.content,
+        sessionId: sessionId, // 使用生成的会话ID
+        fileUrls: [] // 暂不支持文件
       };
 
-      console.log('Widget 无会话聊天请求数据:', previewRequest);
+      console.log('Widget聊天请求数据:', chatRequest);
 
-      // 使用预览聊天的流式处理方式
-      const stream = await previewAgentStream(previewRequest);
+      // 使用Widget聊天流式处理
+      const stream = await widgetChatStream(publicId, chatRequest);
       if (!stream) {
-        throw new Error('Failed to get preview stream');
+        throw new Error('Failed to get widget stream');
       }
 
       // 生成基础消息ID，作为所有消息序列的前缀
@@ -165,9 +163,9 @@ export function WidgetChatInterface({
         type: MessageType.TEXT
       };
 
-      await handlePreviewStream(
+      await handleWidgetStream(
         stream,
-        (response: AgentChatResponse) => {
+        (response: WidgetChatResponse) => {
           console.log('收到Widget流式响应:', response);
           // 处理消息 - 传递baseMessageId作为前缀
           handleStreamDataMessage(response, baseMessageId);
@@ -183,13 +181,13 @@ export function WidgetChatInterface({
         }
       );
     } catch (error) {
-      console.error('Widget 无会话聊天请求失败:', error);
+      console.error('Widget聊天请求失败:', error);
       handleStreamError(error instanceof Error ? error : new Error('未知错误'));
     }
   };
 
-  // 消息处理主函数 - 与预览聊天保持一致
-  const handleStreamDataMessage = (data: AgentChatResponse, baseMessageId: string) => {
+  // 消息处理主函数 - 处理Widget聊天响应
+  const handleStreamDataMessage = (data: WidgetChatResponse, baseMessageId: string) => {
     // 首次响应处理
     if (!hasReceivedFirstResponse.current) {
       hasReceivedFirstResponse.current = true;
@@ -348,7 +346,7 @@ export function WidgetChatInterface({
   };
 
   // 判断是否为错误消息
-  const isErrorMessage = (data: AgentChatResponse): boolean => {
+  const isErrorMessage = (data: WidgetChatResponse): boolean => {
     return !!data.content && (
       data.content.includes("Error updating database") || 
       data.content.includes("PSQLException") || 
@@ -357,7 +355,7 @@ export function WidgetChatInterface({
   };
 
   // 处理错误消息
-  const handleErrorMessage = (data: AgentChatResponse) => {
+  const handleErrorMessage = (data: WidgetChatResponse) => {
     console.error("检测到后端错误:", data.content);
     // 这里可以添加 toast 通知，但先保持简单
   };

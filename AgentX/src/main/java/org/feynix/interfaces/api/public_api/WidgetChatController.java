@@ -7,6 +7,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import org.feynix.application.agent.service.AgentWidgetAppService;
 import org.feynix.application.conversation.dto.ChatResponse;
 import org.feynix.application.conversation.service.ConversationAppService;
+import org.feynix.interfaces.dto.agent.request.WidgetChatRequest;
 import org.feynix.domain.agent.model.AgentWidgetEntity;
 import org.feynix.infrastructure.exception.BusinessException;
 import org.feynix.interfaces.api.common.Result;
@@ -78,15 +79,12 @@ public class WidgetChatController {
         }
     }
 
-    // TODO: 以下聊天端点已被前端直接调用预览聊天API替代，暂时注释以避免编译错误
-    /*
-    /** 小组件聊天接口（流式） - 已废弃，前端直接使用预览聊天API
+    /** 小组件聊天接口（流式）
      *
      * @param publicId 公开访问ID
      * @param request 聊天请求
      * @param httpRequest HTTP请求
      * @return SSE流 */
-    /*
     @PostMapping("/{publicId}/chat")
     public SseEmitter widgetChat(@PathVariable String publicId,
                               @RequestBody @Validated WidgetChatRequest request,
@@ -101,7 +99,7 @@ public class WidgetChatController {
             // 2. 获取小组件配置
             AgentWidgetEntity widget = agentWidgetAppService.getWidgetForPublicAccess(publicId);
 
-            // 3. 处理小组件聊天 - 现在由前端直接调用预览聊天API
+            // 3. 处理小组件聊天
             return conversationAppService.widgetChat(publicId, request, widget);
             
         } catch (BusinessException e) {
@@ -110,16 +108,13 @@ public class WidgetChatController {
             throw new BusinessException("聊天服务异常：" + e.getMessage());
         }
     }
-    */
 
-    /*
-    /** 小组件聊天接口（同步） - 已废弃，前端直接使用预览聊天API
+    /** 小组件聊天接口（同步）
      *
      * @param publicId 公开访问ID
      * @param request 聊天请求
      * @param httpRequest HTTP请求
      * @return 同步聊天响应 */
-    /*
     @PostMapping("/{publicId}/chat/sync")
     public Result<ChatResponse> widgetChatSync(@PathVariable String publicId,
                                             @RequestBody @Validated WidgetChatRequest request,
@@ -134,7 +129,7 @@ public class WidgetChatController {
             // 2. 获取小组件配置
             AgentWidgetEntity widget = agentWidgetAppService.getWidgetForPublicAccess(publicId);
 
-            // 3. 处理同步聊天 - 现在由前端直接调用预览聊天API
+            // 3. 处理同步聊天
             ChatResponse response = conversationAppService.widgetChatSync(publicId, request, widget);
             return Result.success(response);
             
@@ -144,7 +139,6 @@ public class WidgetChatController {
             return Result.error(500, "聊天服务异常：" + e.getMessage());
         }
     }
-    */
 
     /** 验证域名访问权限
      *

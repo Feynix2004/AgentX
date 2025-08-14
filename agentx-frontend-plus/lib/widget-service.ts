@@ -1,4 +1,5 @@
 import { httpClient } from './http-client';
+import { publicHttpClient } from './public-http-client';
 import { withToast } from './toast-utils';
 
 export interface Widget {
@@ -189,11 +190,11 @@ export const deleteWidgetWithToast = withToast(deleteWidget, {
 });
 
 /**
- * 获取Widget公开信息（通过publicId）
+ * 获取Widget公开信息（通过publicId）- 使用公开客户端，无需认证
  */
 export async function getWidgetInfo(publicId: string): Promise<ApiResponse<any>> {
   try {
-    return await httpClient.get<ApiResponse<any>>(`/widget/${publicId}/info`);
+    return await publicHttpClient.get<ApiResponse<any>>(`/widget/${publicId}/info`);
   } catch (error) {
     return {
       code: 500,

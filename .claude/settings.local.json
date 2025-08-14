@@ -49,7 +49,8 @@
       "mcp__postgres-server__query",
       "Bash(npm install:*)",
       "Bash(wc:*)",
-      "Bash(head:*)"
+      "Bash(head:*)",
+      "Bash(rm:*)"
     ],
     "deny": []
   }
