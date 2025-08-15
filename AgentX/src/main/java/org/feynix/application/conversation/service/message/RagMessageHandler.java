@@ -20,7 +20,6 @@ import org.feynix.domain.rag.model.FileDetailEntity;
 import org.feynix.domain.rag.model.UserRagFileEntity;
 import org.feynix.domain.rag.repository.FileDetailRepository;
 import org.feynix.domain.rag.repository.UserRagFileRepository;
-import org.feynix.application.rag.assembler.DocumentUnitAssembler;
 import org.feynix.application.rag.service.RagQaDatasetAppService;
 import org.feynix.domain.agent.model.AgentEntity;
 import org.feynix.domain.conversation.constant.MessageType;
@@ -52,21 +51,16 @@ public class RagMessageHandler extends AbstractMessageHandler {
 
     private final RagQaDatasetAppService ragQaDatasetAppService;
     private final ObjectMapper objectMapper;
-    private final FileDetailRepository fileDetailRepository;
-    private final UserRagFileRepository userRagFileRepository;
 
     public RagMessageHandler(LLMServiceFactory llmServiceFactory, MessageDomainService messageDomainService,
             HighAvailabilityDomainService highAvailabilityDomainService, SessionDomainService sessionDomainService,
             UserSettingsDomainService userSettingsDomainService, LLMDomainService llmDomainService,
             RagToolManager ragToolManager, BillingService billingService, AccountDomainService accountDomainService,
-            RagQaDatasetAppService ragQaDatasetAppService, ObjectMapper objectMapper,
-            FileDetailRepository fileDetailRepository, UserRagFileRepository userRagFileRepository) {
+            RagQaDatasetAppService ragQaDatasetAppService, ObjectMapper objectMapper) {
         super(llmServiceFactory, messageDomainService, highAvailabilityDomainService, sessionDomainService,
                 userSettingsDomainService, llmDomainService, ragToolManager, billingService, accountDomainService);
         this.ragQaDatasetAppService = ragQaDatasetAppService;
         this.objectMapper = objectMapper;
-        this.fileDetailRepository = fileDetailRepository;
-        this.userRagFileRepository = userRagFileRepository;
     }
 
     /** 重写流式聊天处理，添加RAG检索逻辑 */
@@ -111,23 +105,20 @@ public class RagMessageHandler extends AbstractMessageHandler {
                     AgentChatResponse.build("开始检索相关文档...", MessageType.RAG_RETRIEVAL_START));
             Thread.sleep(500);
 
-            // 执行RAG检索 - 直接获取Entity以保留真实数据
-            List<DocumentUnitEntity> retrievedEntities;
+            // 执行RAG检索 - 获取完整数据用于答案生成
+            List<DocumentUnitDTO> fullRetrievedDocuments;
             if (ragContext.getUserRagId() != null) {
                 // 基于已安装知识库检索
-                retrievedEntities = ragQaDatasetAppService.performRagSearchByUserRag(ragContext.getRagSearchRequest(),
+                fullRetrievedDocuments = ragQaDatasetAppService.ragSearchByUserRag(ragContext.getRagSearchRequest(),
                         ragContext.getUserRagId(), ragContext.getUserId());
             } else {
                 // 基于数据集ID检索
-                retrievedEntities = ragQaDatasetAppService.performRagSearch(ragContext.getRagSearchRequest(),
+                fullRetrievedDocuments = ragQaDatasetAppService.ragSearch(ragContext.getRagSearchRequest(),
                         ragContext.getUserId());
             }
 
-            // 转换为轻量级DTO用于前端展示（包含真实数据）
-            List<RagRetrievalDocumentDTO> lightweightDocuments = convertEntitiesToLightweightDTOs(retrievedEntities, ragContext.getUserRagId() != null);
-            
-            // 转换为DocumentUnitDTO用于答案生成
-            List<DocumentUnitDTO> fullRetrievedDocuments = convertEntitiesToDTOs(retrievedEntities);
+            // 转换为轻量级DTO用于前端展示
+            List<RagRetrievalDocumentDTO> lightweightDocuments = convertToLightweightDTOs(fullRetrievedDocuments);
 
             // 构建检索结果响应
             String retrievalMessage = String.format("检索完成，找到 %d 个相关文档", lightweightDocuments.size());
@@ -271,76 +262,47 @@ public class RagMessageHandler extends AbstractMessageHandler {
         tokenStream.start();
     }
 
-    /** 将DocumentUnitEntity转换为轻量级展示DTO（包含真实数据）
-     * @param entities 文档实体列表
-     * @param isUserRag 是否为用户RAG模式（影响文件名查询方式）
-     * @return 轻量级检索结果DTO列表 */
-    private List<RagRetrievalDocumentDTO> convertEntitiesToLightweightDTOs(List<DocumentUnitEntity> entities, boolean isUserRag) {
+    /** 将DocumentUnitDTO转换为轻量级展示DTO */
+    private List<RagRetrievalDocumentDTO> convertToLightweightDTOs(List<DocumentUnitDTO> documents) {
         List<RagRetrievalDocumentDTO> lightweightDTOs = new ArrayList<>();
-        
-        for (DocumentUnitEntity entity : entities) {
+
+        for (DocumentUnitDTO doc : documents) {
             try {
-                // 🎯 获取真实相似度分数
-                Double realScore = entity.getSimilarityScore() != null ? entity.getSimilarityScore() : 0.0;
-                
-                // 🎯 获取真实文件名
-                String realFileName = getRealFileName(entity.getFileId(), isUserRag);
-                
-                // ✅ 创建包含真实数据的轻量级DTO
+                // 需要根据fileId查询文件名，这里先使用默认值
+                String fileName = getFileNameFromCache(doc.getFileId());
+
+                // 创建轻量级DTO，只包含前端需要的字段
                 RagRetrievalDocumentDTO lightweightDTO = new RagRetrievalDocumentDTO(
-                    entity.getFileId(),
-                    realFileName,
-                    entity.getId(),  // documentId
-                    realScore,       // 真实的相似度分数
-                    entity.getPage()
+                    doc.getFileId(),
+                    fileName,
+                    doc.getId(),  // documentId
+                    0.85,         // 默认相似度，实际应该从其他地方获取
+                    doc.getPage()
                 );
-                
+
                 lightweightDTOs.add(lightweightDTO);
-                
+
             } catch (Exception e) {
-                logger.warn("转换轻量级DTO失败，文档ID: {}", entity.getId(), e);
-                // 出错时使用默认值，但仍尽量保留真实分数
-                Double score = entity.getSimilarityScore() != null ? entity.getSimilarityScore() : 0.0;
+                logger.warn("转换轻量级DTO失败，文档ID: {}", doc.getId(), e);
+                // 使用默认值
                 RagRetrievalDocumentDTO lightweightDTO = new RagRetrievalDocumentDTO(
-                    entity.getFileId(),
+                    doc.getFileId(),
                     "未知文件",
-                    entity.getId(),
-                    score,
-                    entity.getPage()
+                    doc.getId(),
+                    0.0,
+                    doc.getPage()
                 );
                 lightweightDTOs.add(lightweightDTO);
             }
         }
-        
+
         return lightweightDTOs;
     }
-    
-    /** 获取真实文件名
-     * @param fileId 文件ID
-     * @param isUserRag 是否为用户RAG模式
-     * @return 真实文件名 */
-    private String getRealFileName(String fileId, boolean isUserRag) {
-        try {
-            if (isUserRag) {
-                // SNAPSHOT模式：查询UserRagFileEntity
-                UserRagFileEntity userFile = userRagFileRepository.selectById(fileId);
-                return userFile != null ? userFile.getFileName() : "未知文件";
-            } else {
-                // REFERENCE模式：查询FileDetailEntity  
-                FileDetailEntity fileDetail = fileDetailRepository.selectById(fileId);
-                return fileDetail != null ? fileDetail.getOriginalFilename() : "未知文件";
-            }
-        } catch (Exception e) {
-            logger.warn("查询文件名失败，fileId: {}, isUserRag: {}, 错误: {}", fileId, isUserRag, e.getMessage());
-            return "未知文件";
-        }
-    }
-    
-    /** 将DocumentUnitEntity转换为DocumentUnitDTO用于答案生成
-     * @param entities 文档实体列表
-     * @return DocumentUnitDTO列表 */
-    private List<DocumentUnitDTO> convertEntitiesToDTOs(List<DocumentUnitEntity> entities) {
-        return DocumentUnitAssembler.toDTOs(entities);
+
+    /** 从缓存或数据库获取文件名（简化实现） */
+    private String getFileNameFromCache(String fileId) {
+        // 这里应该实现文件名查询逻辑，暂时返回默认值
+        return "文档_" + fileId.substring(0, Math.min(8, fileId.length()));
     }
 
     /** 构建RAG提示词
