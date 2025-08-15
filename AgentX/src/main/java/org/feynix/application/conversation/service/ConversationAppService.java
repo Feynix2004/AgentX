@@ -11,6 +11,9 @@ import org.feynix.application.conversation.dto.AgentPreviewRequest;
 import org.feynix.application.conversation.dto.ChatRequest;
 import org.feynix.application.conversation.dto.ChatResponse;
 import org.feynix.application.conversation.dto.MessageDTO;
+import org.feynix.application.conversation.dto.RagChatRequest;
+import org.feynix.application.conversation.service.message.rag.RagChatContext;
+import org.feynix.application.rag.dto.RagStreamChatRequest;
 import org.feynix.interfaces.dto.agent.request.WidgetChatRequest;
 import org.feynix.application.conversation.service.message.AbstractMessageHandler;
 import org.feynix.application.conversation.service.message.preview.PreviewMessageHandler;
@@ -81,6 +84,7 @@ public class ConversationAppService {
     private final UserSettingsDomainService userSettingsDomainService;
     private final PreviewMessageHandler previewMessageHandler;
     private final HighAvailabilityDomainService highAvailabilityDomainService;
+    private final RagSessionManager ragSessionManager;
 
     public ConversationAppService(ConversationDomainService conversationDomainService,
             SessionDomainService sessionDomainService, AgentDomainService agentDomainService,
@@ -89,7 +93,7 @@ public class ConversationAppService {
             MessageDomainService messageDomainService, MessageHandlerFactory messageHandlerFactory,
             MessageTransportFactory transportFactory, UserToolDomainService toolDomainService,
             UserSettingsDomainService userSettingsDomainService, PreviewMessageHandler previewMessageHandler,
-            HighAvailabilityDomainService highAvailabilityDomainService) {
+            HighAvailabilityDomainService highAvailabilityDomainService, RagSessionManager ragSessionManager) {
         this.conversationDomainService = conversationDomainService;
         this.sessionDomainService = sessionDomainService;
         this.agentDomainService = agentDomainService;
@@ -104,6 +108,7 @@ public class ConversationAppService {
         this.userSettingsDomainService = userSettingsDomainService;
         this.previewMessageHandler = previewMessageHandler;
         this.highAvailabilityDomainService = highAvailabilityDomainService;
+        this.ragSessionManager = ragSessionManager;
     }
 
     /** 获取会话中的消息列表
@@ -123,21 +128,21 @@ public class ConversationAppService {
         return MessageAssembler.toDTOs(conversationMessages);
     }
 
-    /** 对话方法 - 统一入口
+    /** 对话方法 - 统一入口，支持根据请求类型自动选择处理器
      *
      * @param chatRequest 聊天请求
      * @param userId 用户ID
      * @return SSE发射器 */
     public SseEmitter chat(ChatRequest chatRequest, String userId) {
-        // 1. 准备对话环境
-        ChatContext environment = prepareEnvironment(chatRequest, userId);
+        // 1. 根据请求类型准备对话环境
+        ChatContext environment = prepareEnvironmentByRequestType(chatRequest, userId);
 
         // 2. 获取传输方式 (当前仅支持SSE，将来支持WebSocket)
         MessageTransport<SseEmitter> transport = transportFactory
                 .getTransport(MessageTransportFactory.TRANSPORT_TYPE_SSE);
 
-        // 3. 获取适合的消息处理器 (根据agent类型)
-        AbstractMessageHandler handler = messageHandlerFactory.getHandler(environment.getAgent());
+        // 3. 根据请求类型获取适合的消息处理器
+        AbstractMessageHandler handler = messageHandlerFactory.getHandler(chatRequest);
 
         // 4. 处理对话
         return handler.chat(environment, transport);
@@ -695,6 +700,122 @@ public class ConversationAppService {
 
         environment.setContextEntity(contextEntity);
         environment.setMessageHistory(messageEntities);
+    }
+
+    // ========== RAG 支持方法 ==========
+
+    /** RAG流式问答 - 基于数据集
+     * @param request RAG流式聊天请求
+     * @param userId 用户ID
+     * @return SSE流式响应 */
+    public SseEmitter ragStreamChat(RagStreamChatRequest request, String userId) {
+        // 1. 创建临时RAG会话
+        String sessionId = ragSessionManager.createOrGetRagSession(userId);
+        
+        // 2. 转换为RagChatRequest
+        RagChatRequest ragChatRequest = RagChatRequest.fromRagStreamChatRequest(request, sessionId);
+        
+        // 3. 使用通用的chat入口
+        return chat(ragChatRequest, userId);
+    }
+
+    /** RAG流式问答 - 基于已安装知识库
+     * @param request RAG流式聊天请求
+     * @param userRagId 用户RAG ID
+     * @param userId 用户ID
+     * @return SSE流式响应 */
+    public SseEmitter ragStreamChatByUserRag(RagStreamChatRequest request, String userRagId, String userId) {
+        // 1. 创建用户RAG专用会话
+        String sessionId = ragSessionManager.createOrGetUserRagSession(userId, userRagId);
+        
+        // 2. 转换为RagChatRequest（包含userRagId）
+        RagChatRequest ragChatRequest = RagChatRequest.fromRagStreamChatRequestWithUserRag(request, userRagId, sessionId);
+        
+        // 3. 使用通用的chat入口
+        return chat(ragChatRequest, userId);
+    }
+
+    /** 根据请求类型准备环境
+     * @param chatRequest 聊天请求
+     * @param userId 用户ID
+     * @return 聊天上下文 */
+    private ChatContext prepareEnvironmentByRequestType(ChatRequest chatRequest, String userId) {
+        if (chatRequest instanceof RagChatRequest) {
+            return prepareRagEnvironment((RagChatRequest) chatRequest, userId);
+        }
+        
+        // 标准对话环境准备
+        return prepareEnvironment(chatRequest, userId);
+    }
+
+    /** 准备RAG环境
+     * @param ragRequest RAG聊天请求
+     * @param userId 用户ID
+     * @return RAG聊天上下文 */
+    private RagChatContext prepareRagEnvironment(RagChatRequest ragRequest, String userId) {
+        // 1. 获取会话上下文和历史消息
+        String sessionId = ragRequest.getSessionId();
+        ContextEntity contextEntity = contextDomainService.findBySessionId(sessionId);
+        List<MessageEntity> messageHistory = new ArrayList<>();
+        
+        if (contextEntity != null && contextEntity.getActiveMessages() != null) {
+            messageHistory = messageDomainService.listByIds(contextEntity.getActiveMessages());
+        } else {
+            contextEntity = new ContextEntity();
+            contextEntity.setSessionId(sessionId);
+        }
+        
+        // 2. 创建RAG专用Agent
+        AgentEntity ragAgent = createRagAgent();
+        
+        // 3. 获取用户默认模型配置
+        String userDefaultModelId = userSettingsDomainService.getUserDefaultModelId(userId);
+        ModelEntity model = llmDomainService.getModelById(userDefaultModelId);
+        List<String> fallbackChain = userSettingsDomainService.getUserFallbackChain(userId);
+        
+        // 4. 获取高可用服务商
+        HighAvailabilityResult result = highAvailabilityDomainService.selectBestProvider(model, userId, sessionId, fallbackChain);
+        ProviderEntity provider = result.getProvider();
+        ModelEntity selectedModel = result.getModel();
+        
+        // 5. 构建RAG上下文
+        RagChatContext ragContext = new RagChatContext();
+        ragContext.setSessionId(sessionId);
+        ragContext.setUserId(userId);
+        ragContext.setUserMessage(ragRequest.getMessage());
+        ragContext.setRagSearchRequest(ragRequest.toRagSearchRequest());
+        ragContext.setUserRagId(ragRequest.getUserRagId());
+        ragContext.setFileId(ragRequest.getFileId());
+        ragContext.setAgent(ragAgent);
+        ragContext.setModel(selectedModel);
+        ragContext.setProvider(provider);
+        ragContext.setInstanceId(result.getInstanceId());
+        ragContext.setContextEntity(contextEntity);
+        ragContext.setMessageHistory(messageHistory);
+        ragContext.setStreaming(true);
+        ragContext.setFileUrls(ragRequest.getFileUrls());
+        
+        return ragContext;
+    }
+
+    /** 创建RAG专用的虚拟Agent
+     * @return RAG Agent */
+    private AgentEntity createRagAgent() {
+        AgentEntity ragAgent = new AgentEntity();
+        ragAgent.setId("system-rag-agent");
+        ragAgent.setUserId("system");
+        ragAgent.setName("RAG助手");
+        ragAgent.setSystemPrompt("""
+                你是一位专业的文档问答助手，专门基于提供的文档内容回答用户问题。
+                你的回答应该准确、有帮助，并且要诚实地告知用户当文档中没有相关信息时的情况。
+                请遵循以下原则：
+                1. 优先基于提供的文档内容回答
+                2. 如果文档中没有相关信息，请明确告知用户
+                3. 使用清晰的Markdown格式组织回答
+                4. 在适当的地方引用文档页码或来源
+                """);
+        ragAgent.setEnabled(true);
+        return ragAgent;
     }
 
 }

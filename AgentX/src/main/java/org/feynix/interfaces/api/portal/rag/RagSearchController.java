@@ -7,6 +7,7 @@ import org.feynix.application.rag.dto.DocumentUnitDTO;
 import org.feynix.application.rag.dto.RagSearchRequest;
 import org.feynix.application.rag.dto.RagStreamChatRequest;
 import org.feynix.application.rag.service.RagQaDatasetAppService;
+import org.feynix.application.conversation.service.ConversationAppService;
 import org.feynix.infrastructure.auth.UserContext;
 import org.feynix.interfaces.api.common.Result;
 
@@ -20,9 +21,11 @@ import java.util.List;
 public class RagSearchController {
 
     private final RagQaDatasetAppService ragQaDatasetAppService;
+    private final ConversationAppService conversationAppService;
 
-    public RagSearchController(RagQaDatasetAppService ragQaDatasetAppService) {
+    public RagSearchController(RagQaDatasetAppService ragQaDatasetAppService, ConversationAppService conversationAppService) {
         this.ragQaDatasetAppService = ragQaDatasetAppService;
+        this.conversationAppService = conversationAppService;
     }
 
     /** RAG搜索文档
@@ -36,14 +39,14 @@ public class RagSearchController {
         return Result.success(searchResults);
     }
 
-    /** RAG流式问答
+    /** RAG流式问答 - 使用统一架构
      * 
      * @param request 流式问答请求
      * @return 流式响应 */
     @PostMapping("/stream-chat")
     public SseEmitter ragStreamChat(@RequestBody @Validated RagStreamChatRequest request) {
         String userId = UserContext.getCurrentUserId();
-        return ragQaDatasetAppService.ragStreamChat(request, userId);
+        return conversationAppService.ragStreamChat(request, userId);
     }
 
     /** 基于已安装知识库的RAG搜索
@@ -59,7 +62,7 @@ public class RagSearchController {
         return Result.success(searchResults);
     }
 
-    /** 基于已安装知识库的RAG流式问答
+    /** 基于已安装知识库的RAG流式问答 - 使用统一架构
      * 
      * @param userRagId 已安装的知识库ID
      * @param request 流式问答请求
@@ -68,7 +71,7 @@ public class RagSearchController {
     public SseEmitter ragStreamChatByUserRag(@PathVariable String userRagId,
             @RequestBody @Validated RagStreamChatRequest request) {
         String userId = UserContext.getCurrentUserId();
-        return ragQaDatasetAppService.ragStreamChatByUserRag(request, userRagId, userId);
+        return conversationAppService.ragStreamChatByUserRag(request, userRagId, userId);
     }
 
 }

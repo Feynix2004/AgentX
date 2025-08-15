@@ -22,6 +22,7 @@ import org.feynix.application.rag.assembler.RagQaDatasetAssembler;
 import org.feynix.domain.rag.model.UserRagEntity;
 import org.feynix.domain.rag.model.UserRagFileEntity;
 import org.feynix.application.rag.dto.*;
+import org.feynix.application.conversation.dto.RagRetrievalDocumentDTO;
 import org.feynix.application.rag.RagPublishAppService;
 import org.feynix.application.rag.RagMarketAppService;
 import org.feynix.application.rag.request.PublishRagRequest;
@@ -843,6 +844,37 @@ public class RagQaDatasetAppService {
         return DocumentUnitAssembler.toDTOs(entities);
     }
 
+    // ========== RAG检索专用方法 - 返回轻量级DTO ==========
+
+    /** RAG检索 - 返回检索专用的轻量级DTO
+     * 专门用于检索结果展示，只包含前端必需的字段，优化传输效率
+     * 
+     * @param request RAG搜索请求
+     * @param userId 用户ID
+     * @return 检索结果（轻量级DTO） */
+    public List<RagRetrievalDocumentDTO> ragRetrievalSearch(RagSearchRequest request, String userId) {
+        // 直接执行搜索逻辑获取Entity（保留相似度分数）
+        List<DocumentUnitEntity> searchEntities = performRagSearch(request, userId);
+        
+        // 转换为轻量级检索结果DTO
+        return convertEntityToRetrievalDTOs(searchEntities);
+    }
+
+    /** 基于已安装知识库的RAG检索 - 返回检索专用的轻量级DTO
+     * 专门用于检索结果展示，只包含前端必需的字段，优化传输效率
+     * 
+     * @param request RAG搜索请求
+     * @param userRagId 用户RAG安装记录ID
+     * @param userId 用户ID
+     * @return 检索结果（轻量级DTO） */
+    public List<RagRetrievalDocumentDTO> ragRetrievalSearchByUserRag(RagSearchRequest request, String userRagId, String userId) {
+        // 直接执行搜索逻辑获取Entity（保留相似度分数）
+        List<DocumentUnitEntity> searchEntities = performRagSearchByUserRag(request, userRagId, userId);
+        
+        // 转换为轻量级检索结果DTO
+        return convertEntityToRetrievalDTOs(searchEntities);
+    }
+
     /** RAG流式问答
      * @param request 流式问答请求
      * @param userId 用户ID
@@ -1490,4 +1522,155 @@ public class RagQaDatasetAppService {
             this.score = score;
         }
     }
+
+    // ========== 搜索逻辑提取方法 ==========
+
+    /** 执行RAG搜索 - 返回Entity以保留相似度分数 */
+    public List<DocumentUnitEntity> performRagSearch(RagSearchRequest request, String userId) {
+        // 验证数据集权限 - 检查用户是否安装了这些知识库
+        List<String> validDatasetIds = new ArrayList<>();
+        for (String datasetId : request.getDatasetIds()) {
+            // 检查用户是否安装了这个知识库
+            if (userRagDomainService.isRagInstalledByOriginalId(userId, datasetId)) {
+                validDatasetIds.add(datasetId);
+                log.debug("用户 {} 已安装知识库 {}，允许搜索", userId, datasetId);
+            } else {
+                // 检查用户是否是创建者（向后兼容）
+                try {
+                    RagQaDatasetEntity ragDataset = ragQaDatasetDomainService.findDatasetById(datasetId);
+                    if (ragDataset.getUserId().equals(userId)) {
+                        validDatasetIds.add(datasetId);
+                        log.debug("用户 {} 是知识库 {} 的创建者，允许搜索", userId, datasetId);
+                    } else {
+                        log.warn("用户 {} 无权访问知识库 {}", userId, datasetId);
+                    }
+                } catch (Exception e) {
+                    log.warn("检查知识库 {} 创建者权限时发生错误: {}", datasetId, e.getMessage());
+                }
+            }
+        }
+
+        if (validDatasetIds.isEmpty()) {
+            log.warn("用户 {} 没有权限访问任何请求的知识库: {}", userId, request.getDatasetIds());
+            return Collections.emptyList();
+        }
+
+        // 调整搜索参数
+        Double adjustedMinScore = request.getAdjustedMinScore();
+        Integer adjustedCandidateMultiplier = request.getAdjustedCandidateMultiplier();
+
+        // 获取用户的嵌入模型配置
+        ModelConfig embeddingModelConfig = ragModelConfigService.getUserEmbeddingModelConfig(userId);
+        EmbeddingModelFactory.EmbeddingConfig embeddingConfig = toEmbeddingConfig(embeddingModelConfig);
+
+        // 执行RAG搜索
+        return embeddingDomainService.ragDoc(validDatasetIds, request.getQuestion(),
+                request.getMaxResults(), adjustedMinScore, request.getEnableRerank(), adjustedCandidateMultiplier,
+                embeddingConfig, request.getEnableQueryExpansion());
+    }
+
+    /** 执行基于用户RAG的搜索 - 返回Entity以保留相似度分数 */
+    public List<DocumentUnitEntity> performRagSearchByUserRag(RagSearchRequest request, String userRagId, String userId) {
+        // 获取RAG数据源信息
+        RagDataAccessDomainService.RagDataSourceInfo sourceInfo = ragDataAccessService.getRagDataSourceInfo(userId, userRagId);
+
+        // 根据安装类型获取实际的数据集ID
+        String actualDatasetId;
+        if (sourceInfo.getIsRealTime()) {
+            // REFERENCE类型：使用原始数据集ID
+            actualDatasetId = sourceInfo.getOriginalRagId();
+        } else {
+            // SNAPSHOT类型：使用用户RAG ID作为数据集ID
+            actualDatasetId = sourceInfo.getUserRagId();
+        }
+
+        // 调整搜索参数
+        Double adjustedMinScore = request.getAdjustedMinScore();
+        Integer adjustedCandidateMultiplier = request.getAdjustedCandidateMultiplier();
+
+        // 获取用户的嵌入模型配置
+        ModelConfig embeddingModelConfig = ragModelConfigService.getUserEmbeddingModelConfig(userId);
+        EmbeddingModelFactory.EmbeddingConfig embeddingConfig = toEmbeddingConfig(embeddingModelConfig);
+
+        List<DocumentUnitEntity> entities;
+        if (sourceInfo.getIsRealTime()) {
+            // REFERENCE类型：搜索实时数据
+            entities = embeddingDomainService.ragDoc(List.of(actualDatasetId), request.getQuestion(),
+                    request.getMaxResults(), adjustedMinScore, request.getEnableRerank(), adjustedCandidateMultiplier,
+                    embeddingConfig, request.getEnableQueryExpansion());
+        } else {
+            // SNAPSHOT类型：搜索版本快照数据
+            List<DocumentUnitEntity> snapshotDocuments = ragDataAccessService.getRagDocuments(userId, userRagId);
+            // 对快照数据进行向量搜索（这里可能需要特殊处理，暂时使用相同逻辑）
+            entities = embeddingDomainService.ragDoc(List.of(actualDatasetId), request.getQuestion(),
+                    request.getMaxResults(), adjustedMinScore, request.getEnableRerank(), adjustedCandidateMultiplier,
+                    embeddingConfig, request.getEnableQueryExpansion());
+        }
+
+        return entities;
+    }
+
+    // ========== 数据转换方法 ==========
+
+    /** 将DocumentUnitEntity转换为轻量级的检索结果DTO */
+    private List<RagRetrievalDocumentDTO> convertEntityToRetrievalDTOs(List<DocumentUnitEntity> entities) {
+        List<RagRetrievalDocumentDTO> retrievalResults = new ArrayList<>();
+        
+        for (DocumentUnitEntity doc : entities) {
+            try {
+                // 查询文件详情获取文件名
+                String fileName = getFileNameById(doc.getFileId());
+                
+                // 从Entity中获取相似度分数
+                Double score = doc.getSimilarityScore() != null ? doc.getSimilarityScore() : 0.0;
+                
+                // 创建轻量级DTO
+                RagRetrievalDocumentDTO retrievalDTO = new RagRetrievalDocumentDTO(
+                    doc.getFileId(),
+                    fileName,
+                    doc.getId(),     // documentId
+                    score,
+                    doc.getPage()
+                );
+                
+                retrievalResults.add(retrievalDTO);
+                
+            } catch (Exception e) {
+                log.warn("转换检索结果失败，文档ID: {}, 错误: {}", doc.getId(), e.getMessage());
+                // 出错时使用默认值，确保不影响其他结果
+                RagRetrievalDocumentDTO retrievalDTO = new RagRetrievalDocumentDTO(
+                    doc.getFileId(),
+                    "未知文件",
+                    doc.getId(),
+                    0.0,
+                    doc.getPage()
+                );
+                retrievalResults.add(retrievalDTO);
+            }
+        }
+        
+        return retrievalResults;
+    }
+
+    /** 根据文件ID获取文件名 */
+    private String getFileNameById(String fileId) {
+        try {
+            FileDetailEntity fileDetail = fileDetailRepository.selectById(fileId);
+            if (fileDetail != null) {
+                return fileDetail.getOriginalFilename();
+            }
+            
+            // 尝试从UserRagFile表查询（SNAPSHOT模式）
+            UserRagFileEntity userFile = userRagFileRepository.selectById(fileId);
+            if (userFile != null) {
+                return userFile.getFileName();
+            }
+            
+            return "未知文件";
+        } catch (Exception e) {
+            log.warn("查询文件名失败，fileId: {}, 错误: {}", fileId, e.getMessage());
+            return "未知文件";
+        }
+    }
+
 }
