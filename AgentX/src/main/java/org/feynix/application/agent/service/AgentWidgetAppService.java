@@ -237,8 +237,8 @@ public class AgentWidgetAppService {
         
         // Widget基本信息
         info.setPublicId(widget.getPublicId());
-        info.setEmbedName(widget.getEmbedName());
-        info.setEmbedDescription(widget.getEmbedDescription());
+        info.setName(widget.getName());
+        info.setDescription(widget.getDescription());
         info.setDailyLimit(widget.getDailyLimit());
         info.setEnabled(widget.getEnabled());
         // TODO: 实现每日调用次数统计，目前暂时设置为0
@@ -264,8 +264,8 @@ public class AgentWidgetAppService {
     /** 完整的小组件信息类（用于公开访问） */
     public static class WidgetInfoForPublicAccess {
         private String publicId;
-        private String embedName;
-        private String embedDescription;
+        private String name;
+        private String description;
         private Integer dailyLimit;
         private Integer dailyCalls;
         private Boolean enabled;
@@ -287,20 +287,20 @@ public class AgentWidgetAppService {
             this.publicId = publicId;
         }
 
-        public String getEmbedName() {
-            return embedName;
+        public String getName() {
+            return name;
         }
 
-        public void setEmbedName(String embedName) {
-            this.embedName = embedName;
+        public void setName(String name) {
+            this.name = name;
         }
 
-        public String getEmbedDescription() {
-            return embedDescription;
+        public String getDescription() {
+            return description;
         }
 
-        public void setEmbedDescription(String embedDescription) {
-            this.embedDescription = embedDescription;
+        public void setDescription(String description) {
+            this.description = description;
         }
 
         public Integer getDailyLimit() {

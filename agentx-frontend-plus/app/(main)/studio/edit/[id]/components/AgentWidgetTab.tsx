@@ -30,7 +30,7 @@ import { getWidgetsWithToast, toggleWidgetStatusWithToast, deleteWidgetWithToast
 import { getAllModelsWithToast } from "@/lib/user-settings-service";
 import { CreateWidgetDialog } from "./CreateWidgetDialog";
 import { UpdateWidgetDialog } from "./UpdateWidgetDialog";
-import { WidgetCodeDialog } from "./WidgetCodeDialog";
+import WidgetCodeDialog from "./WidgetCodeDialog";
 
 interface AgentWidgetTabProps {
   agentId: string;
@@ -233,7 +233,7 @@ export function AgentWidgetTab({ agentId }: AgentWidgetTabProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>确认删除</AlertDialogTitle>
             <AlertDialogDescription>
-              确定要删除小组件配置 "{selectedWidget?.embedName}" 吗？
+              确定要删除小组件配置 "{selectedWidget?.name}" 吗？
               <br />
               此操作不可撤销，删除后所有嵌入在网站中的组件将停止工作。
             </AlertDialogDescription>
@@ -278,9 +278,9 @@ function WidgetConfigCard({ widget, onToggleStatus, onEdit, onViewCode, onCopyCo
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex-1">
-            <CardTitle className="text-lg">{widget.embedName}</CardTitle>
-            {widget.embedDescription && (
-              <CardDescription>{widget.embedDescription}</CardDescription>
+            <CardTitle className="text-lg">{widget.name}</CardTitle>
+            {widget.description && (
+              <CardDescription>{widget.description}</CardDescription>
             )}
           </div>
           <div className="flex items-center gap-2">
@@ -302,7 +302,7 @@ function WidgetConfigCard({ widget, onToggleStatus, onEdit, onViewCode, onCopyCo
                   <Code className="h-4 w-4 mr-2" />
                   查看嵌入代码
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onCopyCode(widget.embedCode)}>
+                <DropdownMenuItem onClick={() => onCopyCode(widget.widgetCode)}>
                   <Copy className="h-4 w-4 mr-2" />
                   复制嵌入代码
                 </DropdownMenuItem>
@@ -340,11 +340,11 @@ function WidgetConfigCard({ widget, onToggleStatus, onEdit, onViewCode, onCopyCo
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
             <Label className="text-muted-foreground">组件类型</Label>
-            <p>
+            <div>
               <Badge variant={widget.widgetType === 'RAG' ? "secondary" : "outline"}>
                 {widget.widgetType === 'RAG' ? 'RAG 问答模式' : 'Agent 模式'}
               </Badge>
-            </p>
+            </div>
           </div>
           <div>
             <Label className="text-muted-foreground">使用模型</Label>

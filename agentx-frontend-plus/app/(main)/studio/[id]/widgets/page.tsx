@@ -48,8 +48,8 @@ interface Agent {
 // Widget接口已从lib/widget-service导入
 
 interface CreateWidgetData {
-  embedName: string;
-  embedDescription: string;
+  name: string;
+  description: string;
   dailyLimit: number;
   allowedDomains: string[];
   modelId: string;
@@ -69,8 +69,8 @@ export default function AgentWidgetsPage() {
 
   // 创建Widget表单状态
   const [createForm, setCreateForm] = useState<CreateWidgetData>({
-    embedName: '',
-    embedDescription: '',
+    name: '',
+    description: '',
     dailyLimit: -1,
     allowedDomains: [],
     modelId: '',
@@ -105,7 +105,7 @@ export default function AgentWidgetsPage() {
   };
 
   const handleCreateWidget = async () => {
-    if (!createForm.embedName.trim()) {
+    if (!createForm.name.trim()) {
       toast({
         title: "请输入组件名称",
         variant: "destructive",
@@ -117,8 +117,8 @@ export default function AgentWidgetsPage() {
       setCreateLoading(true);
       
       const request: CreateWidgetRequest = {
-        embedName: createForm.embedName,
-        embedDescription: createForm.embedDescription,
+        name: createForm.name,
+        description: createForm.description,
         dailyLimit: createForm.dailyLimit,
         allowedDomains: createForm.allowedDomains,
         modelId: createForm.modelId || '', // 暂时用空字符串，实际需要选择模型
@@ -130,8 +130,8 @@ export default function AgentWidgetsPage() {
         setCreateDialogOpen(false);
         // 重置表单
         setCreateForm({
-          embedName: '',
-          embedDescription: '',
+          name: '',
+          description: '',
           dailyLimit: -1,
           allowedDomains: [],
           modelId: '',
@@ -166,7 +166,7 @@ export default function AgentWidgetsPage() {
   };
 
   const deleteWidget = async (widget: Widget) => {
-    if (!confirm(`确定要删除组件 "${widget.embedName}" 吗？`)) {
+    if (!confirm(`确定要删除组件 "${widget.name}" 吗？`)) {
       return;
     }
 
@@ -239,11 +239,11 @@ export default function AgentWidgetsPage() {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="embedName">组件名称 *</Label>
+                  <Label htmlFor="name">组件名称 *</Label>
                   <Input
-                    id="embedName"
-                    value={createForm.embedName}
-                    onChange={(e) => setCreateForm({ ...createForm, embedName: e.target.value })}
+                    id="name"
+                    value={createForm.name}
+                    onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
                     placeholder="例如：客服助手"
                   />
                 </div>
@@ -260,11 +260,11 @@ export default function AgentWidgetsPage() {
               </div>
               
               <div>
-                <Label htmlFor="embedDescription">组件描述</Label>
+                <Label htmlFor="description">组件描述</Label>
                 <Textarea
-                  id="embedDescription"
-                  value={createForm.embedDescription}
-                  onChange={(e) => setCreateForm({ ...createForm, embedDescription: e.target.value })}
+                  id="description"
+                  value={createForm.description}
+                  onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
                   placeholder="简单描述这个组件的用途"
                   rows={3}
                 />
@@ -315,7 +315,7 @@ export default function AgentWidgetsPage() {
             <Card key={widget.id}>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">{widget.embedName}</CardTitle>
+                  <CardTitle className="text-lg">{widget.name}</CardTitle>
                   <div className="flex items-center gap-2">
                     <Badge variant={widget.enabled ? "default" : "secondary"}>
                       {widget.enabled ? "启用" : "禁用"}
@@ -329,8 +329,8 @@ export default function AgentWidgetsPage() {
                     </Button>
                   </div>
                 </div>
-                {widget.embedDescription && (
-                  <CardDescription>{widget.embedDescription}</CardDescription>
+                {widget.description && (
+                  <CardDescription>{widget.description}</CardDescription>
                 )}
               </CardHeader>
               
@@ -382,7 +382,7 @@ export default function AgentWidgetsPage() {
                   </DialogTrigger>
                   <DialogContent className="max-w-4xl max-h-[80vh]">
                     <DialogHeader>
-                      <DialogTitle>嵌入代码 - {widget.embedName}</DialogTitle>
+                      <DialogTitle>嵌入代码 - {widget.name}</DialogTitle>
                       <DialogDescription>
                         复制以下代码到您的网站HTML中即可使用
                       </DialogDescription>

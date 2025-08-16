@@ -10,14 +10,14 @@ import java.util.List;
 /** 创建小组件配置请求 */
 public class CreateWidgetRequest {
 
-    /** 嵌入名称 */
+    /** Widget名称 */
     @NotBlank(message = "小组件名称不能为空")
     @Size(max = 100, message = "小组件名称长度不能超过100字符")
-    private String embedName;
+    private String name;
 
-    /** 嵌入描述 */
+    /** Widget描述 */
     @Size(max = 500, message = "小组件描述长度不能超过500字符")
-    private String embedDescription;
+    private String description;
 
     /** 指定使用的模型ID */
     @NotBlank(message = "请选择模型")
@@ -41,20 +41,20 @@ public class CreateWidgetRequest {
     private List<String> knowledgeBaseIds;
 
     // Getter和Setter方法
-    public String getEmbedName() {
-        return embedName;
+    public String getName() {
+        return name;
     }
 
-    public void setEmbedName(String embedName) {
-        this.embedName = embedName;
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public String getEmbedDescription() {
-        return embedDescription;
+    public String getDescription() {
+        return description;
     }
 
-    public void setEmbedDescription(String embedDescription) {
-        this.embedDescription = embedDescription;
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public String getModelId() {

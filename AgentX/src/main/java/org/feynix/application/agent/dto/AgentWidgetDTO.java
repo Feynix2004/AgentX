@@ -19,14 +19,14 @@ public class AgentWidgetDTO {
     /** 创建者用户ID */
     private String userId;
 
-    /** 嵌入访问的唯一ID */
+    /** Widget访问的唯一ID */
     private String publicId;
 
-    /** 嵌入名称 */
-    private String embedName;
+    /** Widget名称 */
+    private String name;
 
-    /** 嵌入描述 */
-    private String embedDescription;
+    /** Widget描述 */
+    private String description;
 
     /** 关联的模型信息 */
     private ModelDTO model;
@@ -49,8 +49,8 @@ public class AgentWidgetDTO {
     /** 知识库ID列表（RAG类型专用） */
     private List<String> knowledgeBaseIds;
 
-    /** 嵌入代码 */
-    private String embedCode;
+    /** Widget嵌入代码 */
+    private String widgetCode;
 
     /** 创建时间 */
     private LocalDateTime createdAt;
@@ -91,20 +91,20 @@ public class AgentWidgetDTO {
         this.publicId = publicId;
     }
 
-    public String getEmbedName() {
-        return embedName;
+    public String getName() {
+        return name;
     }
 
-    public void setEmbedName(String embedName) {
-        this.embedName = embedName;
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public String getEmbedDescription() {
-        return embedDescription;
+    public String getDescription() {
+        return description;
     }
 
-    public void setEmbedDescription(String embedDescription) {
-        this.embedDescription = embedDescription;
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public ModelDTO getModel() {
@@ -147,12 +147,12 @@ public class AgentWidgetDTO {
         this.enabled = enabled;
     }
 
-    public String getEmbedCode() {
-        return embedCode;
+    public String getWidgetCode() {
+        return widgetCode;
     }
 
-    public void setEmbedCode(String embedCode) {
-        this.embedCode = embedCode;
+    public void setWidgetCode(String widgetCode) {
+        this.widgetCode = widgetCode;
     }
 
     public LocalDateTime getCreatedAt() {

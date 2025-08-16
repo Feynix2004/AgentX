@@ -50,7 +50,7 @@ public class AgentWidgetAssembler {
                                                    ProviderDTO provider, String frontendBaseUrl) {
         AgentWidgetDTO dto = toDTO(entity, model, provider);
         if (dto != null) {
-            dto.setEmbedCode(generateEmbedCode(entity.getPublicId(), frontendBaseUrl));
+            dto.setWidgetCode(generateEmbedCode(entity.getPublicId(), frontendBaseUrl));
         }
         return dto;
     }
@@ -65,8 +65,8 @@ public class AgentWidgetAssembler {
         return AgentWidgetEntity.createNew(
                 agentId,
                 userId,
-                request.getEmbedName(),
-                request.getEmbedDescription(),
+                request.getName(),
+                request.getDescription(),
                 request.getModelId(),
                 request.getProviderId(),
                 request.getAllowedDomains(),
@@ -82,8 +82,8 @@ public class AgentWidgetAssembler {
      * @param request 更新请求 */
     public static void updateEntity(AgentWidgetEntity entity, UpdateWidgetRequest request) {
         entity.updateConfig(
-                request.getEmbedName(),
-                request.getEmbedDescription(),
+                request.getName(),
+                request.getDescription(),
                 request.getModelId(),
                 request.getProviderId(),
                 request.getAllowedDomains(),

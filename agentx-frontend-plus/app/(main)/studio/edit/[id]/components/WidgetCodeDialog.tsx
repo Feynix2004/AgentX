@@ -22,10 +22,10 @@ interface WidgetCodeDialogProps {
   onCopy: (code: string) => void;
 }
 
-export function WidgetCodeDialog({ open, onClose, widget, onCopy }: WidgetCodeDialogProps) {
+export default function WidgetCodeDialog({ open, onClose, widget, onCopy }: WidgetCodeDialogProps) {
   const [activeTab, setActiveTab] = useState("iframe");
 
-  const widgetUrl = `${window.location.origin}/widget/${widget.publicId}`;
+  const widgetUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/widget/${widget.publicId}`;
 
   // 生成不同格式的嵌入代码
   const generateEmbedCode = (type: string) => {
@@ -93,11 +93,11 @@ export function WidgetCodeDialog({ open, onClose, widget, onCopy }: WidgetCodeDi
 </div>`;
 
       default:
-        return widget.embedCode;
+        return widget.widgetCode;
     }
   };
 
-  const embedCodes = {
+  const widgetCodes = {
     iframe: generateEmbedCode("iframe"),
     floating: generateEmbedCode("floating"),
     responsive: generateEmbedCode("responsive"),
@@ -109,7 +109,7 @@ export function WidgetCodeDialog({ open, onClose, widget, onCopy }: WidgetCodeDi
         <DialogHeader>
           <DialogTitle>小组件嵌入代码</DialogTitle>
           <DialogDescription>
-            复制以下代码到你的网站中，即可嵌入 "{widget.embedName}" 小组件
+            复制以下代码到你的网站中，即可嵌入 "{widget.name}" 小组件
           </DialogDescription>
         </DialogHeader>
 
@@ -118,7 +118,7 @@ export function WidgetCodeDialog({ open, onClose, widget, onCopy }: WidgetCodeDi
           <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
             <div>
               <Label className="text-sm text-muted-foreground">小组件名称</Label>
-              <p className="font-medium">{widget.embedName}</p>
+              <p className="font-medium">{widget.name}</p>
             </div>
             <div>
               <Label className="text-sm text-muted-foreground">状态</Label>
@@ -155,12 +155,12 @@ export function WidgetCodeDialog({ open, onClose, widget, onCopy }: WidgetCodeDi
               <Label>固定大小的iframe嵌入</Label>
               <div className="relative">
                 <pre className="bg-gray-100 p-4 rounded-lg text-xs overflow-auto max-h-48 border whitespace-pre-wrap break-words">
-                  <code className="block overflow-x-auto">{embedCodes.iframe}</code>
+                  <code className="block overflow-x-auto">{widgetCodes.iframe}</code>
                 </pre>
                 <Button
                   size="sm"
                   className="absolute top-2 right-2"
-                  onClick={() => onCopy(embedCodes.iframe)}
+                  onClick={() => onCopy(widgetCodes.iframe)}
                 >
                   <Copy className="h-4 w-4 mr-1" />
                   复制
@@ -175,12 +175,12 @@ export function WidgetCodeDialog({ open, onClose, widget, onCopy }: WidgetCodeDi
               <Label>悬浮窗口模式</Label>
               <div className="relative">
                 <pre className="bg-gray-100 p-4 rounded-lg text-xs overflow-auto max-h-48 border whitespace-pre-wrap break-words">
-                  <code className="block overflow-x-auto">{embedCodes.floating}</code>
+                  <code className="block overflow-x-auto">{widgetCodes.floating}</code>
                 </pre>
                 <Button
                   size="sm"
                   className="absolute top-2 right-2"
-                  onClick={() => onCopy(embedCodes.floating)}
+                  onClick={() => onCopy(widgetCodes.floating)}
                 >
                   <Copy className="h-4 w-4 mr-1" />
                   复制
@@ -195,12 +195,12 @@ export function WidgetCodeDialog({ open, onClose, widget, onCopy }: WidgetCodeDi
               <Label>响应式嵌入</Label>
               <div className="relative">
                 <pre className="bg-gray-100 p-4 rounded-lg text-xs overflow-auto max-h-48 border whitespace-pre-wrap break-words">
-                  <code className="block overflow-x-auto">{embedCodes.responsive}</code>
+                  <code className="block overflow-x-auto">{widgetCodes.responsive}</code>
                 </pre>
                 <Button
                   size="sm"
                   className="absolute top-2 right-2"
-                  onClick={() => onCopy(embedCodes.responsive)}
+                  onClick={() => onCopy(widgetCodes.responsive)}
                 >
                   <Copy className="h-4 w-4 mr-1" />
                   复制
@@ -228,7 +228,7 @@ export function WidgetCodeDialog({ open, onClose, widget, onCopy }: WidgetCodeDi
           <Button variant="outline" onClick={onClose}>
             关闭
           </Button>
-          <Button onClick={() => onCopy(embedCodes[activeTab as keyof typeof embedCodes])}>
+          <Button onClick={() => onCopy(widgetCodes[activeTab as keyof typeof widgetCodes])}>
             <Copy className="h-4 w-4 mr-2" />
             复制当前代码
           </Button>

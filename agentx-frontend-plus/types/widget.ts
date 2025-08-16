@@ -10,8 +10,8 @@ export interface AgentWidget {
   agentId: string;
   userId: string;
   publicId: string;
-  embedName: string;
-  embedDescription?: string;
+  name: string;
+  description?: string;
   model: Model;
   provider?: Provider;
   allowedDomains: string[];
@@ -19,15 +19,15 @@ export interface AgentWidget {
   enabled: boolean;
   widgetType: WidgetType;
   knowledgeBaseIds?: string[];
-  embedCode: string;
+  widgetCode: string;
   createdAt: string;
   updatedAt: string;
 }
 
 /** 创建小组件配置请求 */
 export interface CreateWidgetRequest {
-  embedName: string;
-  embedDescription?: string;
+  name: string;
+  description?: string;
   modelId: string;
   providerId?: string;
   allowedDomains: string[];
@@ -38,8 +38,8 @@ export interface CreateWidgetRequest {
 
 /** 更新小组件配置请求 */
 export interface UpdateWidgetRequest {
-  embedName: string;
-  embedDescription?: string;
+  name: string;
+  description?: string;
   modelId: string;
   providerId?: string;
   allowedDomains: string[];

@@ -33,8 +33,8 @@ interface UpdateWidgetDialogProps {
 
 export function UpdateWidgetDialog({ open, onClose, agentId, widget, models, onSuccess }: UpdateWidgetDialogProps) {
   const [formData, setFormData] = useState<UpdateWidgetRequest>({
-    embedName: '',
-    embedDescription: '',
+    name: '',
+    description: '',
     modelId: '',
     providerId: undefined,
     allowedDomains: [],
@@ -73,8 +73,8 @@ export function UpdateWidgetDialog({ open, onClose, agentId, widget, models, onS
   useEffect(() => {
     if (widget) {
       setFormData({
-        embedName: widget.embedName,
-        embedDescription: widget.embedDescription || '',
+        name: widget.name,
+        description: widget.description || '',
         modelId: widget.model?.id || '',
         providerId: widget.provider?.id,
         allowedDomains: widget.allowedDomains,
@@ -88,7 +88,7 @@ export function UpdateWidgetDialog({ open, onClose, agentId, widget, models, onS
   }, [widget]);
 
   const handleSubmit = async () => {
-    if (!formData.embedName.trim()) {
+    if (!formData.name.trim()) {
       return;
     }
     if (!formData.modelId) {
@@ -140,7 +140,7 @@ export function UpdateWidgetDialog({ open, onClose, agentId, widget, models, onS
         <DialogHeader>
           <DialogTitle>编辑小组件配置</DialogTitle>
           <DialogDescription>
-            修改 "{widget?.embedName}" 的配置
+            修改 "{widget?.name}" 的配置
           </DialogDescription>
         </DialogHeader>
 
@@ -180,22 +180,22 @@ export function UpdateWidgetDialog({ open, onClose, agentId, widget, models, onS
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="embedName">配置名称 *</Label>
+            <Label htmlFor="name">配置名称 *</Label>
             <Input
-              id="embedName"
+              id="name"
               placeholder={formData.widgetType === 'AGENT' ? "例如：官网客服助手" : "例如：文档问答助手"}
-              value={formData.embedName}
-              onChange={(e) => setFormData({ ...formData, embedName: e.target.value })}
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             />
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="embedDescription">配置描述</Label>
+            <Label htmlFor="description">配置描述</Label>
             <Textarea
-              id="embedDescription"
+              id="description"
               placeholder="简单描述这个小组件配置的用途"
-              value={formData.embedDescription}
-              onChange={(e) => setFormData({ ...formData, embedDescription: e.target.value })}
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             />
           </div>
 
@@ -294,7 +294,7 @@ export function UpdateWidgetDialog({ open, onClose, agentId, widget, models, onS
           <Button 
             onClick={handleSubmit}
             disabled={
-              !formData.embedName.trim() || 
+              !formData.name.trim() || 
               !formData.modelId || 
               (formData.widgetType === 'RAG' && (!formData.knowledgeBaseIds || formData.knowledgeBaseIds.length === 0)) ||
               submitting

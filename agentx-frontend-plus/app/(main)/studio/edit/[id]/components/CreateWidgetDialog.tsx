@@ -31,8 +31,8 @@ interface CreateWidgetDialogProps {
 
 export function CreateWidgetDialog({ open, onClose, agentId, models, onSuccess }: CreateWidgetDialogProps) {
   const [formData, setFormData] = useState<CreateWidgetRequest>({
-    embedName: '',
-    embedDescription: '',
+    name: '',
+    description: '',
     modelId: '',
     providerId: undefined,
     allowedDomains: [],
@@ -67,7 +67,7 @@ export function CreateWidgetDialog({ open, onClose, agentId, models, onSuccess }
   };
 
   const handleSubmit = async () => {
-    if (!formData.embedName.trim()) {
+    if (!formData.name.trim()) {
       return;
     }
     if (!formData.modelId) {
@@ -106,8 +106,8 @@ export function CreateWidgetDialog({ open, onClose, agentId, models, onSuccess }
 
   const handleClose = () => {
     setFormData({
-      embedName: '',
-      embedDescription: '',
+      name: '',
+      description: '',
       modelId: '',
       providerId: undefined,
       allowedDomains: [],
@@ -165,22 +165,22 @@ export function CreateWidgetDialog({ open, onClose, agentId, models, onSuccess }
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="embedName">配置名称 *</Label>
+            <Label htmlFor="name">配置名称 *</Label>
             <Input
-              id="embedName"
+              id="name"
               placeholder={formData.widgetType === 'AGENT' ? "例如：官网客服助手" : "例如：文档问答助手"}
-              value={formData.embedName}
-              onChange={(e) => setFormData({ ...formData, embedName: e.target.value })}
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             />
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="embedDescription">配置描述</Label>
+            <Label htmlFor="description">配置描述</Label>
             <Textarea
-              id="embedDescription"
+              id="description"
               placeholder="简单描述这个小组件配置的用途"
-              value={formData.embedDescription}
-              onChange={(e) => setFormData({ ...formData, embedDescription: e.target.value })}
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             />
           </div>
 
@@ -279,7 +279,7 @@ export function CreateWidgetDialog({ open, onClose, agentId, models, onSuccess }
           <Button 
             onClick={handleSubmit}
             disabled={
-              !formData.embedName.trim() || 
+              !formData.name.trim() || 
               !formData.modelId || 
               (formData.widgetType === 'RAG' && (!formData.knowledgeBaseIds || formData.knowledgeBaseIds.length === 0)) ||
               submitting

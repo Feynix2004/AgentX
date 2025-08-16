@@ -5,20 +5,20 @@ import { withToast } from './toast-utils';
 export interface Widget {
   id: string;
   publicId: string;
-  embedName: string;
-  embedDescription?: string;
+  name: string;
+  description?: string;
   enabled: boolean;
   dailyLimit: number;
   dailyCalls: number;
   allowedDomains: string[];
-  embedCode: string;
+  widgetCode: string;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface CreateWidgetRequest {
-  embedName: string;
-  embedDescription?: string;
+  name: string;
+  description?: string;
   dailyLimit: number;
   allowedDomains: string[];
   modelId: string;
@@ -26,8 +26,8 @@ export interface CreateWidgetRequest {
 }
 
 export interface UpdateWidgetRequest {
-  embedName?: string;
-  embedDescription?: string;
+  name?: string;
+  description?: string;
   dailyLimit?: number;
   allowedDomains?: string[];
   modelId?: string;

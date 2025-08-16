@@ -54,8 +54,8 @@ public class WidgetChatController {
             // 4. 构建响应信息
             WidgetInfoResponse response = new WidgetInfoResponse();
             response.setPublicId(widget.getPublicId());
-            response.setEmbedName(widget.getEmbedName());
-            response.setEmbedDescription(widget.getEmbedDescription());
+            response.setName(widget.getName());
+            response.setDescription(widget.getDescription());
             response.setDailyLimit(widget.getDailyLimit());
             response.setEnabled(widget.getEnabled());
             
@@ -172,8 +172,8 @@ public class WidgetChatController {
     /** 小组件信息响应类 */
     public static class WidgetInfoResponse {
         private String publicId;
-        private String embedName;
-        private String embedDescription;
+        private String name;
+        private String description;
         private Integer dailyLimit;
         private Integer dailyCalls;
         private Boolean enabled;
@@ -195,20 +195,20 @@ public class WidgetChatController {
             this.publicId = publicId;
         }
 
-        public String getEmbedName() {
-            return embedName;
+        public String getName() {
+            return name;
         }
 
-        public void setEmbedName(String embedName) {
-            this.embedName = embedName;
+        public void setName(String name) {
+            this.name = name;
         }
 
-        public String getEmbedDescription() {
-            return embedDescription;
+        public String getDescription() {
+            return description;
         }
 
-        public void setEmbedDescription(String embedDescription) {
-            this.embedDescription = embedDescription;
+        public void setDescription(String description) {
+            this.description = description;
         }
 
         public Integer getDailyLimit() {

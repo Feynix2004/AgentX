@@ -30,17 +30,17 @@ public class AgentWidgetEntity extends BaseEntity {
     @TableField("user_id")
     private String userId;
 
-    /** 嵌入访问的唯一ID */
+    /** Widget访问的唯一ID */
     @TableField("public_id")
     private String publicId;
 
-    /** 嵌入名称 */
-    @TableField("embed_name")
-    private String embedName;
+    /** Widget名称 */
+    @TableField("name")
+    private String name;
 
-    /** 嵌入描述 */
-    @TableField("embed_description")
-    private String embedDescription;
+    /** Widget描述 */
+    @TableField("description")
+    private String description;
 
     /** 指定使用的模型ID */
     @TableField("model_id")
@@ -74,28 +74,27 @@ public class AgentWidgetEntity extends BaseEntity {
     public AgentWidgetEntity() {
         this.enabled = true;
         this.dailyLimit = -1;
-        this.widgetType = WidgetType.AGENT;
     }
 
     /** 创建新的小组件配置 */
-    public static AgentWidgetEntity createNew(String agentId, String userId, String embedName, 
-                                           String embedDescription, String modelId, String providerId,
+    public static AgentWidgetEntity createNew(String agentId, String userId, String name, 
+                                           String description, String modelId, String providerId,
                                            List<String> allowedDomains, Integer dailyLimit) {
-        return createNew(agentId, userId, embedName, embedDescription, modelId, providerId, 
+        return createNew(agentId, userId, name, description, modelId, providerId, 
                         allowedDomains, dailyLimit, WidgetType.AGENT, null);
     }
 
     /** 创建新的小组件配置（支持Widget类型） */
-    public static AgentWidgetEntity createNew(String agentId, String userId, String embedName, 
-                                           String embedDescription, String modelId, String providerId,
+    public static AgentWidgetEntity createNew(String agentId, String userId, String name, 
+                                           String description, String modelId, String providerId,
                                            List<String> allowedDomains, Integer dailyLimit, 
                                            WidgetType widgetType, List<String> knowledgeBaseIds) {
         AgentWidgetEntity widget = new AgentWidgetEntity();
         widget.setAgentId(agentId);
         widget.setUserId(userId);
         widget.setPublicId(generateUniquePublicId());
-        widget.setEmbedName(embedName);
-        widget.setEmbedDescription(embedDescription);
+        widget.setName(name);
+        widget.setDescription(description);
         widget.setModelId(modelId);
         widget.setProviderId(providerId);
         widget.setAllowedDomains(allowedDomains);
@@ -159,18 +158,18 @@ public class AgentWidgetEntity extends BaseEntity {
     }
 
     /** 更新小组件配置 */
-    public void updateConfig(String embedName, String embedDescription, String modelId, 
+    public void updateConfig(String name, String description, String modelId, 
                            String providerId, List<String> allowedDomains, Integer dailyLimit) {
-        updateConfig(embedName, embedDescription, modelId, providerId, allowedDomains, 
+        updateConfig(name, description, modelId, providerId, allowedDomains, 
                     dailyLimit, this.widgetType, this.knowledgeBaseIds);
     }
 
     /** 更新小组件配置（支持Widget类型） */
-    public void updateConfig(String embedName, String embedDescription, String modelId, 
+    public void updateConfig(String name, String description, String modelId, 
                            String providerId, List<String> allowedDomains, Integer dailyLimit,
                            WidgetType widgetType, List<String> knowledgeBaseIds) {
-        this.embedName = embedName;
-        this.embedDescription = embedDescription;
+        this.name = name;
+        this.description = description;
         this.modelId = modelId;
         this.providerId = providerId;
         this.allowedDomains = allowedDomains;
@@ -219,20 +218,20 @@ public class AgentWidgetEntity extends BaseEntity {
         this.publicId = publicId;
     }
 
-    public String getEmbedName() {
-        return embedName;
+    public String getName() {
+        return name;
     }
 
-    public void setEmbedName(String embedName) {
-        this.embedName = embedName;
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public String getEmbedDescription() {
-        return embedDescription;
+    public String getDescription() {
+        return description;
     }
 
-    public void setEmbedDescription(String embedDescription) {
-        this.embedDescription = embedDescription;
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public String getModelId() {

@@ -10,8 +10,8 @@ import { WidgetChatInterface } from './components/WidgetChatInterface';
 import { getWidgetInfoWithToast } from '@/lib/widget-service';
 
 interface WidgetInfo {
-  embedName: string;
-  embedDescription?: string;
+  name: string;
+  description?: string;
   agentName: string;
   agentAvatar?: string;
   welcomeMessage?: string;
@@ -184,10 +184,10 @@ export default function WidgetChatPage() {
                 </div>
               )}
               <div>
-                <CardTitle className="text-xl">{widgetInfo.embedName}</CardTitle>
-                {widgetInfo.embedDescription && (
+                <CardTitle className="text-xl">{widgetInfo.name}</CardTitle>
+                {widgetInfo.description && (
                   <p className="text-sm text-muted-foreground mt-1">
-                    {widgetInfo.embedDescription}
+                    {widgetInfo.description}
                   </p>
                 )}
               </div>
