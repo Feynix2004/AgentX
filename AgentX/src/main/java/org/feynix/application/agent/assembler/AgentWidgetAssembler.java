@@ -70,7 +70,9 @@ public class AgentWidgetAssembler {
                 request.getModelId(),
                 request.getProviderId(),
                 request.getAllowedDomains(),
-                request.getDailyLimit()
+                request.getDailyLimit(),
+                request.getWidgetType(),
+                request.getKnowledgeBaseIds()
         );
     }
 
@@ -85,7 +87,9 @@ public class AgentWidgetAssembler {
                 request.getModelId(),
                 request.getProviderId(),
                 request.getAllowedDomains(),
-                request.getDailyLimit()
+                request.getDailyLimit(),
+                request.getWidgetType(),
+                request.getKnowledgeBaseIds()
         );
         entity.setEnabled(request.getEnabled());
     }

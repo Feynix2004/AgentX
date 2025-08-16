@@ -3,6 +3,7 @@ package org.feynix.interfaces.dto.agent.request;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import org.feynix.domain.agent.constant.WidgetType;
 
 import java.util.List;
 
@@ -35,6 +36,13 @@ public class UpdateWidgetRequest {
     /** 是否启用 */
     @NotNull(message = "启用状态不能为空")
     private Boolean enabled;
+
+    /** Widget类型：AGENT/RAG */
+    @NotNull(message = "Widget类型不能为空")
+    private WidgetType widgetType;
+
+    /** 知识库ID列表（RAG类型专用） */
+    private List<String> knowledgeBaseIds;
 
     // Getter和Setter方法
     public String getEmbedName() {
@@ -91,5 +99,21 @@ public class UpdateWidgetRequest {
 
     public void setEnabled(Boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public WidgetType getWidgetType() {
+        return widgetType;
+    }
+
+    public void setWidgetType(WidgetType widgetType) {
+        this.widgetType = widgetType;
+    }
+
+    public List<String> getKnowledgeBaseIds() {
+        return knowledgeBaseIds;
+    }
+
+    public void setKnowledgeBaseIds(List<String> knowledgeBaseIds) {
+        this.knowledgeBaseIds = knowledgeBaseIds;
     }
 }

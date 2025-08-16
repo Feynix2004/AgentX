@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Send, MessageCircle, User, Loader2, Bot, Wrench } from "lucide-react";
+import { Send, MessageCircle, User, Loader2, Bot } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { widgetChatStream, handleWidgetStream, type WidgetChatRequest, type WidgetChatResponse } from '@/lib/widget-chat-service';
 import { MessageType } from '@/types/conversation';
@@ -21,6 +21,7 @@ interface Message {
   timestamp: number;
   isStreaming?: boolean;
   type?: MessageType;
+  payload?: string; // 用于存储RAG检索结果等额外数据
 }
 
 interface WidgetChatInterfaceProps {
@@ -64,24 +65,71 @@ export function WidgetChatInterface({
   const hasReceivedFirstResponse = useRef(false);
   const messageContentAccumulator = useRef({
     content: "",
-    type: MessageType.TEXT as MessageType
+    type: MessageType.TEXT as MessageType,
+    payload: undefined as string | undefined
   });
   const messageSequenceNumber = useRef(0);
   const [completedTextMessages, setCompletedTextMessages] = useState<Set<string>>(new Set());
   const [currentAssistantMessage, setCurrentAssistantMessage] = useState<{ id: string; hasContent: boolean } | null>(null);
   const [autoScroll, setAutoScroll] = useState(true);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const isUserScrolling = useRef(false);
+  const scrollTimer = useRef<NodeJS.Timeout | null>(null);
 
-  // 智能滚动到底部 - 只在自动滚动开启时滚动
+  // 检测用户是否正在手动滚动
   useEffect(() => {
-    if (autoScroll && messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    // 查找ScrollArea内部的实际滚动容器
+    const scrollContainer = scrollContainerRef.current?.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement;
+    if (!scrollContainer) return;
+
+    const handleScroll = () => {
+      isUserScrolling.current = true;
+      
+      // 清除之前的定时器
+      if (scrollTimer.current) {
+        clearTimeout(scrollTimer.current);
+      }
+      
+      // 设置定时器，500ms后认为用户停止滚动
+      scrollTimer.current = setTimeout(() => {
+        isUserScrolling.current = false;
+      }, 500);
+
+      // 检查是否滚动到底部
+      const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
+      const isAtBottom = Math.abs(scrollHeight - clientHeight - scrollTop) < 10;
+      
+      if (isAtBottom) {
+        setAutoScroll(true);
+      } else {
+        setAutoScroll(false);
+      }
+    };
+
+    scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
+    
+    return () => {
+      scrollContainer.removeEventListener('scroll', handleScroll);
+      if (scrollTimer.current) {
+        clearTimeout(scrollTimer.current);
+      }
+    };
+  }, []);
+
+  // 智能滚动到底部 - 只在用户不在滚动且开启自动滚动时滚动
+  useEffect(() => {
+    if (autoScroll && !isUserScrolling.current && messagesEndRef.current) {
+      // 使用requestAnimationFrame确保DOM更新完成
+      requestAnimationFrame(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      });
     }
   }, [messages, isThinking, autoScroll]);
 
   // 处理用户主动发送消息时强制滚动到底部
   const scrollToBottom = useCallback(() => {
     setAutoScroll(true);
-    // 使用setTimeout确保在下一个渲染周期执行
+    // 立即滚动，不等待用户停止滚动
     setTimeout(() => {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, 100);
@@ -93,7 +141,8 @@ export function WidgetChatInterface({
     hasReceivedFirstResponse.current = false;
     messageContentAccumulator.current = {
       content: "",
-      type: MessageType.TEXT
+      type: MessageType.TEXT,
+      payload: undefined
     };
     setCompletedTextMessages(new Set());
     messageSequenceNumber.current = 0;
@@ -160,7 +209,8 @@ export function WidgetChatInterface({
       hasReceivedFirstResponse.current = false;
       messageContentAccumulator.current = {
         content: "",
-        type: MessageType.TEXT
+        type: MessageType.TEXT,
+        payload: undefined
       };
 
       await handleWidgetStream(
@@ -208,8 +258,12 @@ export function WidgetChatInterface({
     
     console.log(`处理消息: 类型=${messageType}, 序列=${messageSequenceNumber.current}, ID=${currentMessageId}, done=${data.done}`);
     
-    // 处理消息内容（用于UI显示）
-    const displayableTypes = [undefined, "TEXT", "TOOL_CALL"];
+    // 处理消息内容（用于UI显示）- 简化版本，只显示最终回答
+    const displayableTypes = [
+      undefined, 
+      "TEXT", 
+      "RAG_ANSWER_PROGRESS"  // 只处理RAG回答内容，不显示中间过程
+    ];
     const isDisplayableType = displayableTypes.includes(data.messageType);
     
     if (isDisplayableType && data.content) {
@@ -244,6 +298,7 @@ export function WidgetChatInterface({
   const updateOrCreateMessageInUI = (messageId: string, messageData: {
     content: string;
     type: MessageType;
+    payload?: string;
   }) => {
     // 使用函数式更新，在一次原子操作中检查并更新/创建消息
     setMessages(prev => {
@@ -256,7 +311,8 @@ export function WidgetChatInterface({
         const newMessages = [...prev];
         newMessages[messageIndex] = {
           ...newMessages[messageIndex],
-          content: messageData.content
+          content: messageData.content,
+          payload: messageData.payload || newMessages[messageIndex].payload
         };
         return newMessages;
       } else {
@@ -270,7 +326,8 @@ export function WidgetChatInterface({
             content: messageData.content,
             type: messageData.type,
             timestamp: Date.now(),
-            isStreaming: true
+            isStreaming: true,
+            payload: messageData.payload
           }
         ];
       }
@@ -285,6 +342,7 @@ export function WidgetChatInterface({
   const finalizeMessage = (messageId: string, messageData: {
     content: string;
     type: MessageType;
+    payload?: string;
   }) => {
     console.log(`完成消息: ${messageId}, 类型: ${messageData.type}, 内容长度: ${messageData.content.length}`);
     
@@ -306,7 +364,8 @@ export function WidgetChatInterface({
         newMessages[messageIndex] = {
           ...newMessages[messageIndex],
           content: messageData.content,
-          isStreaming: false
+          isStreaming: false,
+          payload: messageData.payload || newMessages[messageIndex].payload
         };
         return newMessages;
       } else {
@@ -320,7 +379,8 @@ export function WidgetChatInterface({
             content: messageData.content,
             type: messageData.type,
             timestamp: Date.now(),
-            isStreaming: false
+            isStreaming: false,
+            payload: messageData.payload
           }
         ];
       }
@@ -341,7 +401,8 @@ export function WidgetChatInterface({
     console.log("重置消息累积器");
     messageContentAccumulator.current = {
       content: "",
-      type: MessageType.TEXT
+      type: MessageType.TEXT,
+      payload: undefined
     };
   };
 
@@ -380,21 +441,13 @@ export function WidgetChatInterface({
     inputRef.current?.focus();
   };
 
-  // 根据消息类型获取图标和文本
+  // 根据消息类型获取图标和文本 - 简化版本
   const getMessageTypeInfo = (type?: MessageType) => {
-    switch (type) {
-      case MessageType.TOOL_CALL:
-        return {
-          icon: <Wrench className="h-4 w-4 text-blue-500" />,
-          text: '工具调用'
-        };
-      case MessageType.TEXT:
-      default:
-        return {
-          icon: <Bot className="h-4 w-4" />,
-          text: agentName
-        };
-    }
+    // 统一使用普通的Assistant样式，不区分消息类型
+    return {
+      icon: <Bot className="h-4 w-4" />,
+      text: agentName
+    };
   };
 
   // 格式化消息时间
@@ -410,6 +463,7 @@ export function WidgetChatInterface({
       return '刚刚';
     }
   };
+
 
   // 渲染Markdown内容
   const renderMessageContent = (content: string) => {
@@ -496,7 +550,7 @@ export function WidgetChatInterface({
   return (
     <div className="flex flex-col h-[500px] bg-white rounded-lg border">
       {/* 消息区域 */}
-      <ScrollArea className="flex-1 p-4">
+      <ScrollArea className="flex-1 p-4" ref={scrollContainerRef}>
         <div className="space-y-4">
           {messages.map((message) => (
             <div key={message.id} className="w-full">
@@ -557,7 +611,7 @@ export function WidgetChatInterface({
                             )}
                           </div>
                         ) : (
-                          // 正常消息使用Markdown渲染
+                          // 所有正常消息统一使用Markdown渲染
                           <div className="markdown-content">
                             {renderMessageContent(
                               message.content + (message.isStreaming ? ' ▌' : '')
@@ -601,15 +655,17 @@ export function WidgetChatInterface({
           )}
 
           {/* 滚动到底部按钮 - 当用户手动滚动离开底部时显示 */}
-          {!autoScroll && (isLoading || isThinking) && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="fixed bottom-32 right-6 rounded-full shadow-md bg-white z-10 hover:bg-gray-50"
-              onClick={scrollToBottom}
-            >
-              <span className="text-sm">↓ 回到底部</span>
-            </Button>
+          {!autoScroll && (
+            <div className="sticky bottom-0 flex justify-center py-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-full shadow-md bg-white hover:bg-gray-50"
+                onClick={scrollToBottom}
+              >
+                <span className="text-sm">↓ 回到底部</span>
+              </Button>
+            </div>
           )}
         </div>
         <div ref={messagesEndRef} />

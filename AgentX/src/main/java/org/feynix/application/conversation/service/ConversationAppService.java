@@ -13,6 +13,7 @@ import org.feynix.application.conversation.dto.ChatResponse;
 import org.feynix.application.conversation.dto.MessageDTO;
 import org.feynix.application.conversation.dto.RagChatRequest;
 import org.feynix.application.conversation.service.message.rag.RagChatContext;
+import org.feynix.application.rag.dto.RagSearchRequest;
 import org.feynix.application.rag.dto.RagStreamChatRequest;
 import org.feynix.interfaces.dto.agent.request.WidgetChatRequest;
 import org.feynix.application.conversation.service.message.AbstractMessageHandler;
@@ -576,8 +577,8 @@ public class ConversationAppService {
         MessageTransport<SseEmitter> transport = transportFactory
                 .getTransport(MessageTransportFactory.TRANSPORT_TYPE_SSE);
 
-        // 3. 获取适合的消息处理器
-        AbstractMessageHandler handler = messageHandlerFactory.getHandler(environment.getAgent());
+        // 3. 获取适合的消息处理器（传入widget参数以支持类型选择）
+        AbstractMessageHandler handler = messageHandlerFactory.getHandler(environment.getAgent(), widgetEntity);
 
         // 4. 处理对话
         return handler.chat(environment, transport);
@@ -598,8 +599,8 @@ public class ConversationAppService {
         MessageTransport<ChatResponse> transport = transportFactory
                 .getTransport(MessageTransportFactory.TRANSPORT_TYPE_SYNC);
 
-        // 3. 获取适合的消息处理器
-        AbstractMessageHandler handler = messageHandlerFactory.getHandler(environment.getAgent());
+        // 3. 获取适合的消息处理器（传入widget参数以支持类型选择）
+        AbstractMessageHandler handler = messageHandlerFactory.getHandler(environment.getAgent(), widgetEntity);
 
         // 4. 处理对话
         return handler.chat(environment, transport);
@@ -612,6 +613,12 @@ public class ConversationAppService {
      * @param widgetEntity Widget配置实体
      * @return 对话环境 */
     private ChatContext prepareWidgetEnvironment(String publicId, WidgetChatRequest widgetChatRequest, AgentWidgetEntity widgetEntity) {
+        // 检查Widget类型，如果是RAG类型则创建RAG专用上下文
+        if (widgetEntity.isRagWidget()) {
+            return createRagWidgetContext(publicId, widgetChatRequest, widgetEntity);
+        }
+        
+        // Agent类型Widget的处理逻辑
         // 1. 获取Agent和模型信息
         String agentId = widgetEntity.getAgentId();
         String creatorUserId = widgetEntity.getUserId();
@@ -816,6 +823,62 @@ public class ConversationAppService {
                 """);
         ragAgent.setEnabled(true);
         return ragAgent;
+    }
+
+    /** 创建RAG Widget专用的上下文
+     * @param publicId 公开访问ID
+     * @param widgetChatRequest Widget聊天请求
+     * @param widgetEntity Widget配置实体
+     * @return RAG聊天上下文 */
+    private ChatContext createRagWidgetContext(String publicId, WidgetChatRequest widgetChatRequest, AgentWidgetEntity widgetEntity) {
+        // 1. 获取基础信息
+        String creatorUserId = widgetEntity.getUserId();
+        String sessionId = widgetChatRequest.getSessionId();
+        
+        // 2. 创建系统RAG Agent（用于RAG对话）
+        AgentEntity ragAgent = createRagAgent();
+        
+        // 3. 获取Widget配置指定的模型
+        ModelEntity model = llmDomainService.getModelById(widgetEntity.getModelId());
+        
+        // 4. 获取高可用服务商信息
+        List<String> fallbackChain = userSettingsDomainService.getUserFallbackChain(creatorUserId);
+        HighAvailabilityResult result = highAvailabilityDomainService.selectBestProvider(model, creatorUserId, 
+                sessionId, fallbackChain);
+        ProviderEntity provider = result.getProvider();
+        ModelEntity selectedModel = result.getModel();
+        String instanceId = result.getInstanceId();
+        provider.isActive();
+        
+        // 5. 创建模型配置
+        LLMModelConfig llmModelConfig = createDefaultLLMModelConfig(selectedModel.getModelId());
+        
+        // 6. 创建RAG搜索请求
+        RagSearchRequest ragSearchRequest = new RagSearchRequest();
+        ragSearchRequest.setQuestion(widgetChatRequest.getMessage());
+        ragSearchRequest.setDatasetIds(widgetEntity.getKnowledgeBaseIds()); // 使用Widget配置的知识库ID
+        ragSearchRequest.setMaxResults(5);  // 默认检索5个结果
+        ragSearchRequest.setMinScore(0.7);  // 默认最小相似度
+        ragSearchRequest.setEnableRerank(true);  // 默认启用重排序
+        
+        // 7. 创建RAG专用上下文
+        RagChatContext ragContext = new RagChatContext();
+        ragContext.setSessionId(sessionId);
+        ragContext.setUserId(creatorUserId);
+        ragContext.setUserMessage(widgetChatRequest.getMessage());
+        ragContext.setAgent(ragAgent);
+        ragContext.setModel(selectedModel);
+        ragContext.setProvider(provider);
+        ragContext.setLlmModelConfig(llmModelConfig);
+        ragContext.setInstanceId(instanceId);
+        ragContext.setRagSearchRequest(ragSearchRequest);
+        ragContext.setUserRagId(null); // Widget RAG使用数据集ID，不使用userRagId
+        ragContext.setFileUrls(widgetChatRequest.getFileUrls());
+        
+        // 8. 设置会话和上下文
+        setupWidgetContextAndHistory(ragContext, widgetChatRequest);
+        
+        return ragContext;
     }
 
 }

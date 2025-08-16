@@ -66,7 +66,42 @@ export enum MessageType {
   /**
    * 任务状态变为加载中消息
    */
-  TASK_STATUS_TO_LOADING = "TASK_STATUS_TO_LOADING"
+  TASK_STATUS_TO_LOADING = "TASK_STATUS_TO_LOADING",
+
+  /**
+   * RAG检索开始消息
+   */
+  RAG_RETRIEVAL_START = "RAG_RETRIEVAL_START",
+  
+  /**
+   * RAG检索结束消息
+   */
+  RAG_RETRIEVAL_END = "RAG_RETRIEVAL_END",
+  
+  /**
+   * RAG回答开始消息
+   */
+  RAG_ANSWER_START = "RAG_ANSWER_START",
+  
+  /**
+   * RAG思考开始消息
+   */
+  RAG_THINKING_START = "RAG_THINKING_START",
+  
+  /**
+   * RAG思考结束消息
+   */
+  RAG_THINKING_END = "RAG_THINKING_END",
+  
+  /**
+   * RAG回答进度消息
+   */
+  RAG_ANSWER_PROGRESS = "RAG_ANSWER_PROGRESS",
+  
+  /**
+   * RAG回答结束消息
+   */
+  RAG_ANSWER_END = "RAG_ANSWER_END"
 }
 
 // 消息接口

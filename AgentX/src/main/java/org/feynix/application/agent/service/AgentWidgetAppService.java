@@ -91,6 +91,21 @@ public class AgentWidgetAppService {
         List<ModelDTO> models = new ArrayList<>();
         List<ProviderDTO> providers = new ArrayList<>();
 
+        for (AgentWidgetEntity widget : widgets) {
+            // 查询模型信息
+            ModelEntity model = llmDomainService.getModelById(widget.getModelId());
+            ModelDTO modelDTO = model != null ? ModelAssembler.toDTO(model) : null;
+            models.add(modelDTO);
+            
+            // 查询提供商信息
+            ProviderEntity provider = null;
+            if (model != null) {
+                provider = llmDomainService.getProvider(model.getProviderId());
+            }
+            ProviderDTO providerDTO = provider != null ? ProviderAssembler.toDTO(provider) : null;
+            providers.add(providerDTO);
+        }
+
         // 4. 转换为DTO列表
         return AgentWidgetAssembler.toDTOsWithEmbedCode(widgets, models, providers, 
                 agentWidgetAssembler.frontendBaseUrl);
@@ -109,6 +124,21 @@ public class AgentWidgetAppService {
 
         List<ModelDTO> models = new ArrayList<>();
         List<ProviderDTO> providers = new ArrayList<>();
+
+        for (AgentWidgetEntity widget : widgets) {
+            // 查询模型信息
+            ModelEntity model = llmDomainService.getModelById(widget.getModelId());
+            ModelDTO modelDTO = model != null ? ModelAssembler.toDTO(model) : null;
+            models.add(modelDTO);
+            
+            // 查询提供商信息
+            ProviderEntity provider = null;
+            if (model != null) {
+                provider = llmDomainService.getProvider(model.getProviderId());
+            }
+            ProviderDTO providerDTO = provider != null ? ProviderAssembler.toDTO(provider) : null;
+            providers.add(providerDTO);
+        }
 
         return AgentWidgetAssembler.toDTOsWithEmbedCode(widgets, models, providers,
                 agentWidgetAssembler.frontendBaseUrl);

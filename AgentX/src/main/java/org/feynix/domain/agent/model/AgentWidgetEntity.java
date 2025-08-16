@@ -4,7 +4,9 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import org.feynix.domain.agent.constant.WidgetType;
 import org.feynix.infrastructure.converter.ListStringConverter;
+import org.feynix.infrastructure.converter.WidgetTypeConverter;
 import org.feynix.infrastructure.entity.BaseEntity;
 import org.feynix.infrastructure.exception.BusinessException;
 
@@ -60,16 +62,34 @@ public class AgentWidgetEntity extends BaseEntity {
     @TableField("enabled")
     private Boolean enabled;
 
+    /** Widget类型：AGENT/RAG */
+    @TableField(value = "widget_type", typeHandler = WidgetTypeConverter.class)
+    private WidgetType widgetType = WidgetType.AGENT;
+
+    /** 知识库ID列表（RAG类型专用） */
+    @TableField(value = "knowledge_base_ids", typeHandler = ListStringConverter.class)
+    private List<String> knowledgeBaseIds;
+
     /** 无参构造函数 */
     public AgentWidgetEntity() {
         this.enabled = true;
         this.dailyLimit = -1;
+        this.widgetType = WidgetType.AGENT;
     }
 
     /** 创建新的小组件配置 */
     public static AgentWidgetEntity createNew(String agentId, String userId, String embedName, 
                                            String embedDescription, String modelId, String providerId,
                                            List<String> allowedDomains, Integer dailyLimit) {
+        return createNew(agentId, userId, embedName, embedDescription, modelId, providerId, 
+                        allowedDomains, dailyLimit, WidgetType.AGENT, null);
+    }
+
+    /** 创建新的小组件配置（支持Widget类型） */
+    public static AgentWidgetEntity createNew(String agentId, String userId, String embedName, 
+                                           String embedDescription, String modelId, String providerId,
+                                           List<String> allowedDomains, Integer dailyLimit, 
+                                           WidgetType widgetType, List<String> knowledgeBaseIds) {
         AgentWidgetEntity widget = new AgentWidgetEntity();
         widget.setAgentId(agentId);
         widget.setUserId(userId);
@@ -80,6 +100,8 @@ public class AgentWidgetEntity extends BaseEntity {
         widget.setProviderId(providerId);
         widget.setAllowedDomains(allowedDomains);
         widget.setDailyLimit(dailyLimit != null ? dailyLimit : -1);
+        widget.setWidgetType(widgetType != null ? widgetType : WidgetType.AGENT);
+        widget.setKnowledgeBaseIds(knowledgeBaseIds);
         widget.setEnabled(true);
         widget.setCreatedAt(LocalDateTime.now());
         widget.setUpdatedAt(LocalDateTime.now());
@@ -114,6 +136,16 @@ public class AgentWidgetEntity extends BaseEntity {
         return false;
     }
 
+    /** 检查是否为RAG类型Widget */
+    public boolean isRagWidget() {
+        return this.widgetType != null && this.widgetType.isRag();
+    }
+
+    /** 检查是否为Agent类型Widget */
+    public boolean isAgentWidget() {
+        return this.widgetType == null || this.widgetType.isAgent();
+    }
+
     /** 启用小组件配置 */
     public void enable() {
         this.enabled = true;
@@ -129,12 +161,22 @@ public class AgentWidgetEntity extends BaseEntity {
     /** 更新小组件配置 */
     public void updateConfig(String embedName, String embedDescription, String modelId, 
                            String providerId, List<String> allowedDomains, Integer dailyLimit) {
+        updateConfig(embedName, embedDescription, modelId, providerId, allowedDomains, 
+                    dailyLimit, this.widgetType, this.knowledgeBaseIds);
+    }
+
+    /** 更新小组件配置（支持Widget类型） */
+    public void updateConfig(String embedName, String embedDescription, String modelId, 
+                           String providerId, List<String> allowedDomains, Integer dailyLimit,
+                           WidgetType widgetType, List<String> knowledgeBaseIds) {
         this.embedName = embedName;
         this.embedDescription = embedDescription;
         this.modelId = modelId;
         this.providerId = providerId;
         this.allowedDomains = allowedDomains;
         this.dailyLimit = dailyLimit != null ? dailyLimit : -1;
+        this.widgetType = widgetType != null ? widgetType : WidgetType.AGENT;
+        this.knowledgeBaseIds = knowledgeBaseIds;
         this.updatedAt = LocalDateTime.now();
     }
 
@@ -231,5 +273,21 @@ public class AgentWidgetEntity extends BaseEntity {
 
     public void setEnabled(Boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public WidgetType getWidgetType() {
+        return widgetType;
+    }
+
+    public void setWidgetType(WidgetType widgetType) {
+        this.widgetType = widgetType;
+    }
+
+    public List<String> getKnowledgeBaseIds() {
+        return knowledgeBaseIds;
+    }
+
+    public void setKnowledgeBaseIds(List<String> knowledgeBaseIds) {
+        this.knowledgeBaseIds = knowledgeBaseIds;
     }
 }

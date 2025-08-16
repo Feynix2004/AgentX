@@ -3,6 +3,7 @@ package org.feynix.interfaces.dto.agent.request;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import org.feynix.domain.agent.constant.WidgetType;
 
 import java.util.List;
 
@@ -31,6 +32,13 @@ public class CreateWidgetRequest {
     /** 每日调用限制（-1为无限制） */
     @NotNull(message = "每日限制不能为空")
     private Integer dailyLimit = -1;
+
+    /** Widget类型：AGENT/RAG */
+    @NotNull(message = "Widget类型不能为空")
+    private WidgetType widgetType = WidgetType.AGENT;
+
+    /** 知识库ID列表（RAG类型专用） */
+    private List<String> knowledgeBaseIds;
 
     // Getter和Setter方法
     public String getEmbedName() {
@@ -79,5 +87,21 @@ public class CreateWidgetRequest {
 
     public void setDailyLimit(Integer dailyLimit) {
         this.dailyLimit = dailyLimit;
+    }
+
+    public WidgetType getWidgetType() {
+        return widgetType;
+    }
+
+    public void setWidgetType(WidgetType widgetType) {
+        this.widgetType = widgetType;
+    }
+
+    public List<String> getKnowledgeBaseIds() {
+        return knowledgeBaseIds;
+    }
+
+    public void setKnowledgeBaseIds(List<String> knowledgeBaseIds) {
+        this.knowledgeBaseIds = knowledgeBaseIds;
     }
 }

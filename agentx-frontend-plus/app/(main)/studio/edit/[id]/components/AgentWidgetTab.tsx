@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { MoreHorizontal, Plus, ExternalLink, Code, Copy, Eye, Settings, Trash } from "lucide-react";
+import { MoreHorizontal, Plus, ExternalLink, Code, Copy, Eye, Settings, Trash, Power, PowerOff } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,6 +13,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
 import { AgentWidget } from "@/types/widget";
 import { Model } from "@/lib/user-settings-service";
@@ -33,6 +43,7 @@ export function AgentWidgetTab({ agentId }: AgentWidgetTabProps) {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
   const [widgetCodeDialogOpen, setWidgetCodeDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedWidget, setSelectedWidget] = useState<AgentWidget | null>(null);
 
   // 加载小组件配置列表
@@ -79,16 +90,22 @@ export function AgentWidgetTab({ agentId }: AgentWidgetTabProps) {
     }
   };
 
+  // 打开删除确认对话框
+  const handleDeleteClick = (widget: AgentWidget) => {
+    setSelectedWidget(widget);
+    setDeleteDialogOpen(true);
+  };
+
   // 删除小组件配置
-  const handleDelete = async (widget: AgentWidget) => {
-    if (!confirm(`确定要删除小组件配置 \"${widget.embedName}\" 吗？此操作不可撤销。`)) {
-      return;
-    }
+  const handleDeleteConfirm = async () => {
+    if (!selectedWidget) return;
 
     try {
-      const response = await deleteWidgetWithToast(agentId, widget.id);
+      const response = await deleteWidgetWithToast(agentId, selectedWidget.id);
       if (response.code === 200) {
         loadWidgets(); // 重新加载数据
+        setDeleteDialogOpen(false);
+        setSelectedWidget(null);
       }
     } catch (error) {
       console.error('Failed to delete widget:', error);
@@ -169,7 +186,7 @@ export function AgentWidgetTab({ agentId }: AgentWidgetTabProps) {
                 setWidgetCodeDialogOpen(true);
               }}
               onCopyCode={handleCopyWidgetCode}
-              onDelete={handleDelete}
+              onDelete={handleDeleteClick}
             />
           ))}
         </div>
@@ -209,6 +226,36 @@ export function AgentWidgetTab({ agentId }: AgentWidgetTabProps) {
           />
         </>
       )}
+
+      {/* 删除确认对话框 */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>确认删除</AlertDialogTitle>
+            <AlertDialogDescription>
+              确定要删除小组件配置 "{selectedWidget?.embedName}" 吗？
+              <br />
+              此操作不可撤销，删除后所有嵌入在网站中的组件将停止工作。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel 
+              onClick={() => {
+                setDeleteDialogOpen(false);
+                setSelectedWidget(null);
+              }}
+            >
+              取消
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              确认删除
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -265,7 +312,17 @@ function WidgetConfigCard({ widget, onToggleStatus, onEdit, onViewCode, onCopyCo
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => onToggleStatus(widget)}>
-                  {widget.enabled ? "禁用" : "启用"}
+                  {widget.enabled ? (
+                    <>
+                      <PowerOff className="h-4 w-4 mr-2" />
+                      禁用
+                    </>
+                  ) : (
+                    <>
+                      <Power className="h-4 w-4 mr-2" />
+                      启用
+                    </>
+                  )}
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => onDelete(widget)}
@@ -282,6 +339,14 @@ function WidgetConfigCard({ widget, onToggleStatus, onEdit, onViewCode, onCopyCo
       <CardContent>
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
+            <Label className="text-muted-foreground">组件类型</Label>
+            <p>
+              <Badge variant={widget.widgetType === 'RAG' ? "secondary" : "outline"}>
+                {widget.widgetType === 'RAG' ? 'RAG 问答模式' : 'Agent 模式'}
+              </Badge>
+            </p>
+          </div>
+          <div>
             <Label className="text-muted-foreground">使用模型</Label>
             <p>{widget.model?.name}</p>
           </div>
@@ -289,6 +354,12 @@ function WidgetConfigCard({ widget, onToggleStatus, onEdit, onViewCode, onCopyCo
             <Label className="text-muted-foreground">每日限制</Label>
             <p>{widget.dailyLimit === -1 ? "无限制" : `${widget.dailyLimit} 次`}</p>
           </div>
+          {widget.widgetType === 'RAG' && widget.knowledgeBaseIds && widget.knowledgeBaseIds.length > 0 && (
+            <div>
+              <Label className="text-muted-foreground">知识库数量</Label>
+              <p>{widget.knowledgeBaseIds.length} 个</p>
+            </div>
+          )}
           <div className="col-span-2">
             <Label className="text-muted-foreground">访问链接</Label>
             <p className="font-mono text-xs break-all text-blue-600">

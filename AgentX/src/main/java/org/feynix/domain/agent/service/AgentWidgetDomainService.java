@@ -113,6 +113,14 @@ public class AgentWidgetDomainService{
         return widget;
     }
 
+    public void deleteWidgetById(String widgetId, String userId) {
+
+        agentWidgetRepository.delete(Wrappers.<AgentWidgetEntity>lambdaUpdate()
+                .eq(AgentWidgetEntity::getId, widgetId)
+                .eq(AgentWidgetEntity::getUserId, userId));
+    }
+
+
     /** 切换小组件配置启用状态
      *
      * @param widgetId 小组件配置ID
@@ -135,9 +143,11 @@ public class AgentWidgetDomainService{
      * @param widgetId 小组件配置ID
      * @param userId 用户ID */
     public void deleteWidget(String widgetId, String userId) {
-        AgentWidgetEntity widget = getWidgetById(widgetId, userId);
-        widget.delete();
-        updateWidget(widget, userId);
+        LambdaUpdateWrapper<AgentWidgetEntity> updateWrapper = Wrappers.<AgentWidgetEntity>lambdaUpdate()
+                .eq(AgentWidgetEntity::getId, widgetId)
+                .eq(AgentWidgetEntity::getUserId, userId);
+
+        agentWidgetRepository.delete(updateWrapper);
     }
 
     /** 验证域名访问权限

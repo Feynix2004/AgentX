@@ -6,6 +6,7 @@ import org.feynix.application.conversation.dto.ChatRequest;
 import org.feynix.application.conversation.dto.RagChatRequest;
 import org.feynix.application.conversation.service.message.AbstractMessageHandler;
 import org.feynix.domain.agent.model.AgentEntity;
+import org.feynix.domain.agent.model.AgentWidgetEntity;
 
 /** 消息处理器类型枚举 */
 enum MessageHandlerType {
@@ -43,6 +44,22 @@ public class MessageHandlerFactory {
     public AbstractMessageHandler getHandler(AgentEntity agent) {
         // 统一使用标准消息处理器
         return getHandlerByType(MessageHandlerType.STANDARD);
+    }
+
+    /** 根据智能体和Widget配置获取合适的消息处理器
+     * 支持根据Widget类型选择不同的处理器
+     * 
+     * @param agent 智能体实体
+     * @param widget Widget配置实体（可为null）
+     * @return 消息处理器 */
+    public AbstractMessageHandler getHandler(AgentEntity agent, AgentWidgetEntity widget) {
+        // 如果是RAG类型的Widget，直接使用RagMessageHandler
+        if (widget != null && widget.isRagWidget()) {
+            return applicationContext.getBean("ragMessageHandler", AbstractMessageHandler.class);
+        }
+        
+        // 其他情况使用标准的Agent消息处理器
+        return applicationContext.getBean("agentMessageHandler", AbstractMessageHandler.class);
     }
 
     /** 根据处理器类型获取对应的处理器实例

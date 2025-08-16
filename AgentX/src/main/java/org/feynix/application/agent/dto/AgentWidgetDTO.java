@@ -2,6 +2,7 @@ package org.feynix.application.agent.dto;
 
 import org.feynix.application.llm.dto.ModelDTO;
 import org.feynix.application.llm.dto.ProviderDTO;
+import org.feynix.domain.agent.constant.WidgetType;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -41,6 +42,12 @@ public class AgentWidgetDTO {
 
     /** 是否启用 */
     private Boolean enabled;
+
+    /** Widget类型：AGENT/RAG */
+    private WidgetType widgetType;
+
+    /** 知识库ID列表（RAG类型专用） */
+    private List<String> knowledgeBaseIds;
 
     /** 嵌入代码 */
     private String embedCode;
@@ -162,5 +169,21 @@ public class AgentWidgetDTO {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public WidgetType getWidgetType() {
+        return widgetType;
+    }
+
+    public void setWidgetType(WidgetType widgetType) {
+        this.widgetType = widgetType;
+    }
+
+    public List<String> getKnowledgeBaseIds() {
+        return knowledgeBaseIds;
+    }
+
+    public void setKnowledgeBaseIds(List<String> knowledgeBaseIds) {
+        this.knowledgeBaseIds = knowledgeBaseIds;
     }
 }

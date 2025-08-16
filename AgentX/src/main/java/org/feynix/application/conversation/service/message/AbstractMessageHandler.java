@@ -16,6 +16,7 @@ import dev.langchain4j.store.memory.chat.InMemoryChatMemoryStore;
 import org.feynix.application.conversation.dto.AgentChatResponse;
 import org.feynix.application.conversation.service.handler.context.AgentPromptTemplates;
 import org.feynix.application.conversation.service.handler.context.ChatContext;
+import org.feynix.application.conversation.service.message.Agent;
 import org.feynix.application.conversation.service.message.agent.tool.RagToolManager;
 import org.feynix.domain.agent.model.AgentEntity;
 import org.feynix.domain.conversation.constant.MessageType;
