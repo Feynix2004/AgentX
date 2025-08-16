@@ -5,8 +5,7 @@ import org.feynix.application.rag.dto.RagStreamChatRequest;
 
 import java.util.List;
 
-/** RAG专用对话请求
- * 继承 ChatRequest，添加RAG特有的参数 */
+/** RAG专用对话请求 继承 ChatRequest，添加RAG特有的参数 */
 public class RagChatRequest extends ChatRequest {
 
     /** 数据集ID列表（当fileId为空时使用） */
@@ -48,7 +47,8 @@ public class RagChatRequest extends ChatRequest {
      * @param userRagId 用户RAG ID
      * @param sessionId 会话ID
      * @return RAG对话请求 */
-    public static RagChatRequest fromRagStreamChatRequestWithUserRag(RagStreamChatRequest request, String userRagId, String sessionId) {
+    public static RagChatRequest fromRagStreamChatRequestWithUserRag(RagStreamChatRequest request, String userRagId,
+            String sessionId) {
         RagChatRequest ragRequest = fromRagStreamChatRequest(request, sessionId);
         ragRequest.setUserRagId(userRagId);
         return ragRequest;

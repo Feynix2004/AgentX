@@ -12,7 +12,7 @@ import java.util.List;
 
 /** Agent小组件配置领域服务 */
 @Service
-public class AgentWidgetDomainService{
+public class AgentWidgetDomainService {
 
     private final AgentWidgetRepository agentWidgetRepository;
 
@@ -33,7 +33,7 @@ public class AgentWidgetDomainService{
         while (exists) {
             widget.setPublicId(generateNewPublicId());
         }
-        
+
         agentWidgetRepository.insert(widget);
         return widget;
     }
@@ -48,14 +48,13 @@ public class AgentWidgetDomainService{
         if (widget == null || widget.getDeletedAt() != null) {
             throw new BusinessException("小组件配置不存在");
         }
-        
+
         if (!widget.getUserId().equals(userId)) {
             throw new BusinessException("无权限访问此小组件配置");
         }
-        
+
         return widget;
     }
-
 
     /** 根据公开ID获取启用的小组件配置
      *
@@ -63,8 +62,7 @@ public class AgentWidgetDomainService{
      * @return 启用的小组件配置实体 */
     public AgentWidgetEntity getEnabledWidgetByPublicId(String publicId) {
         LambdaQueryWrapper<AgentWidgetEntity> queryWrapper = Wrappers.<AgentWidgetEntity>lambdaQuery()
-                .eq(AgentWidgetEntity::getPublicId, publicId)
-                .eq(AgentWidgetEntity::getEnabled, true);
+                .eq(AgentWidgetEntity::getPublicId, publicId).eq(AgentWidgetEntity::getEnabled, true);
         AgentWidgetEntity widget = agentWidgetRepository.selectOne(queryWrapper);
         if (widget == null) {
             throw new BusinessException("小组件配置不存在或已禁用");
@@ -79,8 +77,7 @@ public class AgentWidgetDomainService{
      * @return 小组件配置列表 */
     public List<AgentWidgetEntity> getWidgetsByAgent(String agentId, String userId) {
         LambdaQueryWrapper<AgentWidgetEntity> queryWrapper = Wrappers.<AgentWidgetEntity>lambdaQuery()
-                .eq(AgentWidgetEntity::getAgentId, agentId)
-                .eq(AgentWidgetEntity::getUserId, userId);
+                .eq(AgentWidgetEntity::getAgentId, agentId).eq(AgentWidgetEntity::getUserId, userId);
         return agentWidgetRepository.selectList(queryWrapper);
     }
 
@@ -104,22 +101,19 @@ public class AgentWidgetDomainService{
         if (!widget.getUserId().equals(userId)) {
             throw new BusinessException("无权限修改此小组件配置");
         }
-        
+
         LambdaUpdateWrapper<AgentWidgetEntity> updateWrapper = Wrappers.<AgentWidgetEntity>lambdaUpdate()
-                .eq(AgentWidgetEntity::getId, widget.getId())
-                .eq(AgentWidgetEntity::getUserId, userId);
-        
+                .eq(AgentWidgetEntity::getId, widget.getId()).eq(AgentWidgetEntity::getUserId, userId);
+
         agentWidgetRepository.checkedUpdate(widget, updateWrapper);
         return widget;
     }
 
     public void deleteWidgetById(String widgetId, String userId) {
 
-        agentWidgetRepository.delete(Wrappers.<AgentWidgetEntity>lambdaUpdate()
-                .eq(AgentWidgetEntity::getId, widgetId)
+        agentWidgetRepository.delete(Wrappers.<AgentWidgetEntity>lambdaUpdate().eq(AgentWidgetEntity::getId, widgetId)
                 .eq(AgentWidgetEntity::getUserId, userId));
     }
-
 
     /** 切换小组件配置启用状态
      *
@@ -128,13 +122,13 @@ public class AgentWidgetDomainService{
      * @return 更新后的小组件配置 */
     public AgentWidgetEntity toggleWidgetStatus(String widgetId, String userId) {
         AgentWidgetEntity widget = getWidgetById(widgetId, userId);
-        
+
         if (widget.getEnabled()) {
             widget.disable();
         } else {
             widget.enable();
         }
-        
+
         return updateWidget(widget, userId);
     }
 
@@ -144,8 +138,7 @@ public class AgentWidgetDomainService{
      * @param userId 用户ID */
     public void deleteWidget(String widgetId, String userId) {
         LambdaUpdateWrapper<AgentWidgetEntity> updateWrapper = Wrappers.<AgentWidgetEntity>lambdaUpdate()
-                .eq(AgentWidgetEntity::getId, widgetId)
-                .eq(AgentWidgetEntity::getUserId, userId);
+                .eq(AgentWidgetEntity::getId, widgetId).eq(AgentWidgetEntity::getUserId, userId);
 
         agentWidgetRepository.delete(updateWrapper);
     }
@@ -181,8 +174,7 @@ public class AgentWidgetDomainService{
      * @return 配置数量 */
     public long countWidgetsByAgent(String agentId, String userId) {
         LambdaQueryWrapper<AgentWidgetEntity> queryWrapper = Wrappers.<AgentWidgetEntity>lambdaQuery()
-                .eq(AgentWidgetEntity::getAgentId, agentId)
-                .eq(AgentWidgetEntity::getUserId, userId);
+                .eq(AgentWidgetEntity::getAgentId, agentId).eq(AgentWidgetEntity::getUserId, userId);
         return agentWidgetRepository.selectCount(queryWrapper);
     }
 
@@ -195,7 +187,7 @@ public class AgentWidgetDomainService{
         if (maxWidgets == -1) {
             return true; // 无限制
         }
-        
+
         long currentCount = countWidgetsByUser(userId);
         return currentCount < maxWidgets;
     }
@@ -210,13 +202,11 @@ public class AgentWidgetDomainService{
         if (widgetIds == null || widgetIds.isEmpty()) {
             return List.of();
         }
-        
+
         LambdaQueryWrapper<AgentWidgetEntity> queryWrapper = Wrappers.<AgentWidgetEntity>lambdaQuery()
-                .in(AgentWidgetEntity::getId, widgetIds)
-                .eq(AgentWidgetEntity::getUserId, userId)
-                .isNull(AgentWidgetEntity::getDeletedAt)
-                .orderByDesc(AgentWidgetEntity::getCreatedAt);
-        
+                .in(AgentWidgetEntity::getId, widgetIds).eq(AgentWidgetEntity::getUserId, userId)
+                .isNull(AgentWidgetEntity::getDeletedAt).orderByDesc(AgentWidgetEntity::getCreatedAt);
+
         return agentWidgetRepository.selectList(queryWrapper);
     }
 }

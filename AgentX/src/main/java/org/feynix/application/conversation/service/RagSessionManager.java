@@ -10,8 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 
-/** RAG会话管理器
- * 负责管理RAG对话的临时会话，支持会话复用和自动清理 */
+/** RAG会话管理器 负责管理RAG对话的临时会话，支持会话复用和自动清理 */
 @Component
 public class RagSessionManager {
 
@@ -27,11 +26,10 @@ public class RagSessionManager {
 
     public RagSessionManager(SessionDomainService sessionDomainService) {
         this.sessionDomainService = sessionDomainService;
-        
+
         // 初始化Guava Cache，30分钟自动过期
         this.ragSessionCache = CacheBuilder.newBuilder()
-                .expireAfterWrite(Duration.ofMinutes(RAG_SESSION_MAX_LIFE_MINUTES))
-                .maximumSize(1000) // 最大缓存1000个会话
+                .expireAfterWrite(Duration.ofMinutes(RAG_SESSION_MAX_LIFE_MINUTES)).maximumSize(1000) // 最大缓存1000个会话
                 .recordStats() // 启用统计功能
                 .build();
     }
@@ -41,7 +39,7 @@ public class RagSessionManager {
      * @return 会话ID */
     public String createOrGetRagSession(String userId) {
         String existingSessionId = ragSessionCache.getIfPresent(userId);
-        
+
         // 如果缓存中存在会话（说明未过期），直接返回
         if (existingSessionId != null) {
             logger.debug("复用已存在的RAG会话: {} for user: {}", existingSessionId, userId);
@@ -59,7 +57,7 @@ public class RagSessionManager {
     public String createOrGetUserRagSession(String userId, String userRagId) {
         String sessionKey = userId + "_" + userRagId;
         String existingSessionId = ragSessionCache.getIfPresent(sessionKey);
-        
+
         // 如果缓存中存在会话（说明未过期），直接返回
         if (existingSessionId != null) {
             logger.debug("复用已存在的用户RAG会话: {} for user: {} userRag: {}", existingSessionId, userId, userRagId);
@@ -78,16 +76,16 @@ public class RagSessionManager {
             // 使用现有的 createSession 方法
             SessionEntity session = sessionDomainService.createSession("system-rag-agent", userId);
             String sessionId = session.getId();
-            
+
             // 更新会话标题
             sessionDomainService.updateSession(sessionId, userId, "RAG对话");
-            
+
             // 缓存会话信息到Guava Cache（自动TTL管理）
             ragSessionCache.put(userId, sessionId);
-            
+
             logger.info("创建新的RAG会话: {} for user: {}", sessionId, userId);
             return sessionId;
-            
+
         } catch (Exception e) {
             logger.error("创建RAG会话失败 for user: {}", userId, e);
             throw new RuntimeException("创建RAG会话失败", e);
@@ -104,22 +102,21 @@ public class RagSessionManager {
             // 使用现有的 createSession 方法
             SessionEntity session = sessionDomainService.createSession("system-rag-agent", userId);
             String sessionId = session.getId();
-            
+
             // 更新会话标题
             sessionDomainService.updateSession(sessionId, userId, "知识库对话 - " + userRagId);
-            
+
             // 缓存会话信息到Guava Cache（自动TTL管理）
             ragSessionCache.put(sessionKey, sessionId);
-            
+
             logger.info("创建新的用户RAG会话: {} for user: {} userRag: {}", sessionId, userId, userRagId);
             return sessionId;
-            
+
         } catch (Exception e) {
             logger.error("创建用户RAG会话失败 for user: {} userRag: {}", userId, userRagId, e);
             throw new RuntimeException("创建用户RAG会话失败", e);
         }
     }
-
 
     /** 手动清理指定用户的RAG会话
      * @param userId 用户ID */
@@ -138,9 +135,7 @@ public class RagSessionManager {
 
     /** 获取缓存统计信息（可选，用于监控和调试） */
     public String getCacheStats() {
-        return String.format("缓存大小: %d, 统计信息: %s", 
-                ragSessionCache.size(), 
-                ragSessionCache.stats().toString());
+        return String.format("缓存大小: %d, 统计信息: %s", ragSessionCache.size(), ragSessionCache.stats().toString());
     }
 
     /** 清理所有过期会话（手动触发清理） */

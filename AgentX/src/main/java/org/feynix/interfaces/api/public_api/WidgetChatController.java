@@ -25,7 +25,7 @@ public class WidgetChatController {
     private final AgentWidgetAppService agentWidgetAppService;
 
     public WidgetChatController(ConversationAppService conversationAppService,
-                             AgentWidgetAppService agentWidgetAppService) {
+            AgentWidgetAppService agentWidgetAppService) {
         this.conversationAppService = conversationAppService;
         this.agentWidgetAppService = agentWidgetAppService;
     }
@@ -36,8 +36,7 @@ public class WidgetChatController {
      * @param request HTTP请求
      * @return 小组件配置基本信息 */
     @GetMapping("/{publicId}/info")
-    public Result<WidgetInfoResponse> getWidgetInfo(@PathVariable String publicId,
-                                                HttpServletRequest request) {
+    public Result<WidgetInfoResponse> getWidgetInfo(@PathVariable String publicId, HttpServletRequest request) {
         try {
             // 1. 验证域名访问权限
             String referer = request.getHeader("Referer");
@@ -47,10 +46,10 @@ public class WidgetChatController {
 
             // 2. 获取小组件配置
             AgentWidgetEntity widget = agentWidgetAppService.getWidgetForPublicAccess(publicId);
-            
+
             // 3. 获取完整的widget信息（包括agent配置）
             var fullWidgetInfo = agentWidgetAppService.getWidgetInfoForPublicAccess(publicId);
-            
+
             // 4. 构建响应信息
             WidgetInfoResponse response = new WidgetInfoResponse();
             response.setPublicId(widget.getPublicId());
@@ -58,7 +57,7 @@ public class WidgetChatController {
             response.setDescription(widget.getDescription());
             response.setDailyLimit(widget.getDailyLimit());
             response.setEnabled(widget.getEnabled());
-            
+
             // 5. 设置agent相关信息（用于无会话聊天）
             if (fullWidgetInfo != null) {
                 response.setAgentName(fullWidgetInfo.getAgentName());
@@ -69,9 +68,9 @@ public class WidgetChatController {
                 response.setKnowledgeBaseIds(fullWidgetInfo.getKnowledgeBaseIds());
                 response.setDailyCalls(fullWidgetInfo.getDailyCalls());
             }
-            
+
             return Result.success(response);
-            
+
         } catch (BusinessException e) {
             return Result.error(404, e.getMessage());
         } catch (Exception e) {
@@ -86,9 +85,8 @@ public class WidgetChatController {
      * @param httpRequest HTTP请求
      * @return SSE流 */
     @PostMapping("/{publicId}/chat")
-    public SseEmitter widgetChat(@PathVariable String publicId,
-                              @RequestBody @Validated WidgetChatRequest request,
-                              HttpServletRequest httpRequest) {
+    public SseEmitter widgetChat(@PathVariable String publicId, @RequestBody @Validated WidgetChatRequest request,
+            HttpServletRequest httpRequest) {
         try {
             // 1. 验证域名访问权限
             String referer = httpRequest.getHeader("Referer");
@@ -101,7 +99,7 @@ public class WidgetChatController {
 
             // 3. 处理小组件聊天
             return conversationAppService.widgetChat(publicId, request, widget);
-            
+
         } catch (BusinessException e) {
             throw e;
         } catch (Exception e) {
@@ -117,8 +115,7 @@ public class WidgetChatController {
      * @return 同步聊天响应 */
     @PostMapping("/{publicId}/chat/sync")
     public Result<ChatResponse> widgetChatSync(@PathVariable String publicId,
-                                            @RequestBody @Validated WidgetChatRequest request,
-                                            HttpServletRequest httpRequest) {
+            @RequestBody @Validated WidgetChatRequest request, HttpServletRequest httpRequest) {
         try {
             // 1. 验证域名访问权限
             String referer = httpRequest.getHeader("Referer");
@@ -132,7 +129,7 @@ public class WidgetChatController {
             // 3. 处理同步聊天
             ChatResponse response = conversationAppService.widgetChatSync(publicId, request, widget);
             return Result.success(response);
-            
+
         } catch (BusinessException e) {
             return Result.error(400, e.getMessage());
         } catch (Exception e) {
@@ -159,7 +156,7 @@ public class WidgetChatController {
 
             // 验证域名权限
             return agentWidgetAppService.validateDomainAccess(publicId, domain);
-            
+
         } catch (MalformedURLException e) {
             // Referer格式错误，拒绝访问
             return false;
@@ -177,7 +174,7 @@ public class WidgetChatController {
         private Integer dailyLimit;
         private Integer dailyCalls;
         private Boolean enabled;
-        
+
         // Agent相关信息（用于无会话聊天）
         private String agentName;
         private String agentAvatar;

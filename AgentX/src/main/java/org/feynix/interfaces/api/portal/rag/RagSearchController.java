@@ -23,7 +23,8 @@ public class RagSearchController {
     private final RagQaDatasetAppService ragQaDatasetAppService;
     private final ConversationAppService conversationAppService;
 
-    public RagSearchController(RagQaDatasetAppService ragQaDatasetAppService, ConversationAppService conversationAppService) {
+    public RagSearchController(RagQaDatasetAppService ragQaDatasetAppService,
+            ConversationAppService conversationAppService) {
         this.ragQaDatasetAppService = ragQaDatasetAppService;
         this.conversationAppService = conversationAppService;
     }

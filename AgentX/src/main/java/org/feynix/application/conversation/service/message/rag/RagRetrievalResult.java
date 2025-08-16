@@ -4,8 +4,7 @@ import org.feynix.application.rag.dto.DocumentUnitDTO;
 
 import java.util.List;
 
-/** RAG检索结果
- * 封装文档检索的结果信息 */
+/** RAG检索结果 封装文档检索的结果信息 */
 public class RagRetrievalResult {
 
     /** 检索到的文档列表 */

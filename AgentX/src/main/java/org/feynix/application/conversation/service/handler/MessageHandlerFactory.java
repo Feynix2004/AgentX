@@ -31,11 +31,11 @@ public class MessageHandlerFactory {
         if (request instanceof RagChatRequest) {
             return applicationContext.getBean("ragMessageHandler", AbstractMessageHandler.class);
         }
-        
+
         // 默认使用标准Agent消息处理器
         return applicationContext.getBean("agentMessageHandler", AbstractMessageHandler.class);
     }
-    
+
     /** 根据智能体获取合适的消息处理器
      * @deprecated 使用 getHandler(ChatRequest) 替代
      * @param agent 智能体实体
@@ -46,8 +46,7 @@ public class MessageHandlerFactory {
         return getHandlerByType(MessageHandlerType.STANDARD);
     }
 
-    /** 根据智能体和Widget配置获取合适的消息处理器
-     * 支持根据Widget类型选择不同的处理器
+    /** 根据智能体和Widget配置获取合适的消息处理器 支持根据Widget类型选择不同的处理器
      * 
      * @param agent 智能体实体
      * @param widget Widget配置实体（可为null）
@@ -57,7 +56,7 @@ public class MessageHandlerFactory {
         if (widget != null && widget.isRagWidget()) {
             return applicationContext.getBean("ragMessageHandler", AbstractMessageHandler.class);
         }
-        
+
         // 其他情况使用标准的Agent消息处理器
         return applicationContext.getBean("agentMessageHandler", AbstractMessageHandler.class);
     }

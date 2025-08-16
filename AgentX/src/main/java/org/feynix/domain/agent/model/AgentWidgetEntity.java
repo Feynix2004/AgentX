@@ -77,18 +77,16 @@ public class AgentWidgetEntity extends BaseEntity {
     }
 
     /** 创建新的小组件配置 */
-    public static AgentWidgetEntity createNew(String agentId, String userId, String name, 
-                                           String description, String modelId, String providerId,
-                                           List<String> allowedDomains, Integer dailyLimit) {
-        return createNew(agentId, userId, name, description, modelId, providerId, 
-                        allowedDomains, dailyLimit, WidgetType.AGENT, null);
+    public static AgentWidgetEntity createNew(String agentId, String userId, String name, String description,
+            String modelId, String providerId, List<String> allowedDomains, Integer dailyLimit) {
+        return createNew(agentId, userId, name, description, modelId, providerId, allowedDomains, dailyLimit,
+                WidgetType.AGENT, null);
     }
 
     /** 创建新的小组件配置（支持Widget类型） */
-    public static AgentWidgetEntity createNew(String agentId, String userId, String name, 
-                                           String description, String modelId, String providerId,
-                                           List<String> allowedDomains, Integer dailyLimit, 
-                                           WidgetType widgetType, List<String> knowledgeBaseIds) {
+    public static AgentWidgetEntity createNew(String agentId, String userId, String name, String description,
+            String modelId, String providerId, List<String> allowedDomains, Integer dailyLimit, WidgetType widgetType,
+            List<String> knowledgeBaseIds) {
         AgentWidgetEntity widget = new AgentWidgetEntity();
         widget.setAgentId(agentId);
         widget.setUserId(userId);
@@ -124,11 +122,11 @@ public class AgentWidgetEntity extends BaseEntity {
         if (allowedDomains == null || allowedDomains.isEmpty()) {
             return true; // 空白名单表示允许所有域名
         }
-        
+
         // 检查精确匹配和通配符匹配
         for (String allowedDomain : allowedDomains) {
-            if (domain.equals(allowedDomain) || 
-                (allowedDomain.startsWith("*.") && domain.endsWith(allowedDomain.substring(1)))) {
+            if (domain.equals(allowedDomain)
+                    || (allowedDomain.startsWith("*.") && domain.endsWith(allowedDomain.substring(1)))) {
                 return true;
             }
         }
@@ -158,16 +156,15 @@ public class AgentWidgetEntity extends BaseEntity {
     }
 
     /** 更新小组件配置 */
-    public void updateConfig(String name, String description, String modelId, 
-                           String providerId, List<String> allowedDomains, Integer dailyLimit) {
-        updateConfig(name, description, modelId, providerId, allowedDomains, 
-                    dailyLimit, this.widgetType, this.knowledgeBaseIds);
+    public void updateConfig(String name, String description, String modelId, String providerId,
+            List<String> allowedDomains, Integer dailyLimit) {
+        updateConfig(name, description, modelId, providerId, allowedDomains, dailyLimit, this.widgetType,
+                this.knowledgeBaseIds);
     }
 
     /** 更新小组件配置（支持Widget类型） */
-    public void updateConfig(String name, String description, String modelId, 
-                           String providerId, List<String> allowedDomains, Integer dailyLimit,
-                           WidgetType widgetType, List<String> knowledgeBaseIds) {
+    public void updateConfig(String name, String description, String modelId, String providerId,
+            List<String> allowedDomains, Integer dailyLimit, WidgetType widgetType, List<String> knowledgeBaseIds) {
         this.name = name;
         this.description = description;
         this.modelId = modelId;

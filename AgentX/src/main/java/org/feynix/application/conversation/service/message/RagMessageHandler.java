@@ -43,8 +43,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-/** RAG专用的消息处理器
- * 继承AbstractMessageHandler，添加RAG检索和问答的特定逻辑 */
+/** RAG专用的消息处理器 继承AbstractMessageHandler，添加RAG检索和问答的特定逻辑 */
 @Component("ragMessageHandler")
 public class RagMessageHandler extends AbstractMessageHandler {
 
@@ -102,8 +101,7 @@ public class RagMessageHandler extends AbstractMessageHandler {
             T connection) {
         try {
             // 发送检索开始信号
-            transport.sendMessage(connection,
-                    AgentChatResponse.build("开始检索相关文档...", MessageType.RAG_RETRIEVAL_START));
+            transport.sendMessage(connection, AgentChatResponse.build("开始检索相关文档...", MessageType.RAG_RETRIEVAL_START));
             Thread.sleep(500);
 
             // 执行RAG检索 - 获取完整数据用于答案生成
@@ -273,26 +271,18 @@ public class RagMessageHandler extends AbstractMessageHandler {
                 String fileName = getFileNameFromCache(doc.getFileId());
 
                 // 创建轻量级DTO，只包含前端需要的字段
-                RagRetrievalDocumentDTO lightweightDTO = new RagRetrievalDocumentDTO(
-                    doc.getFileId(),
-                    fileName,
-                    doc.getId(),  // documentId
-                    0.85,         // 默认相似度，实际应该从其他地方获取
-                    doc.getPage()
-                );
+                RagRetrievalDocumentDTO lightweightDTO = new RagRetrievalDocumentDTO(doc.getFileId(), fileName,
+                        doc.getId(), // documentId
+                        0.85, // 默认相似度，实际应该从其他地方获取
+                        doc.getPage());
 
                 lightweightDTOs.add(lightweightDTO);
 
             } catch (Exception e) {
                 logger.warn("转换轻量级DTO失败，文档ID: {}", doc.getId(), e);
                 // 使用默认值
-                RagRetrievalDocumentDTO lightweightDTO = new RagRetrievalDocumentDTO(
-                    doc.getFileId(),
-                    "未知文件",
-                    doc.getId(),
-                    0.0,
-                    doc.getPage()
-                );
+                RagRetrievalDocumentDTO lightweightDTO = new RagRetrievalDocumentDTO(doc.getFileId(), "未知文件",
+                        doc.getId(), 0.0, doc.getPage());
                 lightweightDTOs.add(lightweightDTO);
             }
         }

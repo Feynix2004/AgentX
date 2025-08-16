@@ -29,7 +29,7 @@ public class AgentWidgetController {
      * @return 创建的小组件配置 */
     @PostMapping
     public Result<AgentWidgetDTO> createWidget(@PathVariable String agentId,
-                                           @RequestBody @Validated CreateWidgetRequest request) {
+            @RequestBody @Validated CreateWidgetRequest request) {
         String userId = UserContext.getCurrentUserId();
         AgentWidgetDTO widget = agentWidgetAppService.createWidget(agentId, request, userId);
         return Result.success(widget);
@@ -52,8 +52,7 @@ public class AgentWidgetController {
      * @param widgetId 小组件配置ID
      * @return 小组件配置详情 */
     @GetMapping("/{widgetId}")
-    public Result<AgentWidgetDTO> getWidgetDetail(@PathVariable String agentId,
-                                              @PathVariable String widgetId) {
+    public Result<AgentWidgetDTO> getWidgetDetail(@PathVariable String agentId, @PathVariable String widgetId) {
         String userId = UserContext.getCurrentUserId();
         AgentWidgetDTO widget = agentWidgetAppService.getWidgetDetail(widgetId, userId);
         return Result.success(widget);
@@ -66,9 +65,8 @@ public class AgentWidgetController {
      * @param request 更新请求
      * @return 更新后的小组件配置 */
     @PutMapping("/{widgetId}")
-    public Result<AgentWidgetDTO> updateWidget(@PathVariable String agentId,
-                                           @PathVariable String widgetId,
-                                           @RequestBody @Validated UpdateWidgetRequest request) {
+    public Result<AgentWidgetDTO> updateWidget(@PathVariable String agentId, @PathVariable String widgetId,
+            @RequestBody @Validated UpdateWidgetRequest request) {
         String userId = UserContext.getCurrentUserId();
         AgentWidgetDTO widget = agentWidgetAppService.updateWidget(widgetId, request, userId);
         return Result.success(widget);
@@ -80,8 +78,7 @@ public class AgentWidgetController {
      * @param widgetId 小组件配置ID
      * @return 更新后的小组件配置 */
     @PostMapping("/{widgetId}/status")
-    public Result<AgentWidgetDTO> toggleWidgetStatus(@PathVariable String agentId,
-                                                 @PathVariable String widgetId) {
+    public Result<AgentWidgetDTO> toggleWidgetStatus(@PathVariable String agentId, @PathVariable String widgetId) {
         String userId = UserContext.getCurrentUserId();
         AgentWidgetDTO widget = agentWidgetAppService.toggleWidgetStatus(widgetId, userId);
         return Result.success(widget);
@@ -93,8 +90,7 @@ public class AgentWidgetController {
      * @param widgetId 小组件配置ID
      * @return 删除结果 */
     @DeleteMapping("/{widgetId}")
-    public Result<Void> deleteWidget(@PathVariable String agentId,
-                                  @PathVariable String widgetId) {
+    public Result<Void> deleteWidget(@PathVariable String agentId, @PathVariable String widgetId) {
         String userId = UserContext.getCurrentUserId();
         agentWidgetAppService.deleteWidget(widgetId, userId);
         return Result.success();

@@ -31,10 +31,8 @@ public class AgentWidgetAppService {
     private final LLMDomainService llmDomainService;
     private final AgentWidgetAssembler agentWidgetAssembler;
 
-    public AgentWidgetAppService(AgentWidgetDomainService agentWidgetDomainService,
-                              AgentRepository agentRepository,
-                              LLMDomainService llmDomainService,
-                              AgentWidgetAssembler agentWidgetAssembler) {
+    public AgentWidgetAppService(AgentWidgetDomainService agentWidgetDomainService, AgentRepository agentRepository,
+            LLMDomainService llmDomainService, AgentWidgetAssembler agentWidgetAssembler) {
         this.agentWidgetDomainService = agentWidgetDomainService;
         this.agentRepository = agentRepository;
         this.llmDomainService = llmDomainService;
@@ -54,12 +52,12 @@ public class AgentWidgetAppService {
 
         // 2. 检查是否可以创建更多小组件配置（可选限制）
         // if (!agentWidgetDomainService.canCreateMoreWidgets(userId, 10)) {
-        //     throw new BusinessException("已达到最大小组件配置数量限制");
+        // throw new BusinessException("已达到最大小组件配置数量限制");
         // }
 
         // 3. 创建小组件配置实体
         AgentWidgetEntity widget = AgentWidgetAssembler.toEntity(request, agentId, userId);
-        
+
         // 4. 保存到数据库
         AgentWidgetEntity savedWidget = agentWidgetDomainService.createWidget(widget);
 
@@ -68,7 +66,8 @@ public class AgentWidgetAppService {
         ProviderEntity provider = llmDomainService.getProvider(model.getProviderId());
 
         // 6. 转换为DTO并返回
-        return agentWidgetAssembler.toDTOWithEmbedCode(savedWidget, ModelAssembler.toDTO(model), ProviderAssembler.toDTO(provider));
+        return agentWidgetAssembler.toDTOWithEmbedCode(savedWidget, ModelAssembler.toDTO(model),
+                ProviderAssembler.toDTO(provider));
     }
 
     /** 获取Agent的所有小组件配置
@@ -82,7 +81,7 @@ public class AgentWidgetAppService {
 
         // 2. 获取小组件配置列表
         List<AgentWidgetEntity> widgets = agentWidgetDomainService.getWidgetsByAgent(agentId, userId);
-        
+
         if (widgets.isEmpty()) {
             return List.of();
         }
@@ -96,7 +95,7 @@ public class AgentWidgetAppService {
             ModelEntity model = llmDomainService.getModelById(widget.getModelId());
             ModelDTO modelDTO = model != null ? ModelAssembler.toDTO(model) : null;
             models.add(modelDTO);
-            
+
             // 查询提供商信息
             ProviderEntity provider = null;
             if (model != null) {
@@ -107,7 +106,7 @@ public class AgentWidgetAppService {
         }
 
         // 4. 转换为DTO列表
-        return AgentWidgetAssembler.toDTOsWithEmbedCode(widgets, models, providers, 
+        return AgentWidgetAssembler.toDTOsWithEmbedCode(widgets, models, providers,
                 agentWidgetAssembler.frontendBaseUrl);
     }
 
@@ -117,7 +116,7 @@ public class AgentWidgetAppService {
      * @return 小组件配置列表 */
     public List<AgentWidgetDTO> getWidgetsByUser(String userId) {
         List<AgentWidgetEntity> widgets = agentWidgetDomainService.getWidgetsByUser(userId);
-        
+
         if (widgets.isEmpty()) {
             return List.of();
         }
@@ -130,7 +129,7 @@ public class AgentWidgetAppService {
             ModelEntity model = llmDomainService.getModelById(widget.getModelId());
             ModelDTO modelDTO = model != null ? ModelAssembler.toDTO(model) : null;
             models.add(modelDTO);
-            
+
             // 查询提供商信息
             ProviderEntity provider = null;
             if (model != null) {
@@ -161,7 +160,8 @@ public class AgentWidgetAppService {
         ModelEntity model = llmDomainService.getModelById(widget.getModelId());
         ProviderEntity provider = llmDomainService.getProvider(model.getProviderId());
 
-        return agentWidgetAssembler.toDTOWithEmbedCode(updatedWidget, ModelAssembler.toDTO(model), ProviderAssembler.toDTO(provider));
+        return agentWidgetAssembler.toDTOWithEmbedCode(updatedWidget, ModelAssembler.toDTO(model),
+                ProviderAssembler.toDTO(provider));
     }
 
     /** 切换小组件配置启用状态
@@ -175,7 +175,8 @@ public class AgentWidgetAppService {
         ModelEntity model = llmDomainService.getModelById(widget.getModelId());
         ProviderEntity provider = llmDomainService.getProvider(model.getProviderId());
 
-        return agentWidgetAssembler.toDTOWithEmbedCode(widget, ModelAssembler.toDTO(model), ProviderAssembler.toDTO(provider));
+        return agentWidgetAssembler.toDTOWithEmbedCode(widget, ModelAssembler.toDTO(model),
+                ProviderAssembler.toDTO(provider));
     }
 
     /** 删除小组件配置
@@ -198,7 +199,8 @@ public class AgentWidgetAppService {
         ModelEntity model = llmDomainService.getModelById(widget.getModelId());
         ProviderEntity provider = llmDomainService.getProvider(model.getProviderId());
 
-        return agentWidgetAssembler.toDTOWithEmbedCode(widget, ModelAssembler.toDTO(model), ProviderAssembler.toDTO(provider));
+        return agentWidgetAssembler.toDTOWithEmbedCode(widget, ModelAssembler.toDTO(model),
+                ProviderAssembler.toDTO(provider));
     }
 
     /** 根据公开ID获取小组件配置（用于公开访问）
@@ -225,7 +227,7 @@ public class AgentWidgetAppService {
     public WidgetInfoForPublicAccess getWidgetInfoForPublicAccess(String publicId) {
         // 1. 获取小组件配置
         AgentWidgetEntity widget = agentWidgetDomainService.getEnabledWidgetByPublicId(publicId);
-        
+
         // 2. 获取关联的Agent信息
         AgentEntity agent = agentRepository.selectById(widget.getAgentId());
         if (agent == null || agent.getDeletedAt() != null) {
@@ -234,7 +236,7 @@ public class AgentWidgetAppService {
 
         // 3. 构建完整的信息对象
         WidgetInfoForPublicAccess info = new WidgetInfoForPublicAccess();
-        
+
         // Widget基本信息
         info.setPublicId(widget.getPublicId());
         info.setName(widget.getName());
@@ -243,13 +245,13 @@ public class AgentWidgetAppService {
         info.setEnabled(widget.getEnabled());
         // TODO: 实现每日调用次数统计，目前暂时设置为0
         info.setDailyCalls(0);
-        
+
         // Agent配置信息（用于无会话聊天）
         info.setAgentName(agent.getName());
         info.setAgentAvatar(agent.getAvatar());
         info.setWelcomeMessage(agent.getWelcomeMessage());
         info.setSystemPrompt(agent.getSystemPrompt());
-        
+
         // 工具和知识库ID（需要转换为List<String>）
         if (agent.getToolIds() != null) {
             info.setToolIds(agent.getToolIds());
@@ -269,7 +271,7 @@ public class AgentWidgetAppService {
         private Integer dailyLimit;
         private Integer dailyCalls;
         private Boolean enabled;
-        
+
         // Agent相关信息（用于无会话聊天）
         private String agentName;
         private String agentAvatar;

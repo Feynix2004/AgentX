@@ -590,7 +590,8 @@ public class ConversationAppService {
      * @param widgetChatRequest Widget聊天请求
      * @param widgetEntity Widget配置实体
      * @return 同步聊天响应 */
-    public ChatResponse widgetChatSync(String publicId, WidgetChatRequest widgetChatRequest, AgentWidgetEntity widgetEntity) {
+    public ChatResponse widgetChatSync(String publicId, WidgetChatRequest widgetChatRequest,
+            AgentWidgetEntity widgetEntity) {
         // 1. 准备Widget对话环境（设置为非流式）
         ChatContext environment = prepareWidgetEnvironment(publicId, widgetChatRequest, widgetEntity);
         environment.setStreaming(false); // 设置为同步模式
@@ -612,12 +613,13 @@ public class ConversationAppService {
      * @param widgetChatRequest Widget聊天请求
      * @param widgetEntity Widget配置实体
      * @return 对话环境 */
-    private ChatContext prepareWidgetEnvironment(String publicId, WidgetChatRequest widgetChatRequest, AgentWidgetEntity widgetEntity) {
+    private ChatContext prepareWidgetEnvironment(String publicId, WidgetChatRequest widgetChatRequest,
+            AgentWidgetEntity widgetEntity) {
         // 检查Widget类型，如果是RAG类型则创建RAG专用上下文
         if (widgetEntity.isRagWidget()) {
             return createRagWidgetContext(publicId, widgetChatRequest, widgetEntity);
         }
-        
+
         // Agent类型Widget的处理逻辑
         // 1. 获取Agent和模型信息
         String agentId = widgetEntity.getAgentId();
@@ -654,9 +656,9 @@ public class ConversationAppService {
     }
 
     /** 创建Widget ChatContext对象 */
-    private ChatContext createWidgetChatContext(WidgetChatRequest widgetChatRequest, AgentEntity agent, ModelEntity model,
-                                             ProviderEntity provider, LLMModelConfig llmModelConfig,
-                                             List<String> mcpServerNames, String instanceId, String publicId, String creatorUserId) {
+    private ChatContext createWidgetChatContext(WidgetChatRequest widgetChatRequest, AgentEntity agent,
+            ModelEntity model, ProviderEntity provider, LLMModelConfig llmModelConfig, List<String> mcpServerNames,
+            String instanceId, String publicId, String creatorUserId) {
         ChatContext chatContext = new ChatContext();
         chatContext.setSessionId(widgetChatRequest.getSessionId());
         chatContext.setUserId(creatorUserId); // Widget聊天使用创建者的userId用于工具调用
@@ -689,7 +691,8 @@ public class ConversationAppService {
 
             // 对于Widget聊天，暂不应用复杂的Token溢出策略，使用简单的窗口限制
             if (messageEntities.size() > 20) { // 限制历史消息数量
-                messageEntities = messageEntities.subList(Math.max(0, messageEntities.size() - 20), messageEntities.size());
+                messageEntities = messageEntities.subList(Math.max(0, messageEntities.size() - 20),
+                        messageEntities.size());
             }
         } else {
             contextEntity = new ContextEntity();
@@ -718,10 +721,10 @@ public class ConversationAppService {
     public SseEmitter ragStreamChat(RagStreamChatRequest request, String userId) {
         // 1. 创建临时RAG会话
         String sessionId = ragSessionManager.createOrGetRagSession(userId);
-        
+
         // 2. 转换为RagChatRequest
         RagChatRequest ragChatRequest = RagChatRequest.fromRagStreamChatRequest(request, sessionId);
-        
+
         // 3. 使用通用的chat入口
         return chat(ragChatRequest, userId);
     }
@@ -734,10 +737,11 @@ public class ConversationAppService {
     public SseEmitter ragStreamChatByUserRag(RagStreamChatRequest request, String userRagId, String userId) {
         // 1. 创建用户RAG专用会话
         String sessionId = ragSessionManager.createOrGetUserRagSession(userId, userRagId);
-        
+
         // 2. 转换为RagChatRequest（包含userRagId）
-        RagChatRequest ragChatRequest = RagChatRequest.fromRagStreamChatRequestWithUserRag(request, userRagId, sessionId);
-        
+        RagChatRequest ragChatRequest = RagChatRequest.fromRagStreamChatRequestWithUserRag(request, userRagId,
+                sessionId);
+
         // 3. 使用通用的chat入口
         return chat(ragChatRequest, userId);
     }
@@ -750,7 +754,7 @@ public class ConversationAppService {
         if (chatRequest instanceof RagChatRequest) {
             return prepareRagEnvironment((RagChatRequest) chatRequest, userId);
         }
-        
+
         // 标准对话环境准备
         return prepareEnvironment(chatRequest, userId);
     }
@@ -764,27 +768,28 @@ public class ConversationAppService {
         String sessionId = ragRequest.getSessionId();
         ContextEntity contextEntity = contextDomainService.findBySessionId(sessionId);
         List<MessageEntity> messageHistory = new ArrayList<>();
-        
+
         if (contextEntity != null && contextEntity.getActiveMessages() != null) {
             messageHistory = messageDomainService.listByIds(contextEntity.getActiveMessages());
         } else {
             contextEntity = new ContextEntity();
             contextEntity.setSessionId(sessionId);
         }
-        
+
         // 2. 创建RAG专用Agent
         AgentEntity ragAgent = createRagAgent();
-        
+
         // 3. 获取用户默认模型配置
         String userDefaultModelId = userSettingsDomainService.getUserDefaultModelId(userId);
         ModelEntity model = llmDomainService.getModelById(userDefaultModelId);
         List<String> fallbackChain = userSettingsDomainService.getUserFallbackChain(userId);
-        
+
         // 4. 获取高可用服务商
-        HighAvailabilityResult result = highAvailabilityDomainService.selectBestProvider(model, userId, sessionId, fallbackChain);
+        HighAvailabilityResult result = highAvailabilityDomainService.selectBestProvider(model, userId, sessionId,
+                fallbackChain);
         ProviderEntity provider = result.getProvider();
         ModelEntity selectedModel = result.getModel();
-        
+
         // 5. 构建RAG上下文
         RagChatContext ragContext = new RagChatContext();
         ragContext.setSessionId(sessionId);
@@ -801,7 +806,7 @@ public class ConversationAppService {
         ragContext.setMessageHistory(messageHistory);
         ragContext.setStreaming(true);
         ragContext.setFileUrls(ragRequest.getFileUrls());
-        
+
         return ragContext;
     }
 
@@ -830,37 +835,38 @@ public class ConversationAppService {
      * @param widgetChatRequest Widget聊天请求
      * @param widgetEntity Widget配置实体
      * @return RAG聊天上下文 */
-    private ChatContext createRagWidgetContext(String publicId, WidgetChatRequest widgetChatRequest, AgentWidgetEntity widgetEntity) {
+    private ChatContext createRagWidgetContext(String publicId, WidgetChatRequest widgetChatRequest,
+            AgentWidgetEntity widgetEntity) {
         // 1. 获取基础信息
         String creatorUserId = widgetEntity.getUserId();
         String sessionId = widgetChatRequest.getSessionId();
-        
+
         // 2. 创建系统RAG Agent（用于RAG对话）
         AgentEntity ragAgent = createRagAgent();
-        
+
         // 3. 获取Widget配置指定的模型
         ModelEntity model = llmDomainService.getModelById(widgetEntity.getModelId());
-        
+
         // 4. 获取高可用服务商信息
         List<String> fallbackChain = userSettingsDomainService.getUserFallbackChain(creatorUserId);
-        HighAvailabilityResult result = highAvailabilityDomainService.selectBestProvider(model, creatorUserId, 
+        HighAvailabilityResult result = highAvailabilityDomainService.selectBestProvider(model, creatorUserId,
                 sessionId, fallbackChain);
         ProviderEntity provider = result.getProvider();
         ModelEntity selectedModel = result.getModel();
         String instanceId = result.getInstanceId();
         provider.isActive();
-        
+
         // 5. 创建模型配置
         LLMModelConfig llmModelConfig = createDefaultLLMModelConfig(selectedModel.getModelId());
-        
+
         // 6. 创建RAG搜索请求
         RagSearchRequest ragSearchRequest = new RagSearchRequest();
         ragSearchRequest.setQuestion(widgetChatRequest.getMessage());
         ragSearchRequest.setDatasetIds(widgetEntity.getKnowledgeBaseIds()); // 使用Widget配置的知识库ID
-        ragSearchRequest.setMaxResults(5);  // 默认检索5个结果
-        ragSearchRequest.setMinScore(0.7);  // 默认最小相似度
-        ragSearchRequest.setEnableRerank(true);  // 默认启用重排序
-        
+        ragSearchRequest.setMaxResults(5); // 默认检索5个结果
+        ragSearchRequest.setMinScore(0.7); // 默认最小相似度
+        ragSearchRequest.setEnableRerank(true); // 默认启用重排序
+
         // 7. 创建RAG专用上下文
         RagChatContext ragContext = new RagChatContext();
         ragContext.setSessionId(sessionId);
@@ -874,10 +880,10 @@ public class ConversationAppService {
         ragContext.setRagSearchRequest(ragSearchRequest);
         ragContext.setUserRagId(null); // Widget RAG使用数据集ID，不使用userRagId
         ragContext.setFileUrls(widgetChatRequest.getFileUrls());
-        
+
         // 8. 设置会话和上下文
         setupWidgetContextAndHistory(ragContext, widgetChatRequest);
-        
+
         return ragContext;
     }
 
