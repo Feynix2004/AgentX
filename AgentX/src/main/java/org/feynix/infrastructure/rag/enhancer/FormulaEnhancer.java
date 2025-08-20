@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.feynix.domain.rag.enhancer.SegmentEnhancer;
 import org.feynix.domain.rag.model.ProcessedSegment;
+import org.feynix.domain.rag.model.enums.SegmentType;
 import org.feynix.domain.rag.straegy.context.ProcessingContext;
 import org.feynix.infrastructure.llm.LLMProviderService;
 import org.feynix.infrastructure.llm.protocol.enums.ProviderProtocol;
@@ -24,7 +25,7 @@ public class FormulaEnhancer implements SegmentEnhancer {
 
     @Override
     public boolean canEnhance(ProcessedSegment segment) {
-        return segment.getContent() != null && containsFormula(segment.getContent());
+        return segment.getType() == SegmentType.FORMULA;
     }
 
     @Override
