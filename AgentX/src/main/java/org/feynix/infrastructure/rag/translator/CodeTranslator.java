@@ -9,7 +9,7 @@ import dev.langchain4j.model.chat.response.ChatResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import org.feynix.domain.rag.straegy.context.ProcessingContext;
+import org.feynix.domain.rag.strategy.context.ProcessingContext;
 import org.feynix.domain.rag.translator.NodeTranslator;
 import org.feynix.infrastructure.llm.LLMProviderService;
 import org.feynix.infrastructure.llm.protocol.enums.ProviderProtocol;

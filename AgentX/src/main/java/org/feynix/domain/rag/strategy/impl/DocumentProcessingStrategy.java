@@ -1,18 +1,18 @@
-package org.feynix.domain.rag.straegy.impl;
+package org.feynix.domain.rag.strategy.impl;
 
 import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.feynix.domain.rag.message.RagDocSyncOcrMessage;
-import org.feynix.domain.rag.straegy.RagDocSyncOcrStrategy;
+import org.feynix.domain.rag.strategy.RagDocSyncOcrStrategy;
 
 /** @author shilong.zang
  * @date 17:32 <br/>
  */
-public abstract class RagDocSyncOcrStrategyImpl implements RagDocSyncOcrStrategy {
+public abstract class DocumentProcessingStrategy implements RagDocSyncOcrStrategy {
 
-    private static final Logger LOG = LoggerFactory.getLogger(RagDocSyncOcrStrategyImpl.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DocumentProcessingStrategy.class);
 
     /** 处理消息
      * @param ragDocSyncOcrMessage 消息数据

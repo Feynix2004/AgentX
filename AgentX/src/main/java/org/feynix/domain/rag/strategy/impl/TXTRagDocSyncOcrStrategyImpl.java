@@ -1,4 +1,4 @@
-package org.feynix.domain.rag.straegy.impl;
+package org.feynix.domain.rag.strategy.impl;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -9,9 +9,7 @@ import java.util.Map;
 
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import org.dromara.streamquery.stream.core.bean.BeanHelper;
 import org.dromara.streamquery.stream.core.stream.Steam;
-import org.dromara.x.file.storage.core.FileInfo;
 import org.dromara.x.file.storage.core.FileStorageService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +23,6 @@ import org.feynix.domain.rag.repository.FileDetailRepository;
 import dev.langchain4j.data.document.Document;
 import dev.langchain4j.data.document.DocumentParser;
 import dev.langchain4j.data.document.parser.TextDocumentParser;
-import dev.langchain4j.data.document.parser.apache.poi.ApachePoiDocumentParser;
 import dev.langchain4j.data.document.splitter.DocumentBySentenceSplitter;
 import dev.langchain4j.data.segment.TextSegment;
 import jakarta.annotation.Resource;
@@ -34,7 +31,7 @@ import jakarta.annotation.Resource;
  * @date 19:07 <br/>
  */
 @Service("ragDocSyncOcr-TXT")
-public class TXTRagDocSyncOcrStrategyImpl extends RagDocSyncOcrStrategyImpl {
+public class TXTRagDocSyncOcrStrategyImpl extends DocumentProcessingStrategy {
 
     private static final Logger log = LoggerFactory.getLogger(TXTRagDocSyncOcrStrategyImpl.class);
 

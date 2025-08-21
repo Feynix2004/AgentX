@@ -4,7 +4,7 @@ import com.vladsch.flexmark.util.ast.Node;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.feynix.domain.rag.straegy.context.ProcessingContext;
+import org.feynix.domain.rag.strategy.context.ProcessingContext;
 import org.feynix.domain.rag.translator.NodeTranslator;
 
 import java.util.Comparator;

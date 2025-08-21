@@ -1,4 +1,4 @@
-package org.feynix.domain.rag.straegy;
+package org.feynix.domain.rag.strategy;
 
 import org.feynix.domain.rag.message.RagDocSyncOcrMessage;
 

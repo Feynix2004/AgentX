@@ -1,4 +1,4 @@
-package org.feynix.domain.rag.straegy.impl;
+package org.feynix.domain.rag.strategy.impl;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -9,9 +9,7 @@ import java.util.Map;
 
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import org.dromara.streamquery.stream.core.bean.BeanHelper;
 import org.dromara.streamquery.stream.core.stream.Steam;
-import org.dromara.x.file.storage.core.FileInfo;
 import org.dromara.x.file.storage.core.FileStorageService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +33,7 @@ import jakarta.annotation.Resource;
  * @date 10:07 <br/>
  */
 @Service(value = "ragDocSyncOcr-WORD")
-public class WORDRagDocSyncOcrStrategyImpl extends RagDocSyncOcrStrategyImpl implements RAGSystemPrompt {
+public class WORDRagDocSyncOcrStrategyImpl extends DocumentProcessingStrategy implements RAGSystemPrompt {
 
     private static final Logger log = LoggerFactory.getLogger(WORDRagDocSyncOcrStrategyImpl.class);
 

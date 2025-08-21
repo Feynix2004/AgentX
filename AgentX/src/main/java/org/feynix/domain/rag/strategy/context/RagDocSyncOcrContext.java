@@ -1,10 +1,10 @@
-package org.feynix.domain.rag.straegy.context;
+package org.feynix.domain.rag.strategy.context;
 
 import java.util.Map;
 
 import org.springframework.stereotype.Service;
-import org.feynix.domain.rag.model.enums.RagDocSyncOcrEnum;
-import org.feynix.domain.rag.straegy.RagDocSyncOcrStrategy;
+import org.feynix.domain.rag.model.enums.DocumentProcessingType;
+import org.feynix.domain.rag.strategy.RagDocSyncOcrStrategy;
 
 import jakarta.annotation.Resource;
 
@@ -18,6 +18,6 @@ public class RagDocSyncOcrContext {
     private Map<String, RagDocSyncOcrStrategy> taskExportStrategyMap;
 
     public RagDocSyncOcrStrategy getTaskExportStrategy(String strategy) {
-        return taskExportStrategyMap.get(RagDocSyncOcrEnum.getLabelByValue(strategy));
+        return taskExportStrategyMap.get(DocumentProcessingType.getLabelByValue(strategy));
     }
 }

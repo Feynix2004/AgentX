@@ -10,8 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.feynix.domain.rag.model.ProcessedSegment;
 import org.feynix.domain.rag.model.enums.SegmentType;
-import org.feynix.domain.rag.processor.MarkdownProcessor;
-import org.feynix.domain.rag.straegy.context.ProcessingContext;
+import org.feynix.domain.rag.strategy.context.ProcessingContext;
 import org.feynix.infrastructure.rag.config.MarkdownProcessorProperties;
 
 import java.util.ArrayList;

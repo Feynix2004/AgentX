@@ -1,4 +1,4 @@
-package org.feynix.domain.rag.straegy.context;
+package org.feynix.domain.rag.strategy.context;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

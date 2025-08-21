@@ -10,7 +10,7 @@ import org.feynix.domain.rag.model.DocumentUnitEntity;
 import org.feynix.domain.rag.model.FileDetailEntity;
 import org.feynix.domain.rag.repository.DocumentUnitRepository;
 import org.feynix.domain.rag.service.FileDetailDomainService;
-import org.feynix.domain.rag.straegy.context.ProcessingContext;
+import org.feynix.domain.rag.strategy.context.ProcessingContext;
 import org.feynix.infrastructure.mq.enums.EventType;
 import org.feynix.infrastructure.mq.events.RagDocSyncStorageEvent;
 import org.feynix.infrastructure.rag.service.UserModelConfigResolver;
@@ -23,20 +23,20 @@ import java.util.List;
  * 
  * @author claude */
 @Service
-public class VectorSegmentProcessor {
+public class DocumentVectorizationOrchestrator {
 
-    private static final Logger log = LoggerFactory.getLogger(VectorSegmentProcessor.class);
+    private static final Logger log = LoggerFactory.getLogger(DocumentVectorizationOrchestrator.class);
 
-    private final SpecialNodeTranslator translator;
-    private final SecondarySegmentSplitter splitter;
+    private final MarkdownAstRewriter translator;
+    private final MarkdownContentSplitter splitter;
     private final DocumentUnitRepository documentUnitRepository;
     private final ApplicationContext applicationContext;
     private final FileDetailDomainService fileDetailDomainService;
     private final UserModelConfigResolver userModelConfigResolver;
 
-    public VectorSegmentProcessor(SpecialNodeTranslator translator, SecondarySegmentSplitter splitter,
-            DocumentUnitRepository documentUnitRepository, ApplicationContext applicationContext,
-            FileDetailDomainService fileDetailDomainService, UserModelConfigResolver userModelConfigResolver) {
+    public DocumentVectorizationOrchestrator(MarkdownAstRewriter translator, MarkdownContentSplitter splitter,
+                                             DocumentUnitRepository documentUnitRepository, ApplicationContext applicationContext,
+                                             FileDetailDomainService fileDetailDomainService, UserModelConfigResolver userModelConfigResolver) {
         this.translator = translator;
         this.splitter = splitter;
         this.documentUnitRepository = documentUnitRepository;

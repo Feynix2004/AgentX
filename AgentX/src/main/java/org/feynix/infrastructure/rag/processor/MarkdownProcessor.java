@@ -1,13 +1,13 @@
-package org.feynix.domain.rag.processor;
+package org.feynix.infrastructure.rag.processor;
 
 import org.feynix.domain.rag.model.ProcessedSegment;
-import org.feynix.domain.rag.straegy.context.ProcessingContext;
+import org.feynix.domain.rag.strategy.context.ProcessingContext;
 
 import java.util.List;
 
 /** 统一的Markdown处理器接口
  * 
- * 设计原则： - 保持方法签名与现有EnhancedMarkdownProcessor一致 - 支持纯净解析和RAG增强两种实现模式 - 通过依赖注入选择具体实现，无需复杂配置
+ * 设计原则： - 提供统一的Markdown处理接口 - 支持纯净解析和RAG增强两种实现模式 - 通过依赖注入选择具体实现，无需复杂配置
  * 
  * @author claude */
 public interface MarkdownProcessor {

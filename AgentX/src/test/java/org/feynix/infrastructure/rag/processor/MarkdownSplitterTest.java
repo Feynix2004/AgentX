@@ -3,7 +3,7 @@ package org.feynix.infrastructure.rag.processor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.feynix.domain.rag.model.ProcessedSegment;
-import org.feynix.domain.rag.straegy.context.ProcessingContext;
+import org.feynix.domain.rag.strategy.context.ProcessingContext;
 import org.feynix.infrastructure.rag.config.MarkdownProcessorProperties;
 
 import java.nio.file.Files;
@@ -14,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /** 验证层次化分割算法的核心特性 */
-class HierarchicalSplitValidationTest {
+class MarkdownSplitterTest {
 
     private PureMarkdownProcessor processor;
     private ProcessingContext context;
