@@ -1,4 +1,4 @@
-package org.feynix.domain.rag.translator;
+package org.feynix.infrastructure.rag.translator;
 
 import com.vladsch.flexmark.util.ast.Node;
 import org.feynix.domain.rag.strategy.context.ProcessingContext;
