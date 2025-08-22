@@ -772,7 +772,7 @@ export default function ProvidersPage() {
                 <Separator />
                 
                 {/* 模型列表 */}
-                <div className="flex-1 overflow-hidden flex flex-col">
+                <div className="flex flex-col">
                   <div className="flex justify-between items-center mb-2">
                     <h3 className="text-lg font-semibold">模型列表</h3>
                     {!selectedProvider.isOfficial && (
@@ -783,7 +783,7 @@ export default function ProvidersPage() {
                     )}
                   </div>
                   
-                  <ScrollArea className="flex-1">
+                  <ScrollArea className="h-[300px]">
                     {!selectedProvider.models || selectedProvider.models.length === 0 ? (
                       <div className="text-center py-6 text-muted-foreground">
                         暂无模型{!selectedProvider.isOfficial && "，点击添加按钮创建模型"}
