@@ -1,4 +1,4 @@
-package org.feynix.domain.rag.service;
+package org.feynix.domain.rag.service.management;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -24,6 +24,7 @@ import org.feynix.domain.rag.repository.FileDetailRepository;
 import org.feynix.domain.rag.repository.RagVersionDocumentRepository;
 import org.feynix.domain.rag.repository.RagVersionFileRepository;
 import org.feynix.domain.rag.repository.RagVersionRepository;
+import org.feynix.domain.rag.service.RagQaDatasetDomainService;
 import org.feynix.infrastructure.exception.BusinessException;
 
 import java.time.LocalDateTime;

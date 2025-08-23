@@ -1,8 +1,6 @@
-package org.feynix.application.rag;
+package org.feynix.application.rag.service.manager;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -23,16 +21,13 @@ import org.feynix.domain.rag.model.FileDetailEntity;
 import org.feynix.domain.rag.model.RagQaDatasetEntity;
 import org.feynix.domain.rag.model.RagVersionEntity;
 import org.feynix.domain.rag.model.UserRagEntity;
-import org.feynix.domain.rag.repository.DocumentUnitRepository;
 import org.feynix.domain.rag.service.FileDetailDomainService;
-import org.feynix.domain.rag.service.RagDataAccessDomainService;
+import org.feynix.domain.rag.service.management.RagDataAccessDomainService;
 import org.feynix.domain.rag.service.RagQaDatasetDomainService;
-import org.feynix.domain.rag.service.RagVersionDomainService;
-import org.feynix.domain.rag.service.UserRagDomainService;
-import org.feynix.domain.rag.service.UserRagSnapshotDomainService;
+import org.feynix.domain.rag.service.management.RagVersionDomainService;
+import org.feynix.domain.rag.service.management.UserRagDomainService;
+import org.feynix.domain.rag.service.management.UserRagSnapshotDomainService;
 import org.feynix.domain.user.service.UserDomainService;
-import org.feynix.domain.rag.constant.RagPublishStatus;
-import org.feynix.infrastructure.exception.BusinessException;
 
 import java.util.ArrayList;
 import java.util.List;

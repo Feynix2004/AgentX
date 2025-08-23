@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.feynix.application.rag.dto.*;
-import org.feynix.application.rag.service.FileOperationAppService;
+import org.feynix.application.rag.service.manager.FileOperationAppService;
 import org.feynix.infrastructure.auth.UserContext;
 import org.feynix.interfaces.api.common.Result;
 

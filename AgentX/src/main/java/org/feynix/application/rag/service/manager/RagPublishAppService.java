@@ -1,4 +1,4 @@
-package org.feynix.application.rag;
+package org.feynix.application.rag.service.manager;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -17,8 +17,8 @@ import org.feynix.interfaces.dto.rag.request.QueryPendingReviewRequest;
 import org.feynix.application.rag.request.QueryRagVersionRequest;
 import org.feynix.domain.rag.constant.RagPublishStatus;
 import org.feynix.domain.rag.model.RagVersionEntity;
-import org.feynix.domain.rag.service.RagVersionDomainService;
-import org.feynix.domain.rag.service.UserRagDomainService;
+import org.feynix.domain.rag.service.management.RagVersionDomainService;
+import org.feynix.domain.rag.service.management.UserRagDomainService;
 import org.feynix.domain.user.service.UserDomainService;
 import org.feynix.infrastructure.exception.BusinessException;
 

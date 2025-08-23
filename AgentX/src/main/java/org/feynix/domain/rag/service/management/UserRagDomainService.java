@@ -1,4 +1,4 @@
-package org.feynix.domain.rag.service;
+package org.feynix.domain.rag.service.management;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -7,13 +7,14 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.feynix.domain.rag.constant.InstallType;
 import org.feynix.domain.rag.constant.RagPublishStatus;
 import org.feynix.domain.rag.model.RagQaDatasetEntity;
 import org.feynix.domain.rag.model.RagVersionEntity;
 import org.feynix.domain.rag.model.UserRagEntity;
+import org.feynix.domain.rag.model.UserRagFileEntity;
 import org.feynix.domain.rag.repository.UserRagRepository;
+import org.feynix.domain.rag.service.RagQaDatasetDomainService;
 import org.feynix.infrastructure.exception.BusinessException;
 
 import java.time.LocalDateTime;

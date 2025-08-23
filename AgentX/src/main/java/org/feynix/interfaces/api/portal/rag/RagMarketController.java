@@ -3,7 +3,7 @@ package org.feynix.interfaces.api.portal.rag;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.feynix.application.rag.RagMarketAppService;
+import org.feynix.application.rag.service.manager.RagMarketAppService;
 import org.feynix.application.rag.dto.DocumentUnitDTO;
 import org.feynix.application.rag.dto.FileDetailDTO;
 import org.feynix.application.rag.dto.RagMarketDTO;

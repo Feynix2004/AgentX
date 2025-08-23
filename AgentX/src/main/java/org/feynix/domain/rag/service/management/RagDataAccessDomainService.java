@@ -1,4 +1,4 @@
-package org.feynix.domain.rag.service;
+package org.feynix.domain.rag.service.management;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
