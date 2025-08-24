@@ -7,21 +7,14 @@ import dev.langchain4j.service.TokenStream;
 import dev.langchain4j.service.tool.ToolProvider;
 import dev.langchain4j.store.memory.chat.InMemoryChatMemoryStore;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 import org.feynix.application.conversation.dto.AgentChatResponse;
 import org.feynix.application.conversation.service.handler.context.ChatContext;
-import org.feynix.application.conversation.service.message.Agent;
 import org.feynix.application.conversation.service.message.agent.tool.RagToolManager;
 import org.feynix.application.conversation.service.message.rag.RagChatContext;
 import org.feynix.application.conversation.service.message.rag.RagRetrievalResult;
 import org.feynix.application.conversation.dto.RagRetrievalDocumentDTO;
 import org.feynix.application.rag.dto.DocumentUnitDTO;
-import org.feynix.domain.rag.model.DocumentUnitEntity;
-import org.feynix.domain.rag.model.FileDetailEntity;
-import org.feynix.domain.rag.model.UserRagFileEntity;
-import org.feynix.domain.rag.repository.FileDetailRepository;
-import org.feynix.domain.rag.repository.UserRagFileRepository;
-import org.feynix.application.rag.service.RagQaDatasetAppService;
+import org.feynix.application.rag.service.search.RAGSearchAppService;
 import org.feynix.domain.agent.model.AgentEntity;
 import org.feynix.domain.conversation.constant.MessageType;
 import org.feynix.domain.conversation.model.MessageEntity;
@@ -49,17 +42,17 @@ public class RagMessageHandler extends AbstractMessageHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(RagMessageHandler.class);
 
-    private final RagQaDatasetAppService ragQaDatasetAppService;
+    private final RAGSearchAppService ragSearchAppService;
     private final ObjectMapper objectMapper;
 
     public RagMessageHandler(LLMServiceFactory llmServiceFactory, MessageDomainService messageDomainService,
             HighAvailabilityDomainService highAvailabilityDomainService, SessionDomainService sessionDomainService,
             UserSettingsDomainService userSettingsDomainService, LLMDomainService llmDomainService,
             RagToolManager ragToolManager, BillingService billingService, AccountDomainService accountDomainService,
-            RagQaDatasetAppService ragQaDatasetAppService, ObjectMapper objectMapper) {
+            RAGSearchAppService ragSearchAppService, ObjectMapper objectMapper) {
         super(llmServiceFactory, messageDomainService, highAvailabilityDomainService, sessionDomainService,
                 userSettingsDomainService, llmDomainService, ragToolManager, billingService, accountDomainService);
-        this.ragQaDatasetAppService = ragQaDatasetAppService;
+        this.ragSearchAppService = ragSearchAppService;
         this.objectMapper = objectMapper;
     }
 
@@ -108,11 +101,11 @@ public class RagMessageHandler extends AbstractMessageHandler {
             List<DocumentUnitDTO> fullRetrievedDocuments;
             if (ragContext.getUserRagId() != null) {
                 // 基于已安装知识库检索
-                fullRetrievedDocuments = ragQaDatasetAppService.ragSearchByUserRag(ragContext.getRagSearchRequest(),
+                fullRetrievedDocuments = ragSearchAppService.ragSearchByUserRag(ragContext.getRagSearchRequest(),
                         ragContext.getUserRagId(), ragContext.getUserId());
             } else {
                 // 基于数据集ID检索
-                fullRetrievedDocuments = ragQaDatasetAppService.ragSearch(ragContext.getRagSearchRequest(),
+                fullRetrievedDocuments = ragSearchAppService.ragSearch(ragContext.getRagSearchRequest(),
                         ragContext.getUserId());
             }
 
