@@ -9,6 +9,7 @@ import org.feynix.application.conversation.service.message.AbstractMessageHandle
 import org.feynix.application.conversation.service.message.Agent;
 import org.feynix.application.conversation.service.message.agent.AgentToolManager;
 import org.feynix.application.conversation.service.message.agent.tool.RagToolManager;
+import org.feynix.application.conversation.service.ChatSessionManager;
 import org.feynix.domain.conversation.constant.MessageType;
 import org.feynix.domain.conversation.model.MessageEntity;
 import org.feynix.domain.conversation.service.MessageDomainService;
@@ -34,9 +35,10 @@ public class PreviewMessageHandler extends AbstractMessageHandler {
             HighAvailabilityDomainService highAvailabilityDomainService, SessionDomainService sessionDomainService,
             UserSettingsDomainService userSettingsDomainService, LLMDomainService llmDomainService,
             RagToolManager ragToolManager, BillingService billingService, AccountDomainService accountDomainService,
-            AgentToolManager agentToolManager) {
+            ChatSessionManager chatSessionManager, AgentToolManager agentToolManager) {
         super(llmServiceFactory, messageDomainService, highAvailabilityDomainService, sessionDomainService,
-                userSettingsDomainService, llmDomainService, ragToolManager, billingService, accountDomainService);
+                userSettingsDomainService, llmDomainService, ragToolManager, billingService, accountDomainService,
+                chatSessionManager);
         this.agentToolManager = agentToolManager;
     }
 
