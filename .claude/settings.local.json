@@ -51,7 +51,10 @@
       "Bash(wc:*)",
       "Bash(head:*)",
       "Bash(rm:*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(ssh-keygen:*)",
+      "Read(/Users/feynix/.ssh/**)",
+      "Read(/Users/feynix/.ssh/**)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
