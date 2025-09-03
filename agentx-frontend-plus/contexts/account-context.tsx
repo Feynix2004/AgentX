@@ -75,6 +75,11 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     return `¥${amount.toFixed(2)}`;
   }, []);
 
+  // 初始化时自动获取账户数据
+  useEffect(() => {
+    refreshAccount();
+  }, [refreshAccount]);
+
   const value: AccountContextType = {
     account,
     loading,

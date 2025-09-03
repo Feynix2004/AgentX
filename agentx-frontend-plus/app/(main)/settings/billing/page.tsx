@@ -303,9 +303,10 @@ export default function BillingPage() {
 
 
   useEffect(() => {
+    refreshAccount(); // 刷新账户数据
     loadTotalCost(); // 加载总消费数据
     loadUsageRecords(); // 加载用量记录
-  }, []);
+  }, [refreshAccount]);
 
   return (
     <div className="container py-6">
