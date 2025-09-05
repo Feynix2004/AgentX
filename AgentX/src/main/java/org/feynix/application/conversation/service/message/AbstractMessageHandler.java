@@ -17,7 +17,7 @@ import org.feynix.application.conversation.dto.AgentChatResponse;
 import org.feynix.application.conversation.service.handler.context.AgentPromptTemplates;
 import org.feynix.application.conversation.service.handler.context.ChatContext;
 import org.feynix.application.conversation.service.message.Agent;
-import org.feynix.application.conversation.service.message.agent.tool.RagToolManager;
+import org.feynix.application.conversation.service.message.builtin.BuiltInToolRegistry;
 import org.feynix.application.conversation.service.ChatSessionManager;
 import org.feynix.domain.agent.model.AgentEntity;
 import org.feynix.domain.conversation.constant.MessageType;
@@ -71,22 +71,22 @@ public abstract class AbstractMessageHandler {
     protected final SessionDomainService sessionDomainService;
     protected final UserSettingsDomainService userSettingsDomainService;
     protected final LLMDomainService llmDomainService;
-    protected final RagToolManager ragToolManager;
+    protected final BuiltInToolRegistry builtInToolRegistry;
     protected final BillingService billingService;
     protected final AccountDomainService accountDomainService;
     protected final ChatSessionManager chatSessionManager;
     public AbstractMessageHandler(LLMServiceFactory llmServiceFactory, MessageDomainService messageDomainService,
             HighAvailabilityDomainService highAvailabilityDomainService, SessionDomainService sessionDomainService,
             UserSettingsDomainService userSettingsDomainService, LLMDomainService llmDomainService,
-            RagToolManager ragToolManager, BillingService billingService, AccountDomainService accountDomainService,
-            ChatSessionManager chatSessionManager) {
+            BuiltInToolRegistry builtInToolRegistry, BillingService billingService,
+            AccountDomainService accountDomainService, ChatSessionManager chatSessionManager) {
         this.llmServiceFactory = llmServiceFactory;
         this.messageDomainService = messageDomainService;
         this.highAvailabilityDomainService = highAvailabilityDomainService;
         this.sessionDomainService = sessionDomainService;
         this.userSettingsDomainService = userSettingsDomainService;
         this.llmDomainService = llmDomainService;
-        this.ragToolManager = ragToolManager;
+        this.builtInToolRegistry = builtInToolRegistry;
         this.billingService = billingService;
         this.accountDomainService = accountDomainService;
         this.chatSessionManager = chatSessionManager;
@@ -435,14 +435,17 @@ public abstract class AbstractMessageHandler {
     protected Agent buildStreamingAgent(StreamingChatModel model, MessageWindowChatMemory memory,
             ToolProvider toolProvider, AgentEntity agent) {
 
-        Map<ToolSpecification, ToolExecutor> ragTools = ragToolManager.createRagTools(agent);
+        // 通过内置工具注册器获取所有适用的内置工具
+        Map<ToolSpecification, ToolExecutor> builtInTools = builtInToolRegistry.createToolsForAgent(agent);
 
         AiServices<Agent> agentService = AiServices.builder(Agent.class).streamingChatModel(model).chatMemory(memory);
 
-        if (ragTools != null) {
-            agentService.tools(ragTools);
+        // 添加内置工具（如RAG等）
+        if (builtInTools != null && !builtInTools.isEmpty()) {
+            agentService.tools(builtInTools);
         }
 
+        // 添加外部工具提供者
         if (toolProvider != null) {
             agentService.toolProvider(toolProvider);
         }

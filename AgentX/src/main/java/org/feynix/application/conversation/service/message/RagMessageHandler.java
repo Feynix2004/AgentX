@@ -9,7 +9,7 @@ import dev.langchain4j.store.memory.chat.InMemoryChatMemoryStore;
 import org.springframework.stereotype.Component;
 import org.feynix.application.conversation.dto.AgentChatResponse;
 import org.feynix.application.conversation.service.handler.context.ChatContext;
-import org.feynix.application.conversation.service.message.agent.tool.RagToolManager;
+import org.feynix.application.conversation.service.message.builtin.BuiltInToolRegistry;
 import org.feynix.application.conversation.service.ChatSessionManager;
 import org.feynix.application.conversation.service.message.rag.RagChatContext;
 import org.feynix.application.conversation.service.message.rag.RagRetrievalResult;
@@ -62,10 +62,11 @@ public class RagMessageHandler extends AbstractMessageHandler {
     public RagMessageHandler(LLMServiceFactory llmServiceFactory, MessageDomainService messageDomainService,
             HighAvailabilityDomainService highAvailabilityDomainService, SessionDomainService sessionDomainService,
             UserSettingsDomainService userSettingsDomainService, LLMDomainService llmDomainService,
-            RagToolManager ragToolManager, BillingService billingService, AccountDomainService accountDomainService,
-            ChatSessionManager chatSessionManager, RAGSearchAppService ragSearchAppService, ObjectMapper objectMapper) {
+            BuiltInToolRegistry builtInToolRegistry, BillingService billingService,
+            AccountDomainService accountDomainService, ChatSessionManager chatSessionManager,
+            RAGSearchAppService ragSearchAppService, ObjectMapper objectMapper) {
         super(llmServiceFactory, messageDomainService, highAvailabilityDomainService, sessionDomainService,
-                userSettingsDomainService, llmDomainService, ragToolManager, billingService, accountDomainService,
+                userSettingsDomainService, llmDomainService, builtInToolRegistry, billingService, accountDomainService,
                 chatSessionManager);
         this.ragSearchAppService = ragSearchAppService;
         this.objectMapper = objectMapper;

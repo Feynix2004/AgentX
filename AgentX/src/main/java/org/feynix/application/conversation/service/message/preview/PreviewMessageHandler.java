@@ -8,7 +8,7 @@ import org.feynix.application.conversation.service.handler.context.ChatContext;
 import org.feynix.application.conversation.service.message.AbstractMessageHandler;
 import org.feynix.application.conversation.service.message.Agent;
 import org.feynix.application.conversation.service.message.agent.AgentToolManager;
-import org.feynix.application.conversation.service.message.agent.tool.RagToolManager;
+import org.feynix.application.conversation.service.message.builtin.BuiltInToolRegistry;
 import org.feynix.application.conversation.service.ChatSessionManager;
 import org.feynix.domain.conversation.constant.MessageType;
 import org.feynix.domain.conversation.model.MessageEntity;
@@ -34,10 +34,11 @@ public class PreviewMessageHandler extends AbstractMessageHandler {
     public PreviewMessageHandler(LLMServiceFactory llmServiceFactory, MessageDomainService messageDomainService,
             HighAvailabilityDomainService highAvailabilityDomainService, SessionDomainService sessionDomainService,
             UserSettingsDomainService userSettingsDomainService, LLMDomainService llmDomainService,
-            RagToolManager ragToolManager, BillingService billingService, AccountDomainService accountDomainService,
-            ChatSessionManager chatSessionManager, AgentToolManager agentToolManager) {
+            BuiltInToolRegistry builtInToolRegistry, BillingService billingService,
+            AccountDomainService accountDomainService, ChatSessionManager chatSessionManager,
+            AgentToolManager agentToolManager) {
         super(llmServiceFactory, messageDomainService, highAvailabilityDomainService, sessionDomainService,
-                userSettingsDomainService, llmDomainService, ragToolManager, billingService, accountDomainService,
+                userSettingsDomainService, llmDomainService, builtInToolRegistry, billingService, accountDomainService,
                 chatSessionManager);
         this.agentToolManager = agentToolManager;
     }

@@ -1,19 +1,15 @@
 package org.feynix.application.conversation.service.message.agent;
 
-import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.mcp.McpToolProvider;
 import dev.langchain4j.mcp.client.DefaultMcpClient;
 import dev.langchain4j.mcp.client.McpClient;
 import dev.langchain4j.mcp.client.transport.McpTransport;
 import dev.langchain4j.mcp.client.transport.PresetParameter;
 import dev.langchain4j.mcp.client.transport.http.HttpMcpTransport;
-import dev.langchain4j.service.tool.ToolExecutor;
 import dev.langchain4j.service.tool.ToolProvider;
 import org.springframework.stereotype.Component;
 import org.feynix.application.conversation.service.handler.context.ChatContext;
 import org.feynix.application.conversation.service.McpUrlProviderService;
-import org.feynix.application.conversation.service.message.agent.tool.RagToolManager;
-import org.feynix.domain.agent.model.AgentEntity;
 import org.feynix.infrastructure.utils.JsonUtils;
 
 import java.time.Duration;
@@ -26,11 +22,9 @@ import java.util.Map;
 public class AgentToolManager {
 
     private final McpUrlProviderService mcpUrlProviderService;
-    private final RagToolManager ragToolManager;
 
-    public AgentToolManager(McpUrlProviderService mcpUrlProviderService, RagToolManager ragToolManager) {
+    public AgentToolManager(McpUrlProviderService mcpUrlProviderService) {
         this.mcpUrlProviderService = mcpUrlProviderService;
-        this.ragToolManager = ragToolManager;
     }
 
     /** 创建工具提供者（支持全局/用户隔离工具自动识别）
@@ -58,6 +52,7 @@ public class AgentToolManager {
             if (toolPresetParams != null && toolPresetParams.containsKey(mcpServerName)) {
                 List<PresetParameter> presetParameters = new ArrayList<>();
                 for (String key : toolPresetParams.keySet()) {
+
                     toolPresetParams.get(key).forEach((k, v) -> {
                         presetParameters.add(new PresetParameter(k, JsonUtils.toJsonString(v)));
                     });
