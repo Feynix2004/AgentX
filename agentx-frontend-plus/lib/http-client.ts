@@ -302,20 +302,135 @@ class HttpClient {
 // 导出单例实例
 export const httpClient = new HttpClient();
 
-// 添加认证拦截器
+// 增强的认证拦截器
 export const addAuthInterceptor = () => {
   httpClient.addInterceptor({
     request: (config) => {
-      const token = localStorage.getItem("auth_token");
-      if (token) {
-        config.headers = {
-          ...config.headers,
-          Authorization: `Bearer ${token}`
-        };
+      // 在每个请求中动态读取token
+      if (typeof window !== "undefined") {
+        let token = localStorage.getItem("auth_token");
+        
+        // 如果localStorage中没有token，尝试从cookie中读取
+        if (!token) {
+          const cookies = document.cookie.split(';');
+          for (let cookie of cookies) {
+            const [name, value] = cookie.trim().split('=');
+            if (name === 'token' && value) {
+              token = value;
+              // 同步到localStorage以便后续使用
+              localStorage.setItem("auth_token", token);
+              break;
+            }
+          }
+        }
+        
+        if (token) {
+          // 基本的token格式检查（JWT通常包含两个点）
+          if (token.split('.').length === 3) {
+            config.headers = {
+              ...config.headers,
+              Authorization: `Bearer ${token}`
+            };
+            
+            // 调试日志（仅在开发环境）
+            if (process.env.NODE_ENV === 'development') {
+              console.log(`[HttpClient] 添加认证头到请求: ${config.method || 'GET'} ${config.headers?.['X-Debug-Endpoint'] || '未知端点'}`);
+            }
+          } else {
+            // token格式异常，清理并记录警告
+            console.warn('[HttpClient] Token格式异常，已清理:', token);
+            localStorage.removeItem("auth_token");
+            document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+          }
+        } else {
+          // 无token的调试日志（仅在开发环境）
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`[HttpClient] 无认证token的请求: ${config.method || 'GET'} ${config.headers?.['X-Debug-Endpoint'] || '未知端点'}`);
+          }
+        }
       }
+      
       return config;
+    },
+    
+    response: async (response, options) => {
+      // 处理401认证失败的响应
+      if (response.status === 401) {
+        console.warn('[HttpClient] 收到401响应，清理认证信息');
+        
+        if (typeof window !== "undefined") {
+          // 清理认证信息
+          localStorage.removeItem("auth_token");
+          document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+          
+          // 如果当前不在登录相关页面，则重定向
+          const currentPath = window.location.pathname;
+          if (!currentPath.includes('/login') && 
+              !currentPath.includes('/sso/') && 
+              !currentPath.includes('/register')) {
+            
+            toast({
+              variant: "destructive",
+              title: "登录已过期",
+              description: "请重新登录"
+            });
+            
+            // 延迟重定向，确保toast能显示
+            setTimeout(() => {
+              window.location.href = '/login';
+            }, 1000);
+          }
+        }
+      }
+      
+      return undefined; // 让默认响应拦截器处理
+    },
+    
+    error: async (error) => {
+      // 处理认证相关错误
+      if (error.status === 401) {
+        console.warn('[HttpClient] 请求认证失败:', error.message);
+      }
+      
+      return undefined; // 让默认错误拦截器处理
     }
   });
+};
+
+// 认证状态检查工具
+export const checkAuthStatus = (): boolean => {
+  if (typeof window === "undefined") return false;
+  
+  const token = localStorage.getItem("auth_token");
+  if (!token) return false;
+  
+  // 基本格式检查
+  if (token.split('.').length !== 3) {
+    // 格式异常，清理token
+    localStorage.removeItem("auth_token");
+    document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    return false;
+  }
+  
+  try {
+    // 简单的JWT payload解析（不验证签名，只检查过期时间）
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const currentTime = Math.floor(Date.now() / 1000);
+    
+    if (payload.exp && payload.exp < currentTime) {
+      console.warn('[HttpClient] Token已过期');
+      localStorage.removeItem("auth_token");
+      document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.warn('[HttpClient] Token解析失败:', error);
+    localStorage.removeItem("auth_token");
+    document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    return false;
+  }
 };
 
 // 初始化：添加认证拦截器
