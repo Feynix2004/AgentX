@@ -104,8 +104,12 @@ services:
       # 文件存储
       FILE_STORAGE_PATH: /app/storage
       
+      # Docker连接配置
+      AGENTX_CONTAINER_DOCKER_HOST: unix:///var/run/docker.sock
+      
     volumes:
       - storage-data:/app/storage
+      - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - "${HTTP_PORT:-3000}:3000"
     networks:

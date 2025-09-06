@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.feynix.domain.container.model.ContainerTemplate;
+import org.feynix.infrastructure.config.ContainerConfig;
 import org.feynix.infrastructure.exception.BusinessException;
 
 import java.time.Duration;
@@ -29,12 +30,20 @@ public class DockerService {
 
     private static final Logger logger = LoggerFactory.getLogger(DockerService.class);
     private DockerClient dockerClient;
+    private final ContainerConfig containerConfig;
+
+    public DockerService(ContainerConfig containerConfig) {
+        this.containerConfig = containerConfig;
+    }
 
     @PostConstruct
     public void init() {
         try {
+            String dockerHost = containerConfig.getDockerHost();
+            logger.info("正在初始化Docker客户端，连接地址: {}", dockerHost);
+
             DefaultDockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder()
-                    .withDockerHost("unix:///var/run/docker.sock").build();
+                    .withDockerHost(dockerHost).build();
 
             ApacheDockerHttpClient httpClient = new ApacheDockerHttpClient.Builder().dockerHost(config.getDockerHost())
                     .sslConfig(config.getSSLConfig()).maxConnections(100).connectionTimeout(Duration.ofSeconds(30))
@@ -42,11 +51,36 @@ public class DockerService {
 
             dockerClient = DockerClientImpl.getInstance(config, httpClient);
 
-            logger.info("Docker客户端初始化成功");
+            // 测试连接
+            dockerClient.pingCmd().exec();
+            logger.info("Docker客户端初始化成功，连接地址: {}", dockerHost);
         } catch (Exception e) {
-            logger.error("Docker客户端初始化失败", e);
-            throw new BusinessException("Docker服务不可用");
+            String dockerHost = containerConfig.getDockerHost();
+            String errorMsg = buildErrorDiagnosticMessage(dockerHost, e);
+            logger.error("Docker客户端初始化失败，连接地址: {}, 详细诊断: {}", dockerHost, errorMsg, e);
+            throw new BusinessException("Docker服务不可用: " + errorMsg);
         }
+    }
+
+    /** 构建错误诊断信息 */
+    private String buildErrorDiagnosticMessage(String dockerHost, Exception e) {
+        StringBuilder diagnosis = new StringBuilder();
+        diagnosis.append("连接失败原因: ").append(e.getMessage());
+
+        if (dockerHost.startsWith("unix://")) {
+            diagnosis.append("\n可能的解决方案:");
+            diagnosis.append("\n1. 检查Docker daemon是否运行: docker info");
+            diagnosis.append("\n2. 检查socket文件权限: ls -la /var/run/docker.sock");
+            diagnosis.append("\n3. 在容器环境中，确保挂载了Docker socket: -v /var/run/docker.sock:/var/run/docker.sock");
+            diagnosis.append("\n4. 检查用户组权限: sudo usermod -aG docker $USER");
+        } else if (dockerHost.startsWith("tcp://")) {
+            diagnosis.append("\n可能的解决方案:");
+            diagnosis.append("\n1. 检查Docker daemon TCP端口是否开启");
+            diagnosis.append("\n2. 检查网络连通性");
+            diagnosis.append("\n3. 检查TLS配置是否正确");
+        }
+
+        return diagnosis.toString();
     }
 
     @PreDestroy

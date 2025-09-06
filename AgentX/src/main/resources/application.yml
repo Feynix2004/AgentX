@@ -155,3 +155,12 @@ payment:
     secret-key: ${STRIPE_SECRET_KEY:your_stripe_secret_key}
     publishable-key: ${STRIPE_PUBLISHABLE_KEY:your_stripe_publishable_key}
     webhook-secret: ${STRIPE_WEBHOOK_SECRET:your_stripe_webhook_secret}
+
+# 容器管理配置
+agentx:
+  container:
+    docker-host: ${AGENTX_CONTAINER_DOCKER_HOST:unix:///var/run/docker.sock}
+    user-volume-base-path: ${AGENTX_CONTAINER_USER_VOLUME_PATH:/docker/users}
+    default-mcp-gateway-image: ${AGENTX_CONTAINER_DEFAULT_MCP_IMAGE:ghcr.io/feynix2004/mcp-gateway:latest}
+    monitor-interval: ${AGENTX_CONTAINER_MONITOR_INTERVAL:300000}
+    stats-update-interval: ${AGENTX_CONTAINER_STATS_INTERVAL:120000}
