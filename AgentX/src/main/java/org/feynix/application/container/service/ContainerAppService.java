@@ -512,10 +512,10 @@ public class ContainerAppService {
             return "localhost";
         }
 
-        // bridge网络模式返回127.0.0.1，通过端口映射访问
+        // bridge网络模式返回localhost，通过端口映射访问
         if ("bridge".equals(networkMode)) {
             logger.info("容器使用bridge网络模式，IP地址设为127.0.0.1（通过端口映射访问）");
-            return "127.0.0.1";
+            return "localhost";
         }
 
         // 其他特殊网络模式从容器网络设置中提取IP
