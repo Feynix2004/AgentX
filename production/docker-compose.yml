@@ -61,9 +61,10 @@ services:
   agentx:
     image: ghcr.io/feynix2004/agentx:${IMAGE_TAG:-latest}
     container_name: agentx-app
+    network_mode: "host"
     environment:
-      # 数据库配置
-      DB_HOST: postgres
+      # 数据库配置 - Host网络模式下通过localhost访问
+      DB_HOST: localhost
       DB_PORT: 5432
       DB_NAME: ${DB_NAME:-agentx}
       DB_USER: ${DB_USER:-agentx_user}
@@ -88,8 +89,8 @@ services:
       AGENTX_TEST_PASSWORD: ${AGENTX_TEST_PASSWORD:-test123}
       AGENTX_TEST_NICKNAME: ${AGENTX_TEST_NICKNAME:-测试用户}
       
-      # 消息队列配置
-      RABBITMQ_HOST: rabbitmq
+      # 消息队列配置 - Host网络模式下通过localhost访问
+      RABBITMQ_HOST: localhost
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:-guest}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-guest}
@@ -110,10 +111,6 @@ services:
     volumes:
       - storage-data:/app/storage
       - /var/run/docker.sock:/var/run/docker.sock
-    ports:
-      - "${HTTP_PORT:-3000}:3000"
-    networks:
-      - agentx-network
     depends_on:
       postgres:
         condition: service_healthy
