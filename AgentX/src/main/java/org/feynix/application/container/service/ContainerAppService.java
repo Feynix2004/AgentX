@@ -506,10 +506,10 @@ public class ContainerAppService {
      * @param networkMode 网络模式
      * @return IP地址 */
     private String extractIpAddress(DockerService.ContainerInfo containerInfo, String networkMode) {
-        // host网络模式直接返回127.0.0.1
+        // host网络模式直接返回localhost
         if ("host".equals(networkMode)) {
-            logger.info("容器使用host网络模式，IP地址设为127.0.0.1");
-            return "127.0.0.1";
+            logger.info("容器使用host网络模式，IP地址设为localhost");
+            return "localhost";
         }
 
         // bridge网络模式返回127.0.0.1，通过端口映射访问
