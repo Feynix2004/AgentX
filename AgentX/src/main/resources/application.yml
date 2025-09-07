@@ -164,3 +164,6 @@ agentx:
     default-mcp-gateway-image: ${AGENTX_CONTAINER_DEFAULT_MCP_IMAGE:ghcr.io/feynix2004/mcp-gateway:latest}
     monitor-interval: ${AGENTX_CONTAINER_MONITOR_INTERVAL:300000}
     stats-update-interval: ${AGENTX_CONTAINER_STATS_INTERVAL:120000}
+mcp:
+  gateway:
+    connect-timeout: ${MCP_GATEWAY_CONNECT_TIMEOUT:60000}
