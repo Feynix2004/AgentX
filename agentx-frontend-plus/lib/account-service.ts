@@ -23,7 +23,17 @@ export class AccountService {
   // 获取当前用户账户信息
   static async getCurrentUserAccount(): Promise<ApiResponse<Account>> {
     try {
-      return await httpClient.get(API_ENDPOINTS.CURRENT_ACCOUNT);
+      // 手动获取token并添加到请求头，解决SSO登录时机问题
+      const headers: Record<string, string> = {};
+      
+      if (typeof window !== "undefined") {
+        const token = localStorage.getItem("auth_token");
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+      }
+      
+      return await httpClient.get(API_ENDPOINTS.CURRENT_ACCOUNT, { headers });
     } catch (error) {
       return {
         code: 500,
