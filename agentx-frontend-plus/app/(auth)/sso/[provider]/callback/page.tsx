@@ -16,9 +16,17 @@ export default function SsoCallbackPage({ params }: SsoCallbackPageProps) {
   const searchParams = useSearchParams()
   const { provider } = use(params)
   const [status, setStatus] = useState("处理中")
+  const [isProcessing, setIsProcessing] = useState(false) // 防重复调用标识
 
   useEffect(() => {
+    // 防止重复执行
+    if (isProcessing) {
+      return
+    }
+
     const handleCallback = async () => {
+      setIsProcessing(true) // 设置处理标识
+      
       try {
         const code = searchParams.get("code")
         if (!code) {
@@ -41,12 +49,13 @@ export default function SsoCallbackPage({ params }: SsoCallbackPageProps) {
           localStorage.setItem("auth_token", res.data.token)
           setCookie("token", res.data.token, 30)
           
-          // 等待一小段时间确保token保存完成
-          await new Promise(resolve => setTimeout(resolve, 100))
+          // 增加延迟时间，确保token保存完成
+          await new Promise(resolve => setTimeout(resolve, 300))
           
           // 验证token是否有效 - 尝试获取用户账户信息
           setStatus("验证登录状态")
           try {
+            console.log("[SSO] 开始验证账户信息")
             const accountRes = await AccountService.getCurrentUserAccount()
             
             if (accountRes.code === 200) {
@@ -56,10 +65,20 @@ export default function SsoCallbackPage({ params }: SsoCallbackPageProps) {
                 title: "登录成功",
                 description: `使用 ${providerName} 登录成功`
               })
+              console.log("[SSO] 账户验证成功，跳转到主页")
+              router.push("/")
+            } else if (accountRes.code === 401) {
+              // 账户验证返回401，可能是时机问题，仍然继续登录
+              console.warn("[SSO] 账户验证401，可能是时机问题，继续登录流程")
+              const providerName = provider === 'community' ? '敲鸭' : provider.toUpperCase()
+              toast({
+                title: "登录成功", 
+                description: `使用 ${providerName} 登录成功`
+              })
               router.push("/")
             } else {
-              // 账户信息获取失败，但token有效，仍然认为登录成功
-              console.warn("获取账户信息失败，但继续登录:", accountRes.message)
+              // 其他错误，仍然继续登录
+              console.warn("[SSO] 获取账户信息失败，但继续登录:", accountRes.message)
               const providerName = provider === 'community' ? '敲鸭' : provider.toUpperCase()
               toast({
                 title: "登录成功",
@@ -69,7 +88,7 @@ export default function SsoCallbackPage({ params }: SsoCallbackPageProps) {
             }
           } catch (accountError) {
             // 账户信息获取异常，但token获取成功，仍然继续
-            console.warn("账户验证异常，但继续登录:", accountError)
+            console.warn("[SSO] 账户验证异常，但继续登录:", accountError)
             const providerName = provider === 'community' ? '敲鸭' : provider.toUpperCase()
             toast({
               title: "登录成功",
@@ -86,7 +105,7 @@ export default function SsoCallbackPage({ params }: SsoCallbackPageProps) {
           router.push("/login")
         }
       } catch (error) {
-        console.error("SSO登录回调处理失败:", error)
+        console.error("[SSO] 登录回调处理失败:", error)
         
         let errorMessage = "登录过程中出现错误，请重试"
         if (error instanceof Error) {
@@ -106,11 +125,13 @@ export default function SsoCallbackPage({ params }: SsoCallbackPageProps) {
         document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
         
         router.push("/login")
+      } finally {
+        setIsProcessing(false) // 无论成功失败都重置标识
       }
     }
 
     handleCallback()
-  }, [searchParams, router, provider])
+  }, [searchParams, router, provider, isProcessing]) // 将 isProcessing 加入依赖
 
   return (
     <div className="flex items-center justify-center min-h-screen">

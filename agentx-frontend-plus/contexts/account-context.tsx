@@ -75,10 +75,36 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     return `¥${amount.toFixed(2)}`;
   }, []);
 
-  // 初始化时自动获取账户数据
+  // 检查是否在SSO登录过程中
+  const isSsoLogin = useCallback(() => {
+    if (typeof window === "undefined") return false;
+    const currentPath = window.location.pathname;
+    return currentPath.includes('/sso/') || currentPath.includes('/login');
+  }, []);
+
+  // 智能初始化时机控制
   useEffect(() => {
-    refreshAccount();
-  }, [refreshAccount]);
+    // 如果正在SSO登录过程中，延迟初始化避免竞态条件
+    if (isSsoLogin()) {
+      console.log('[AccountContext] 检测到SSO登录，延迟初始化账户数据');
+      
+      // 延迟2秒后再初始化，给SSO登录过程足够时间
+      const timer = setTimeout(() => {
+        if (typeof window !== "undefined") {
+          const token = localStorage.getItem("auth_token");
+          if (token) {
+            console.log('[AccountContext] SSO登录完成，开始获取账户数据');
+            refreshAccount();
+          }
+        }
+      }, 2000);
+      
+      return () => clearTimeout(timer);
+    } else {
+      // 非SSO登录情况，立即初始化
+      refreshAccount();
+    }
+  }, [refreshAccount, isSsoLogin]);
 
   const value: AccountContextType = {
     account,

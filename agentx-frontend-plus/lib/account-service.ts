@@ -20,28 +20,68 @@ const API_ENDPOINTS = {
 } as const;
 
 export class AccountService {
-  // 获取当前用户账户信息
+  // 获取当前用户账户信息（带重试机制）
   static async getCurrentUserAccount(): Promise<ApiResponse<Account>> {
-    try {
-      // 手动获取token并添加到请求头，解决SSO登录时机问题
-      const headers: Record<string, string> = {};
-      
-      if (typeof window !== "undefined") {
-        const token = localStorage.getItem("auth_token");
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
+    const maxRetries = 2;
+    const retryDelay = 200; // 200ms 延迟
+    
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        // 手动获取token并添加到请求头，解决SSO登录时机问题
+        const headers: Record<string, string> = {};
+        
+        if (typeof window !== "undefined") {
+          const token = localStorage.getItem("auth_token");
+          if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+          }
         }
+        
+        const response = await httpClient.get(API_ENDPOINTS.CURRENT_ACCOUNT, { headers });
+        
+        // 如果成功或者不是401错误，直接返回
+        if (response.code === 200 || response.code !== 401) {
+          if (attempt > 0) {
+            console.log(`[AccountService] 重试成功，第${attempt + 1}次尝试`);
+          }
+          return response;
+        }
+        
+        // 如果是401且还有重试机会，等待后继续
+        if (response.code === 401 && attempt < maxRetries) {
+          console.log(`[AccountService] 第${attempt + 1}次尝试返回401，${retryDelay}ms后重试`);
+          await new Promise(resolve => setTimeout(resolve, retryDelay));
+          continue;
+        }
+        
+        // 最后一次重试仍然失败，返回结果
+        return response;
+        
+      } catch (error) {
+        // 网络错误等，如果还有重试机会就继续
+        if (attempt < maxRetries) {
+          console.log(`[AccountService] 第${attempt + 1}次尝试出现异常，${retryDelay}ms后重试:`, error);
+          await new Promise(resolve => setTimeout(resolve, retryDelay));
+          continue;
+        }
+        
+        // 最后一次重试仍然异常，返回错误
+        return {
+          code: 500,
+          message: '获取账户信息失败',
+          data: {} as Account,
+          timestamp: Date.now()
+        };
       }
-      
-      return await httpClient.get(API_ENDPOINTS.CURRENT_ACCOUNT, { headers });
-    } catch (error) {
-      return {
-        code: 500,
-        message: '获取账户信息失败',
-        data: {} as Account,
-        timestamp: Date.now()
-      };
     }
+    
+    // 兜底返回（理论上不会执行到这里）
+    return {
+      code: 500,
+      message: '获取账户信息失败',
+      data: {} as Account,
+      timestamp: Date.now()
+    };
   }
 
   // 账户充值
