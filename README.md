@@ -5,6 +5,7 @@
 AgentX 是一个基于大模型 (LLM) 和多能力平台 (MCP) 的智能 Agent 构建平台。它致力于简化 Agent 的创建流程，让用户无需复杂的流程节点或拖拽操作，仅通过自然语言和工具集成即可打造个性化的智能 Agent。
 
 <div align="center">
+ 
 [![Java](https://img.shields.io/badge/Java-17-orange?style=flat-square)](https://openjdk.java.net/projects/jdk/17/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.3-brightgreen?style=flat-square)](https://spring.io/projects/spring-boot)
 [![Next.js](https://img.shields.io/badge/Next.js-15-black?style=flat-square)](https://nextjs.org/)
@@ -13,6 +14,7 @@ AgentX 是一个基于大模型 (LLM) 和多能力平台 (MCP) 的智能 Agent �
 [![LangChain4j](https://img.shields.io/badge/LangChain4j-1.3.0-purple?style=flat-square)](https://docs.langchain4j.dev/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue?style=flat-square)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
+
 </div>
 ## 🔗 相关链接
 
